@@ -18,13 +18,13 @@ Extract in Debian's home directory, rather than Android shared storage. Inside t
 
 ```sh
 sha256sum -c SHA256SUMS
-git clone aksara-core.git.bundle aksara-core
+git clone --branch main aksara-core.git.bundle aksara-core
 cd aksara-core
 git status --short
 git log --oneline -3
 ```
 
-The bundle works without GitHub/network access and preserves the existing commit. `source/` is an inspectable copy; it does not need to be committed again when importing the bundle.
+The bundle works without GitHub/network access and preserves the existing commits. `--branch main` selects the intended branch even when the receiving machine defaults to `master`. `source/` is an inspectable copy; it does not need to be committed again when importing the bundle.
 
 If the bundle cannot be used, copy `source/` to a fresh directory, initialize Git on `main`, inspect/stage the supplied files and commit. Do not include runtime state or the ZIP itself.
 
@@ -44,11 +44,11 @@ git ls-remote https://github.com/yohn-maistre/aksara-core.git
 Proceed with the following only if API access succeeds, visibility is private, push permission is true, and `git ls-remote` succeeds with no refs (an empty repository):
 
 ```sh
-git remote add origin https://github.com/yohn-maistre/aksara-core.git
+git remote set-url origin https://github.com/yohn-maistre/aksara-core.git
 git push -u origin main
 ```
 
-If refs already exist, fetch and inspect them first. Do not overwrite or force-push unrelated history. If a README/license initialization created a separate root commit, preserve it through a reviewed merge or import onto a new branch. A normal push may require workflow permission because `.github/workflows/ci.yml` is included; use a properly authorized local login rather than dropping the workflow silently.
+The bundle clone initially sets `origin` to the local bundle; `set-url` replaces that address. If you initialized from `source/` and have no origin, use `git remote add origin` instead. If refs already exist at the destination, fetch and inspect them first. Do not overwrite or force-push unrelated history. If a README/license initialization created a separate root commit, preserve it through a reviewed merge or import onto a new branch. A normal push may require workflow permission because `.github/workflows/ci.yml` is included; use a properly authorized local login rather than dropping the workflow silently.
 
 Inspect the resulting Actions run, especially native ARM64. Local actionlint passed; remote CI has not been executed or certified here. Upload the phone tarball as a private release asset if the user requests that separately; it is intentionally absent from Git history.
 
