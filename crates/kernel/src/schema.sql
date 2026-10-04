@@ -1,0 +1,14 @@
+CREATE TABLE meta(key TEXT PRIMARY KEY,value TEXT NOT NULL);
+CREATE TABLE principals(id TEXT PRIMARY KEY,institution_id TEXT NOT NULL,data TEXT NOT NULL,token_hash TEXT UNIQUE NOT NULL,active INTEGER NOT NULL CHECK(active IN (0,1)));
+CREATE TABLE bindings(provider TEXT NOT NULL,account TEXT NOT NULL,subject TEXT NOT NULL,principal_id TEXT NOT NULL REFERENCES principals(id),PRIMARY KEY(provider,account,subject));
+CREATE TABLE lanes(id TEXT PRIMARY KEY,institution_id TEXT NOT NULL,data TEXT NOT NULL);
+CREATE TABLE artifacts(id TEXT PRIMARY KEY,institution_id TEXT NOT NULL,owner TEXT NOT NULL REFERENCES principals(id),data TEXT NOT NULL,raw BLOB NOT NULL,active INTEGER NOT NULL DEFAULT 1 CHECK(active IN (0,1)));
+CREATE TABLE blocks(id TEXT PRIMARY KEY,artifact_id TEXT NOT NULL REFERENCES artifacts(id),ordinal INTEGER NOT NULL,text TEXT NOT NULL,UNIQUE(artifact_id,ordinal));
+CREATE INDEX blocks_artifact ON blocks(artifact_id);
+CREATE TABLE work(id TEXT PRIMARY KEY,institution_id TEXT NOT NULL,lane_id TEXT NOT NULL REFERENCES lanes(id),owner TEXT NOT NULL REFERENCES principals(id),data TEXT NOT NULL,idempotency_key TEXT NOT NULL,request_hash TEXT NOT NULL,UNIQUE(owner,lane_id,idempotency_key));
+CREATE INDEX work_lane ON work(lane_id);
+CREATE TABLE effects(id TEXT PRIMARY KEY,work_id TEXT NOT NULL REFERENCES work(id),idempotency_key TEXT NOT NULL,request_hash TEXT NOT NULL,data TEXT NOT NULL,UNIQUE(work_id,idempotency_key));
+CREATE TABLE receipts(id TEXT PRIMARY KEY,effect_id TEXT UNIQUE NOT NULL REFERENCES effects(id),data TEXT NOT NULL);
+CREATE TABLE memory(id TEXT PRIMARY KEY,institution_id TEXT NOT NULL,owner TEXT NOT NULL REFERENCES principals(id),data TEXT NOT NULL);
+CREATE TABLE ledger(seq INTEGER PRIMARY KEY AUTOINCREMENT,payload TEXT NOT NULL,previous_hash TEXT NOT NULL,hash TEXT NOT NULL,lane_id TEXT);
+CREATE TABLE outbox(ledger_seq INTEGER PRIMARY KEY REFERENCES ledger(seq),attempts INTEGER NOT NULL DEFAULT 0,delivered_at INTEGER);

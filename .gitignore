@@ -1,0 +1,10 @@
+/target/
+node_modules/
+.aksara/
+*.sqlite*
+*.db*
+.env*
+!.env.example
+stress-results*.json
+__pycache__/
+dist/

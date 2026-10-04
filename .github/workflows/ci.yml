@@ -1,0 +1,70 @@
+name: Kernel, runtime and device conformance
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: conformance-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  conformance:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            target: x86_64-unknown-linux-musl
+          - runner: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-musl
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24.19.0'
+      - name: Toolchain
+        run: |
+          rustup toolchain install 1.99.0 --profile minimal --component rustfmt --component clippy
+          rustup target add ${{ matrix.target }} --toolchain 1.99.0
+          sudo apt-get update -qq
+          sudo apt-get install -y musl-tools
+      - name: Dependency install
+        run: npm ci --ignore-scripts
+      - name: Rust authority checks
+        run: |
+          cargo fmt --all -- --check
+          cargo test --locked --workspace
+          cargo clippy --locked --workspace --all-targets -- -D warnings
+      - name: Runtime and controller checks
+        run: |
+          npm test
+          python3 -m unittest discover -s tests -v
+      - name: Browser privacy and approval checks
+        run: |
+          npx playwright install --with-deps chromium
+          cargo build --locked --workspace
+          python3 scripts/browser_smoke.py
+      - name: Static phone host
+        env:
+          CC: musl-gcc
+        run: |
+          target_key=$(echo '${{ matrix.target }}' | tr '[:lower:]-' '[:upper:]_')
+          export "CARGO_TARGET_${target_key}_LINKER=musl-gcc"
+          cargo build --locked --release --target ${{ matrix.target }} -j 2
+      - name: Real-process stress on native architecture
+        run: python3 scripts/stress.py --binary target/${{ matrix.target }}/release/aksarad --documents 200
+      - name: Package with dependency notices
+        run: |
+          python3 scripts/package_release.py --binary target/${{ matrix.target }}/release/aksarad --target ${{ matrix.target }}
+          sha256sum dist/*.tar.gz > dist/SHA256SUMS
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: aksara-${{ matrix.target }}
+          path: |
+            dist/*.tar.gz
+            dist/SHA256SUMS
+            stress-results.json
+          retention-days: 30

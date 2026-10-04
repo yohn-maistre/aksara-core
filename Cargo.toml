@@ -1,0 +1,26 @@
+[workspace]
+members = ["crates/core-types", "crates/kernel", "services/aksarad"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.99"
+license = "Apache-2.0"
+
+[workspace.dependencies]
+aksara-core-types = { path = "crates/core-types" }
+aksara-kernel = { path = "crates/kernel" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+uuid = { version = "1", features = ["v4", "serde"] }
+sha2 = "0.10"
+thiserror = "2"
+
+[profile.dev]
+debug = 0
+
+[profile.release]
+strip = true
+lto = "thin"
+codegen-units = 1

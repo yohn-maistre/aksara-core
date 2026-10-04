@@ -1,0 +1,16 @@
+Aksara Core
+Copyright 2026 Aksara contributors
+Licensed under the Apache License, Version 2.0.
+
+The Pi runtime adapter depends on @earendil-works/chord, pi-ai and pi-durable
+1.0.2, MIT, Copyright (c) 2025 Mario Zechner. Their original implementations
+are installed by npm and their license files remain in those packages.
+
+Muse Gadget SDK (Meta, Apache-2.0), Vellum Assistant (Vellum AI, MIT),
+Hermes Agent (Nous Research, MIT), Dim0 (vcmf, MIT) and canvas-harness (MIT)
+were studied as design/code references. No source from these five projects
+is currently vendored. Pinned revisions and files are recorded in docs/donors.md.
+
+Packaged binaries include additional dependency notices generated from Cargo
+metadata and upstream license files under third-party/. This NOTICE does not
+replace those upstream licenses or imply endorsement by any donor project.
