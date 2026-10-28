@@ -1,12 +1,24 @@
 # Aksara Core
 
+Aksara now has an **OpenDuet-based React PWA** backed by the Rust kernel: Today, private Ask, Channels, Library, reviewed documents/memory, local model conversations and optional Pocket TTS read-aloud. Personal mode uses separate databases. Start with the [platform guide](docs/platform/README.md), [current decisions](docs/platform/decisions.md), [component coverage](docs/platform/component-coverage.csv) and [new verification evidence](docs/platform/verification.md).
+
+```sh
+cargo build --locked --workspace
+npm ci
+npm run build
+npm run platform
+```
+
+Open **http://127.0.0.1:7341**. The chooser is local development identity selection, not production authentication. Local models are optional; OpenCode keyless completion was reachable but rate-limited (429), so it is experimental. The lightweight alpha lab below remains available for conformance and very constrained devices.
+
+
 A local Rust authority kernel for one institution: individual identity, audience-aware retrieval, durable work, exact approvals and verified effects. Apache-2.0. **Development alpha**, with an offline Pi Durable runtime and a separate controller simulator.
 
 The [v1 catalogue](docs/northstar-v1.md) is the northstar. The [design review](docs/design-review.md) records implementation choices and gaps. The [donor ledger](docs/donors.md) distinguishes actual reuse, studied patterns and pending adapters.
 
 [Verification evidence](docs/verification.md) records 67 local checks and the ARM64 emulation limits. The [Hermes handoff](docs/handoff.md) explains importing the source/history bundle, pushing to the private repo and starting the phone binary.
 
-## Run locally
+## Run the alpha conformance lab
 
 Requires Rust 1.99.0, Python 3.9+ and, for the optional Pi worker, Node 24.19+ with built-in SQLite.
 
@@ -52,7 +64,7 @@ The stress harness launches real processes, injects crashes around commits and d
 - Loopback HTTP API, small phone-responsive web test client, offline Pi Durable adapter.
 - Four-profile **behavior simulator** with durable command deduplication, privacy/stop interlocks, capture-lease fixtures, human takeover fences, offline queue bounds and OTA rollback fixtures.
 
-## Still open
+## Alpha limitations and remaining platform work
 
 Cedar policy evaluation, Duroxide institutional workflows, Wasmtime/WIT packs, ConnectRPC/AG-UI, Hermes channel adapters, a Dim0/canvas-harness Workbench, Library hierarchy/wiki/long-document adapters, Graphiti, model streaming, production computers, voice and real MCU hardware are not implemented. The simulator does not emulate silicon, timing, radio, audio acquisition, e-paper or signed OTA cryptography. The current fixed policy and HMAC leases are development mechanisms.
 

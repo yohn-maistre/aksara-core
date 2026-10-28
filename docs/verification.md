@@ -1,3 +1,5 @@
+> Historical 4 October alpha evidence. See [29 October platform verification](platform/verification.md) for this increment. Historical ARM64 results do not attest the new build.
+
 # Verification evidence
 
 Measured in this workspace on 2026-10-04. This is an executable development alpha, not the complete v1 catalogue. No physical Samsung A12 or MCU was available.

@@ -7,6 +7,7 @@ import shutil
 import subprocess
 import tarfile
 import tempfile
+from collect_npm_notices import collect
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -28,12 +29,13 @@ def main():
         (bundle / 'bin/aksarad').chmod(0o755)
         for name in ['LICENSE', 'NOTICE', 'README.md', 'AGENTS.md', 'Cargo.toml', 'Cargo.lock', 'rust-toolchain.toml', 'package.json', 'package-lock.json']:
             shutil.copy2(ROOT / name, bundle / name)
-        for name in ['scripts/dev.py', 'scripts/device_simulator.py', 'scripts/stress.py', 'scripts/browser_smoke.py']:
+        for name in ['scripts/dev.py', 'scripts/start_platform.py', 'scripts/device_simulator.py', 'scripts/stress.py', 'scripts/browser_smoke.py', 'scripts/collect_npm_notices.py']:
             destination = bundle / name
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(ROOT / name, destination)
-        for name in ['python', 'packages/runtime-pi', 'tests', 'docs', 'crates', 'services', 'apps']:
-            shutil.copytree(ROOT / name, bundle / name, ignore=shutil.ignore_patterns('__pycache__'))
+        for name in ['python', 'packages', 'tests', 'docs', 'crates', 'services', 'apps', 'third_party', 'protocols', 'packs']:
+            shutil.copytree(ROOT / name, bundle / name, ignore=shutil.ignore_patterns('__pycache__', 'node_modules', '.aksara'))
+        collect(bundle / 'third_party/npm')
         notices = bundle / 'third-party'
         notices.mkdir()
         records = []

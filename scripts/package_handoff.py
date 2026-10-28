@@ -25,7 +25,9 @@ def main():
     sums = []
     with tempfile.TemporaryDirectory(prefix='aksara-handoff-') as temp:
         bundle = Path(temp) / 'aksara-core.git.bundle'
-        subprocess.run(['git', 'bundle', 'create', str(bundle), 'main', 'HEAD'], cwd=ROOT, check=True)
+        branch = subprocess.check_output(['git', 'branch', '--show-current'], cwd=ROOT, text=True).strip()
+        refs = list(dict.fromkeys(['main', branch or 'HEAD']))
+        subprocess.run(['git', 'bundle', 'create', str(bundle), *refs], cwd=ROOT, check=True)
         subprocess.run(['git', 'bundle', 'verify', str(bundle)], cwd=ROOT, check=True)
         with zipfile.ZipFile(args.output, 'w', zipfile.ZIP_DEFLATED) as output:
             def add(name, data, mode=0o644):

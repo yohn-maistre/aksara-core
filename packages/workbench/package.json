@@ -1,0 +1,11 @@
+{
+  "name": "@aksara/workbench",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@aksara/runtime-mastra": "0.2.0",
+    "@aksara/contracts": "0.2.0"
+  },
+  "license": "Apache-2.0"
+}

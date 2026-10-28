@@ -1,0 +1,23 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { finalizePcmWav } from "./audio.mjs";
+test("streamed Pocket WAV lengths are finalized after complete bounded reception", () => {
+  const b = Buffer.alloc(48044);
+  b.write("RIFF");
+  b.writeUInt32LE(2000000036, 4);
+  b.write("WAVEfmt ", 8);
+  b.writeUInt32LE(16, 16);
+  b.writeUInt16LE(1, 20);
+  b.writeUInt16LE(1, 22);
+  b.writeUInt32LE(24000, 24);
+  b.writeUInt32LE(48000, 28);
+  b.writeUInt16LE(2, 32);
+  b.writeUInt16LE(16, 34);
+  b.write("data", 36);
+  b.writeUInt32LE(2000000000, 40);
+  const final = finalizePcmWav(b);
+  assert.equal(final.readUInt32LE(4), 48036);
+  assert.equal(final.readUInt32LE(40), 48000);
+  assert.equal(b.readUInt32LE(40), 2000000000);
+  assert.throws(() => finalizePcmWav(Buffer.from("not audio")));
+});

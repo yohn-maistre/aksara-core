@@ -5,14 +5,19 @@
   "license": "Apache-2.0",
   "type": "module",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "apps/platform"
   ],
   "engines": {
     "node": ">=24.19.0"
   },
   "scripts": {
     "test": "node --test packages/runtime-pi/*.test.mjs",
-    "worker": "node packages/runtime-pi/worker.mjs"
+    "worker": "node packages/runtime-pi/worker.mjs",
+    "build": "npm run build -w @aksara/platform",
+    "platform": "python3 scripts/start_platform.py",
+    "test:platform": "node --test packages/workbench/*.test.mjs packages/runtime-mastra/*.test.mjs packages/contracts/*.test.mjs",
+    "check": "npm run typecheck -w @aksara/platform"
   },
   "devDependencies": {
     "playwright": "1.63.0"

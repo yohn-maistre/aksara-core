@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "protocol": {
+      "type": "string",
+      "const": "aksara.publication-draft/1"
+    },
+    "artifact_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9._-]{1,79}$"
+    },
+    "destination": {
+      "type": "string",
+      "const": "ruara"
+    },
+    "format": {
+      "type": "string",
+      "const": "public-text"
+    },
+    "sharing_grant_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9._-]{1,79}$"
+    },
+    "source_projection_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "correction_of": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9._-]{1,79}$"
+    }
+  },
+  "required": [
+    "protocol",
+    "artifact_id",
+    "destination",
+    "format",
+    "sharing_grant_id",
+    "source_projection_digest"
+  ],
+  "additionalProperties": false
+}

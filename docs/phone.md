@@ -1,5 +1,10 @@
 # Samsung A12: Termux / proot Debian
 
+For the new web surface, build/install the current host and run `npm ci`, `npm run build`, then `npm run platform` (or `python3 scripts/start_platform.py --binary bin/aksarad` in a release archive). See [the platform guide](platform/README.md). This adds a Node broker and separate personal authority databases. Start without models/voice, then add one small local model and measure. Pocket TTS's CPU Python worker used roughly 573 MiB RSS here; do not enable it by default on the A12. This workspace has no physical A12 measurements.
+
+Node 24.19+ is required; Debian's default Node may be older. Building the frontend needs Vite/Tailwind platform dependencies: use `npm ci`, not an install that skips every package setup script. A phone release includes prebuilt web assets, so `npm ci --omit=dev` can supply the runtime dependencies. For native Termux, dependency/ABI support differs from Debian proot; qualify that path independently.
+
+
 This is a phone **development** profile: Rust host, SQLite, browser test client and Python controller simulator. Pi Durable is optional. No KVM, Docker, systemd, Graphiti, voice model or GPU is required. PRoot does not provide production computer isolation.
 
 The A12 has several variants. Its CPU may be ARM64 while Android userspace or your Debian install is 32-bit. Check the installed environment before choosing an artifact:

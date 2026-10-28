@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "protocol": {
+      "type": "string",
+      "const": "aksara.computer-intent/1"
+    },
+    "work_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9._-]{1,79}$"
+    },
+    "lane_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9._-]{1,79}$"
+    },
+    "session_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9._-]{1,79}$"
+    },
+    "controller_generation": {
+      "type": "integer",
+      "exclusiveMinimum": 0,
+      "maximum": 9007199254740991
+    },
+    "work_revision": {
+      "type": "integer",
+      "exclusiveMinimum": 0,
+      "maximum": 9007199254740991
+    },
+    "work_generation": {
+      "type": "integer",
+      "exclusiveMinimum": 0,
+      "maximum": 9007199254740991
+    },
+    "capability": {
+      "type": "string",
+      "enum": [
+        "computer.observe",
+        "computer.propose"
+      ]
+    },
+    "idempotency_key": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "args_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "required": [
+    "protocol",
+    "work_id",
+    "lane_id",
+    "session_id",
+    "controller_generation",
+    "work_revision",
+    "work_generation",
+    "capability",
+    "idempotency_key",
+    "args_digest"
+  ],
+  "additionalProperties": false
+}

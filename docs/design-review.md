@@ -1,3 +1,5 @@
+> Historical alpha review. Current implementation direction and qualification gates are in [the platform guide](platform/README.md) and [decisions](platform/decisions.md).
+
 # Catalogue review and the first executable slice
 
 The v1 architecture is coherent: institutional authority stays below cognition, every interaction carries a current actor and audience, original evidence survives derived indexes, and a runtime task never becomes an institutional principal. There is no reason to replace that foundation with an all-in-one agent framework.

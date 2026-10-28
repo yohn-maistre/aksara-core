@@ -2,6 +2,7 @@
 mod effects;
 mod library;
 mod memory;
+mod platform;
 mod work;
 
 use aksara_core_types::*;
@@ -98,7 +99,7 @@ impl Kernel {
         let page_size: i64 = db.query_row("PRAGMA page_size", [], |r| r.get(0))?;
         db.pragma_update(None, "max_page_count", (256 * 1_048_576_i64) / page_size)?;
         let version: i64 = db.query_row("PRAGMA user_version", [], |r| r.get(0))?;
-        if version > 2 {
+        if version > 3 {
             return Err(Error::Conflict(
                 "database schema is newer than this binary".into(),
             ));
@@ -118,6 +119,11 @@ impl Kernel {
         if version <= 1 {
             let tx = db.transaction()?;
             tx.execute_batch(include_str!("migrations/002_lineage.sql"))?;
+            tx.commit()?;
+        }
+        if version <= 2 {
+            let tx = db.transaction()?;
+            tx.execute_batch(include_str!("migrations/003_platform.sql"))?;
             tx.commit()?;
         }
         Ok(Self { db, _lock: lock })
@@ -460,7 +466,7 @@ impl Kernel {
             prev = hash;
             count += 1;
         }
-        Ok(serde_json::json!({"sqlite":sqlite,"ledger_events":count,"ledger_head":prev,"schema":2}))
+        Ok(serde_json::json!({"sqlite":sqlite,"ledger_events":count,"ledger_head":prev,"schema":3}))
     }
 }
 

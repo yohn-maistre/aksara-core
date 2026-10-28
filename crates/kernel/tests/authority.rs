@@ -573,7 +573,7 @@ fn schema_one_migration_backfills_committed_source_lineage() {
         .unwrap();
     drop(db);
     f.k = Kernel::open(&path).unwrap();
-    assert_eq!(f.k.integrity().unwrap()["schema"], 2);
+    assert_eq!(f.k.integrity().unwrap()["schema"], 3);
     assert_eq!(f.k.artifact(&ctx, &derived.id).unwrap().id, derived.id);
     f.k.withdraw_artifact(&ctx, &source.id).unwrap();
     assert!(f.k.artifact(&ctx, &derived.id).is_err());

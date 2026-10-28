@@ -29,6 +29,11 @@ struct Cli {
 enum Command {
     /// Create three individual dev principals and shared/private lanes. Prints tokens once.
     InitDev,
+    /// Initialize an isolated one-person TrustDomain. Prints its token once.
+    InitPersonal {
+        #[arg(long, default_value = "Me")]
+        name: String,
+    },
     Serve {
         #[arg(long, default_value = "127.0.0.1:7341")]
         listen: SocketAddr,
@@ -104,6 +109,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
     let mut kernel = Kernel::open(&cli.db)?;
     match cli.command {
+        Command::InitPersonal { name } => println!(
+            "{}",
+            serde_json::to_string_pretty(&kernel.init_personal(&name)?)?
+        ),
         Command::InitDev => println!("{}", serde_json::to_string_pretty(&kernel.init_dev()?)?),
         Command::Doctor => println!("{}", serde_json::to_string_pretty(&kernel.integrity()?)?),
         Command::RebuildLibrary => {
@@ -147,7 +156,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .route(
                     "/health",
                     get(|| async {
-                        Json(json!({"status":"ready","profile":"development","schema":2}))
+                        Json(json!({"status":"ready","profile":"development","schema":3}))
                     }),
                 )
                 .route("/api/{operation}", get(api).post(api))
@@ -304,11 +313,21 @@ async fn api(
         let mut k=app.kernel.lock().map_err(|_|Error::Conflict("kernel unavailable".into()))?;
         let actor=k.authenticate(&bearer)?;
         if method==Method::GET && operation=="me" {return Ok(json!(actor));}
+        if method==Method::GET && operation=="lane-names" {return k.lane_names(&actor);}
         if method==Method::GET && operation=="lanes" {return Ok(json!(k.lanes(&actor)?));}
         let ctx=k.context(&bearer,&lane,&purpose)?;
         let get=|key:&str|query.get(key).map(|v|v.as_str()).ok_or_else(||Error::Invalid(format!("missing query parameter: {key}")));
         let count=|key:&str,default:usize|query.get(key).map(|v|v.parse::<usize>().map_err(|_|Error::Invalid("invalid page size".into()))).unwrap_or(Ok(default));
         match (method.as_str(),operation.as_str()) {
+            ("GET","library")=>Ok(json!(k.library_items(&ctx)?)),
+            ("GET","messages")=>Ok(json!(k.messages(&ctx,count("after",0)? as i64)?)),
+            ("GET","today")=>{let at=query.get("at").map(|s|s.parse::<i64>().map_err(|_|Error::Invalid("invalid timestamp".into()))).transpose()?;Ok(k.today(&ctx,at)?)},
+            ("GET","model-input")=>Ok(k.model_input(&ctx,get("id")?)?),
+            ("POST","channel-create")=>Ok(json!(k.create_channel(&ctx,field(&input,"name")?)?)),
+            ("POST","model-claim")=>Ok(json!(k.claim_model(&ctx,field(&input,"id")?)?)),
+            ("POST","model-interrupt")=>{k.interrupt_model(&ctx,field(&input,"work_id")?)?;Ok(json!({"interrupted":true}))},
+            ("POST","model-begin")=>Ok(json!(k.begin_model(&ctx,&serde_json::from_value(input)?)?)),
+            ("POST","model-finish")=>Ok(json!(k.finish_model(&ctx,field(&input,"id")?,field(&input,"text")?,input["failed"].as_bool().unwrap_or(false))?)),
             ("GET","search")=>Ok(json!(k.search(&ctx,get("query")?,count("limit",10)?)?)),
             ("GET","threads")=>Ok(json!(k.works(&ctx)?)),
             ("GET","thread")=>Ok(json!(k.work(&ctx,get("id")?)?)),

@@ -1,0 +1,12 @@
+{
+  "name": "@aksara/runtime-mastra",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "exports": "./index.mjs",
+  "dependencies": {
+    "@mastra/core": "1.80.0",
+    "@ai-sdk/openai-compatible": "2.0.29"
+  },
+  "license": "Apache-2.0"
+}

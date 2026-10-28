@@ -1,5 +1,8 @@
 # Hermes handoff: source, history and phone binary
 
+**Platform foundation update — 29 October 2026.** The handoff now includes committed source/history, a static ARM64 host, the built React PWA, runtime sources, protocol/Pack schemas and donor/dependency notices. See [the current platform guide](platform/README.md) and [verification](platform/verification.md). After extracting the phone archive, run `npm ci --omit=dev` then `python3 scripts/start_platform.py --binary bin/aksarad`. No models, voice weights, credentials or databases are bundled. The old alpha instructions below remain useful for the lightweight lab. The branch `feat/platform-foundation` contains the new work; preserve that branch when importing the Git bundle rather than assuming `main` is the updated head.
+
+
 Continue the existing Aksara work. Apache-2.0 is selected. Keep the destination repository private. Read `AGENTS.md`, `docs/design-review.md`, `docs/donors.md` and `docs/verification.md` before extending components.
 
 The outer ZIP contains:

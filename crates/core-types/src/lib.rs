@@ -166,3 +166,45 @@ pub struct MemoryRecord {
     pub state: String,
     pub expires_at: i64,
 }
+
+/// A model invocation has no tool or Library authority. Only explicitly consented
+/// conversational text may leave the host; local-only turns stay out of cloud context.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ModelRequest {
+    #[serde(default)]
+    pub source_ids: Vec<String>,
+    pub text: String,
+    pub provider: String,
+    pub model: String,
+    pub cloud_consent: bool,
+    pub idempotency_key: String,
+}
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ModelRun {
+    pub source_ids: Vec<String>,
+    pub input_sha256: String,
+    pub id: String,
+    pub work_id: String,
+    pub work_revision: i64,
+    pub work_generation: i64,
+    pub owner: String,
+    pub lane_id: String,
+    pub audience: Vec<String>,
+    pub lane_revision: i64,
+    pub policy_epoch: i64,
+    pub purpose: String,
+    pub provider: String,
+    pub model: String,
+    pub cloud_consent: bool,
+    pub execution_claimed: bool,
+    pub state: String,
+    pub created_ms: i64,
+}
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ConversationMessage {
+    pub seq: i64,
+    pub role: String,
+    pub text: String,
+    pub run: ModelRun,
+}

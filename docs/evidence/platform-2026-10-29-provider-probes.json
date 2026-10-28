@@ -1,0 +1,38 @@
+{
+  "date": "2026-10-29 Asia/Bangkok",
+  "synthetic_only": true,
+  "phone_measurement": false,
+  "local_model": {
+    "runtime": "llama.cpp b11968 CPU",
+    "model": "bartowski SmolLM2-135M-Instruct Q4_K_M",
+    "model_sha256": "2e8040ceae7815abe0dcb3540b9995eaa1fa0d2ca9e797d0a635ae4433c68c2d",
+    "adapter": "Mastra Core 1.80.0 Agent + OpenAI-compatible provider",
+    "elapsed_ms": 1174,
+    "result": "nonempty text reply",
+    "threads": 2,
+    "bundled": false
+  },
+  "opencode": {
+    "model": "big-pickle",
+    "endpoint": "https://opencode.ai/zen/v1/chat/completions",
+    "credential": "public keyless, no account secret",
+    "completion_status": 429,
+    "error_type": "FreeUsageLimitError",
+    "catalogue_get_status": 403,
+    "fallback": false,
+    "working_completion": false
+  },
+  "voice": {
+    "engine": "Pocket TTS 4.0.1",
+    "torch": "2.15.0+cpu",
+    "language": "english_2m_2026-10",
+    "input": "Hello. Aksara is ready when you are.",
+    "elapsed_seconds": 0.338,
+    "audio_seconds": 3,
+    "sample_rate": 24000,
+    "pcm_bits": 16,
+    "worker_rss_kib": 586540,
+    "measurement": "resident worker; model load/download excluded",
+    "weights_bundled": false
+  }
+}

@@ -1,0 +1,10 @@
+{
+ "protocol":"aksara.pack/1",
+ "id":"aksara.knowledge",
+ "version":"0.1.0",
+ "title":"Knowledge & documents",
+ "license":"Apache-2.0",
+ "trust":"bundled-first-party",
+ "screens":[{"id":"knowledge.finding","slot":"conversation","components":["EvidenceCard","MetricCard"]}],
+ "capabilities":["library.lookup","artifact.create"]
+}

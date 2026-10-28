@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "protocol": {
+      "type": "string",
+      "const": "aksara.pack/1"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9._-]{1,79}$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "license": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+    },
+    "trust": {
+      "type": "string",
+      "const": "bundled-first-party"
+    },
+    "screens": {
+      "maxItems": 12,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9._-]{1,79}$"
+          },
+          "slot": {
+            "type": "string",
+            "enum": [
+              "today",
+              "conversation",
+              "library"
+            ]
+          },
+          "components": {
+            "minItems": 1,
+            "maxItems": 8,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "EvidenceCard",
+                "MetricCard"
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "slot",
+          "components"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "capabilities": {
+      "maxItems": 12,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "library.lookup",
+          "artifact.create",
+          "device.indicate"
+        ]
+      }
+    }
+  },
+  "required": [
+    "protocol",
+    "id",
+    "version",
+    "title",
+    "license",
+    "trust",
+    "screens",
+    "capabilities"
+  ],
+  "additionalProperties": false
+}
