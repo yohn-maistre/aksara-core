@@ -1,6 +1,6 @@
 # Aksara platform foundation handoff
 
-Verified development snapshot from source commit `159519b51ebda3e18276c47a82684451df898b44`.
+Verified development snapshot from source commit `1442f06e74f84b195f2f8bf85e2c8548c8a7f266`.
 
 [Source / draft PR](https://github.com/yohn-maistre/aksara-core/pull/1) · [Platform guide](https://github.com/yohn-maistre/aksara-core/blob/feat/platform-foundation/docs/platform/README.md) · [Verification](https://github.com/yohn-maistre/aksara-core/blob/feat/platform-foundation/docs/platform/verification.md)
 
@@ -11,7 +11,7 @@ Verified development snapshot from source commit `159519b51ebda3e18276c47a826844
 
 This branch distributes build artifacts; it is independent of the source branch and is not a production release. No credentials, databases, runtime stores or model weights are included.
 
-99 distinct local checks passed; the same 22 process checks also passed against the new ARM64 binary under QEMU. Native ARM64 CI is tracked on the source PR. No physical Samsung A12 measurement is asserted.
+100 distinct local checks passed; the same 22 process checks also passed against the new ARM64 binary under QEMU. Native ARM64 CI is tracked on the source PR. No physical Samsung A12 measurement is asserted.
 
 ## On the phone
 
