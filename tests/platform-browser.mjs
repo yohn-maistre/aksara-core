@@ -95,6 +95,7 @@ try {
   const previews = process.env.AKSARA_PREVIEW_DIR || path.join(dir, "previews");
   await mkdir(previews, { recursive: true });
   await page.screenshot({
+    animations: "disabled",
     path: path.join(previews, "today-desktop.png"),
     fullPage: true,
   });
@@ -209,7 +210,9 @@ try {
   await page.setViewportSize({ width: 360, height: 800 });
   await page.getByRole("button", { name: "Open navigation" }).click();
   await page.getByRole("button", { name: "Today", exact: true }).click();
+  await page.waitForFunction(() => document.querySelector(".sidebar").getBoundingClientRect().right <= 1);
   await page.screenshot({
+    animations: "disabled",
     path: path.join(previews, "today-mobile.png"),
     fullPage: true,
   });
