@@ -336,7 +336,8 @@ function App() {
       audioRef.current = new Audio(audioURL.current);
       setAudioSeq(seq);
       audioRef.current.onended = stopAudio;
-      await audioRef.current.play();
+      // Mobile browsers may require another explicit tap after async synthesis.
+      await audioRef.current.play().catch(() => {});
     });
   }
   const run = async (fn: () => Promise<void>) => {
@@ -1817,6 +1818,22 @@ function App() {
           </span>
         </footer>
       </div>
+      {audioSeq !== null && (
+        <aside className="voice-player" aria-label="Local read-aloud controls">
+          <Volume2 size={17} />
+          <span>Local read-aloud</span>
+          <button
+            onClick={() =>
+              void audioRef.current
+                ?.play()
+                .catch(() => setError("Tap Play again to start audio."))
+            }
+          >
+            Play
+          </button>
+          <button onClick={stopAudio}>Stop</button>
+        </aside>
+      )}
       <Dialog.Root
         open={!!selected}
         onOpenChange={(v) => {

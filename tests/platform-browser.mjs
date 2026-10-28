@@ -18,6 +18,25 @@ const model = http.createServer(async (req, res) => {
     );
     return;
   }
+  if (req.url === "/tts") {
+    for await (const chunk of req) {
+    }
+    const b = Buffer.alloc(4844);
+    b.write("RIFF");
+    b.writeUInt32LE(4800036, 4);
+    b.write("WAVEfmt ", 8);
+    b.writeUInt32LE(16, 16);
+    b.writeUInt16LE(1, 20);
+    b.writeUInt16LE(1, 22);
+    b.writeUInt32LE(24000, 24);
+    b.writeUInt32LE(48000, 28);
+    b.writeUInt16LE(2, 32);
+    b.writeUInt16LE(16, 34);
+    b.write("data", 36);
+    b.writeUInt32LE(4800000, 40);
+    res.end(b);
+    return;
+  }
   let data = "";
   for await (const part of req) data += part;
   const body = JSON.parse(data || "{}");
@@ -57,7 +76,12 @@ const host = spawn(
     "17850",
   ],
   {
-    env: { ...process.env, AKSARA_LOCAL_MODEL_PORT: "17860" },
+    env: {
+      ...process.env,
+      AKSARA_LOCAL_MODEL_PORT: "17860",
+      AKSARA_TTS_ENABLED: "1",
+      AKSARA_TTS_PORT: "17860",
+    },
     stdio: ["ignore", "pipe", "pipe"],
   },
 );
@@ -146,6 +170,34 @@ try {
   mark(
     "Actual Mastra adapter produces a canonical reply and a registered OpenUI card",
   );
+  await page.evaluate(() => {
+    const original = HTMLMediaElement.prototype.play;
+    HTMLMediaElement.prototype.play = function () {
+      HTMLMediaElement.prototype.play = original;
+      return Promise.reject(
+        new DOMException("Synthetic autoplay block", "NotAllowedError"),
+      );
+    };
+  });
+  await page.getByRole("button", { name: "Read aloud locally" }).click();
+  await page
+    .getByRole("complementary", { name: "Local read-aloud controls" })
+    .waitFor();
+  assert.equal(
+    await page.getByRole("button", { name: "Play", exact: true }).count(),
+    1,
+  );
+  await page.getByRole("button", { name: "Stop", exact: true }).click();
+  assert.equal(
+    await page
+      .getByRole("complementary", { name: "Local read-aloud controls" })
+      .count(),
+    0,
+  );
+  mark(
+    "Read-aloud retains explicit Play/Stop controls after mobile autoplay rejection",
+  );
+
   await page.getByRole("button", { name: "Library", exact: true }).click();
   await page.getByRole("button", { name: /Private original Private/ }).click();
   await page
@@ -210,7 +262,9 @@ try {
   await page.setViewportSize({ width: 360, height: 800 });
   await page.getByRole("button", { name: "Open navigation" }).click();
   await page.getByRole("button", { name: "Today", exact: true }).click();
-  await page.waitForFunction(() => document.querySelector(".sidebar").getBoundingClientRect().right <= 1);
+  await page.waitForFunction(
+    () => document.querySelector(".sidebar").getBoundingClientRect().right <= 1,
+  );
   await page.screenshot({
     animations: "disabled",
     path: path.join(previews, "today-mobile.png"),

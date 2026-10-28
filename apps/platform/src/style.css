@@ -1829,3 +1829,28 @@ pre {
 .source-picker input {
   min-height: 0;
 }
+
+.voice-player {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: calc(100% - 40px);
+  padding: 10px 14px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 8px 35px #10251b20;
+  color: var(--green);
+  font-size: 11px;
+}
+.voice-player button {
+  min-width: 44px;
+  min-height: 34px;
+  border-radius: 7px;
+  background: var(--soft);
+  padding: 0 10px;
+}
