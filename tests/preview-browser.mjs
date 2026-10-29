@@ -1,3 +1,4 @@
+import { navigateSurface } from "./surface-navigation.mjs";
 import { chromium } from "playwright";
 import http from "node:http";
 import path from "node:path";
@@ -76,11 +77,26 @@ try {
   page.on("pageerror", (e) => errors.push(e.message));
   page.on("request", (r) => requests.push(r.url()));
   await page.goto(base);
-  await page
-    .getByRole("heading", { name: "A little clarity, Operator." })
-    .waitFor();
+  await page.getByRole("heading", { name: "Hello, Operator." }).waitFor();
   await page.getByText("Interactive UI preview", { exact: true }).waitFor();
   mark("Preview opens on Today and identifies sample data without a backend");
+  const menu = page.getByRole("button", {
+    name: "Open navigation",
+    exact: true,
+  });
+  await menu.focus();
+  await page.keyboard.press("Enter");
+  await page.getByRole("dialog").waitFor();
+  for (let i = 0; i < 18; i++) {
+    await page.keyboard.press("Tab");
+    await page.waitForFunction(
+      () => !!document.activeElement.closest('[role="dialog"]'),
+    );
+  }
+  await page.keyboard.press("Escape");
+  await page.getByRole("dialog").waitFor({ state: "hidden" });
+  assert.ok(await menu.evaluate((el) => el === document.activeElement));
+  mark("Menu traps keyboard focus and Escape returns to its opener");
   await page.getByRole("button", { name: /Review.*welcome note/ }).click();
   await page.getByRole("button", { name: "Try sample approval" }).click();
   await page
@@ -101,9 +117,7 @@ try {
   const second = await browser.newContext();
   const other = await second.newPage();
   await other.goto(base);
-  await other
-    .getByRole("heading", { name: "A little clarity, Operator." })
-    .waitFor();
+  await other.getByRole("heading", { name: "Hello, Operator." }).waitFor();
   await other.getByRole("button", { name: "Library", exact: true }).click();
   assert.equal(
     await other.getByRole("button", { name: /Tab-only sample note/ }).count(),
@@ -128,7 +142,7 @@ try {
     .getByRole("heading", { name: "Make room for what you know." })
     .waitFor();
   mark("Sample personal mode stays separate from the community sample");
-  await page.getByRole("button", { name: "Tools", exact: true }).click();
+  await navigateSurface(page, "Tools");
   assert.equal(
     await page
       .getByRole("button", { name: "Prepare a test indication" })
@@ -143,9 +157,7 @@ try {
     .waitFor();
   mark("Unrecorded history stays empty");
   await page.reload();
-  await page
-    .getByRole("heading", { name: "A little clarity, Operator." })
-    .waitFor();
+  await page.getByRole("heading", { name: "Hello, Operator." }).waitFor();
   await page.getByRole("button", { name: "Library", exact: true }).click();
   assert.equal(
     await page.getByRole("button", { name: /Tab-only sample note/ }).count(),
@@ -176,6 +188,23 @@ try {
       animations: "disabled",
     });
   mark("Hosted preview is usable at a 360 px viewport");
+  await page.evaluate(() => (document.documentElement.style.fontSize = "200%"));
+  await page.getByRole("button", { name: "Ask PRIVATE", exact: true }).click();
+  const messageBox = await page.getByLabel("Message Aksara").boundingBox();
+  const tabs = await page
+    .getByRole("navigation", { name: "Main", exact: true })
+    .boundingBox();
+  assert.ok(messageBox.y >= 0 && messageBox.y + messageBox.height <= tabs.y);
+  assert.equal(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth > innerWidth,
+    ),
+    false,
+  );
+  await page.evaluate(() => (document.documentElement.style.fontSize = ""));
+  mark(
+    "At 200% text size the phone composer stays above navigation without sideways overflow",
+  );
   assert.deepEqual(errors, []);
   assert.ok(!requests.some((u) => new URL(u).pathname.startsWith("/api/")));
   assert.ok(requests.every((u) => new URL(u).origin === new URL(base).origin));

@@ -28,3 +28,12 @@ their upstream license files remain in those distributions. Pocket TTS and
 local model runtimes/weights are optional installations, not bundled assets.
 Nightly Labs OpenBot was studied as a product reference under its
 Noncommercial license; no code from it is copied into Aksara.
+
+The project-local Taste Skill v2 (2.1.5), MIT, Copyright (c) 2026 Leonxlnx,
+is installed under .agents/skills/design-taste-frontend with its original
+LICENSE. It is development tooling, not part of the running platform.
+
+The platform bundles Inter Variable through @fontsource-variable/inter 5.3.0.
+Copyright 2016 The Inter Project Authors. SIL Open Font License 1.1 is
+reproduced in apps/platform/public/licenses/inter-OFL.txt and included in
+the static site. Fonts load from the application origin.

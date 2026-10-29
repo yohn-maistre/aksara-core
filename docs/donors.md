@@ -45,7 +45,7 @@ For a new adapter record revision, upstream license/NOTICE, exact files studied,
 
 | Donor | Studied pin / license | Files and actual use |
 | --- | --- | --- |
-| OpenDuet | `60fd4c71d9d82e13739dce00827278154d13c947`, MIT | `openbot/app/src/components/duet/{morning-brief-card,kit,icons,build-in}.tsx`, `lib/{motion,reduced-motion}.ts`, `styles.css`. Actual presentation code/tokens adapted into `apps/platform`; license retained. Removed reply-hold coupling; own backend, source/approval/session semantics. Full upstream's Intelligence/CopilotKit backend is not adopted. |
+| OpenDuet | `60fd4c71d9d82e13739dce00827278154d13c947`, MIT | `openbot/app/src/components/duet/{morning-brief-card,kit,icons,build-in,mic-orb}.tsx`, `mic-orb-draw.ts`, `lib/{motion,reduced-motion}.ts`, `styles.css`, and `shell/{app-shell,header,tab-bar,menu-sheet}.tsx`. Actual card/icon/motion/orb implementation and tokens reused; shell geometry, header, floating tab capsule and menu adapted to Aksara navigation with Base UI dialogs. Upstream's phone-width layout is retained on Today and Ask, with wider secondary forms. Composer/Chat source studied for separate transcript scrolling and a docked composer; provider consent/source controls remain ours. Router/query hooks, CopilotKit/Intelligence/backend, upload, dictation and tool authority are not imported. License retained. |
 | Mastra | `d42a194c29b6ce75787a86e3b3bfdf51d976d2f3`, Apache-2.0 outside separately licensed EE | `packages/core/src/agent/durable/{index,create-durable-agent,durable-agent}.ts`, durable approval/controller fixture and LibSQL store source; installed public Agent/model/logger types. Actual Core 1.80.0 conversational Agent dependency. No EE code or vendor authority imported. Durable stream cache is not canonical history; replay can reissue model/tool calls. No automatic recovery enabled in this adapter. |
 | OpenUI | `1492107c8d24805a19651ad57420156f702bbda5`, MIT | `packages/react-lang/README.md`, component/library/Renderer source/API. Actual `@openuidev/react-lang` 1.0.2 dependency, two bounded text components. No generic Query/Mutation or arbitrary renderer/tool provider. |
 | OpenCode | `506ac20c8086b4fb525fa1772a7e89273a95ff3c`, MIT | `packages/core/src/plugin/provider/opencode.ts` and `packages/ai/src/providers/opencode.ts`: public credential/free-model filtering, current SystemOne route; legacy Zen chat-completion compatibility tested independently. No source copied. Actual public-credential synthetic completion received 429 quota denial. Model hints do not establish entitlement. |
@@ -56,3 +56,19 @@ For a new adapter record revision, upstream license/NOTICE, exact files studied,
 | Pamir Lapis One | Official vendor page, retrieved 28 October UTC | Appliance hardware/OS/KVM/SDK claims used as a product reference. No reusable licensed source established; no Pamir code or verified hardware claim. |
 
 The new frontend intentionally starts from permissible OpenDuet components, with Aksara's own context, Library and review semantics. Donor account/session/thread/transport identities never establish Aksara rights. Dependency/source pins document this checkpoint rather than claiming every catalogue donor is fully audited.
+
+## UI audit tooling — 29 October 2026
+
+Taste Skill v2 / `design-taste-frontend` 2.1.5 is copied project-local from
+[Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill), MIT, revision
+`12af471f627f866411b4bd785b19646d3672784c`. `SKILL.md`, the full app-screen
+reference, inspector/linter and CDP launch/profile cleanup code were studied.
+The installed tree retains its MIT license and pin in `UPSTREAM.md`. No install
+script was executed and it adds no product runtime dependency. The user's
+explicit OpenDuet-fidelity direction overrides randomly dealt art direction
+and three documented aesthetic checks. [Audit evidence](platform/ui-audit.md).
+
+Inter Variable is self-hosted using exact npm dependency
+`@fontsource-variable/inter@5.3.0`, OFL-1.1. The package CSS/font exports and
+license were inspected; its original license is distributed with the static
+site in `public/licenses/inter-OFL.txt`. No font CDN is contacted.

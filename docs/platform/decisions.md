@@ -6,7 +6,7 @@ Accepted direction implemented from the v2.5.5 review, 29 October 2026.
 | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
 | Rust stays authoritative; evolve the existing alpha          | Schema 3 and new APIs; original effect, lineage and Pi regressions retained                                               |
 | One current product monorepo                                 | Core, first-party PWA, broker and adapters change together; independent social/hardware release boundaries retained       |
-| React/PWA first; OpenDuet presentation                       | Actual MIT components/tokens reused; no required Intelligence account                                                     |
+| React/PWA first; OpenDuet presentation                       | MIT shell/card/orb/motion code and tokens reused; phone-width Today/Ask; no required Intelligence account                                                     |
 | Mastra qualification, Pi preservation                        | Actual bounded Mastra model turn works; Pi durable retrieval remains tested; Mastra durable tool/recovery gate still open |
 | Actual-read dependencies, eligibility before context         | Frozen input digest, conservative read union, source withdrawal tests across reply/follow-up                              |
 | Canonical work/messages outlive vendor cache                 | Rust persistence; at-most-one automatic provider invocation per claimed run; no automatic crash replay                    |

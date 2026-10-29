@@ -1,3 +1,4 @@
+import { navigateSurface } from "./surface-navigation.mjs";
 /** Real product browser conformance. Synthetic inference uses the actual Mastra
  * adapter over a local OpenAI-compatible fixture; no hosted provider is contacted. */
 import { chromium } from "playwright";
@@ -113,9 +114,7 @@ try {
   await page
     .getByRole("button", { name: "Operator Community workspace" })
     .click();
-  await page
-    .getByRole("heading", { name: "A little clarity, Operator." })
-    .waitFor();
+  await page.getByRole("heading", { name: "Hello, Operator." }).waitFor();
   const previews = process.env.AKSARA_PREVIEW_DIR || path.join(dir, "previews");
   await mkdir(previews, { recursive: true });
   await page.screenshot({
@@ -154,11 +153,12 @@ try {
   await page
     .getByRole("button", { name: "Propose evidence for memory" })
     .click();
-  await page.getByRole("button", { name: "Tools", exact: true }).click();
+  await navigateSurface(page, "Tools");
   await page.getByRole("button", { name: "Approve candidate" }).click();
   await page.getByRole("button", { name: "Revoke", exact: true }).waitFor();
   mark("Evidence memory stays separate until explicit review");
   await page.getByRole("button", { name: "Ask PRIVATE" }).click();
+  await page.getByText(/^Model & sources/).click();
   await page.getByLabel("Model", { exact: true }).selectOption("fixture-local");
   await page.getByText("Reference Library sources locally").click();
   await page.getByLabel("Private original", { exact: true }).check();
@@ -243,7 +243,7 @@ try {
     !(await page.locator("main").innerText()).includes("Reviewed page"),
   );
   mark("Shared Channel cannot read private Library artifacts");
-  await page.getByRole("button", { name: "Tools", exact: true }).click();
+  await navigateSurface(page, "Tools");
   await page.getByRole("button", { name: "Prepare a test indication" }).click();
   await page.getByRole("button", { name: "Approve exact proposal" }).click();
   await page.getByRole("button", { name: "Execute approved effect" }).click();
@@ -253,6 +253,7 @@ try {
     "Device effect is reviewed and receipted through the independent simulator",
   );
   await page.getByRole("button", { name: "Ask PRIVATE" }).click();
+  await page.getByText(/^Model & sources/).click();
   await page.getByLabel("Model provider").selectOption("opencode-free");
   await page.getByLabel("Message Aksara").fill("Synthetic cloud prompt");
   assert.ok(
@@ -262,9 +263,7 @@ try {
   await page.setViewportSize({ width: 360, height: 800 });
   await page.getByRole("button", { name: "Open navigation" }).click();
   await page.getByRole("button", { name: "Today", exact: true }).click();
-  await page.waitForFunction(
-    () => document.querySelector(".sidebar").getBoundingClientRect().right <= 1,
-  );
+  await page.waitForFunction(() => !document.querySelector(".menu-sheet"));
   await page.screenshot({
     animations: "disabled",
     path: path.join(previews, "today-mobile.png"),

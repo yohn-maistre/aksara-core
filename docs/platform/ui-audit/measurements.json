@@ -1,0 +1,107 @@
+{
+  "before": {
+    "at": "2026-10-29T02:29:29.947Z",
+    "allow": [],
+    "findings": [
+      {
+        "level": "FAIL",
+        "id": "micro-label",
+        "width": 1440,
+        "message": "4 tiny uppercase letter-spaced labels (e.g. \"YOUR WORKSPACE\", \"CHANNELS\", \"YOUR LIVING WORKSPACE\", \"MAKE A LITTLE PROGRESS\").",
+        "fix": "Use sentence-case text at a readable size, or delete the label.",
+        "alsoAt": [
+          768,
+          390
+        ]
+      },
+      {
+        "level": "FAIL",
+        "id": "button-fx",
+        "width": 1440,
+        "message": "Buttons with shadow/glow.",
+        "fix": "Flat fill, one colour.",
+        "alsoAt": [
+          768,
+          390
+        ]
+      },
+      {
+        "level": "WARN",
+        "id": "contrast",
+        "width": 1440,
+        "message": "Low-contrast text: \"AKSARA A place for what\u2019s next\" 2.7:1 needs 4.5:1; \"Foundation preview Local authority\" 2.7:1 needs 4.5:1; \"YOUR WORKSPACE\" 2.9:1 needs 4.5:1; \"PRIVATE\" 2.9:1 needs 4.5:1",
+        "fix": "Darken or lighten the text colour.",
+        "alsoAt": [
+          768,
+          390
+        ]
+      },
+      {
+        "level": "FAIL",
+        "id": "heavy-shadow",
+        "width": 1440,
+        "message": "3 panel shadow(s) heavy enough to read as floating: rgba(1, 5, 7, 0.18) 0px 6px 18px -12px | rgba(1, 5, 7, 0.18) 0px 6px 18px -12px | rgba(1, 5, 7, 0.18) 0px 6px 18px -12px",
+        "fix": "Panels sit on the ground: separate them with a fill one step from the ground or a quiet 1px border. A shadow, if any, is under 8% black with a small blur. Real overlays (menus, dialogs, popovers) may float.",
+        "alsoAt": [
+          768,
+          390
+        ]
+      },
+      {
+        "level": "FAIL",
+        "id": "icon-chips",
+        "width": 1440,
+        "message": "5 icons sit in tinted squares or circles in 4 different colours.",
+        "fix": "This is the commonest tell of a generated dashboard. Drop the tinted square: a KPI is a label and a number; an icon, if it helps, is plain and in the text colour.",
+        "alsoAt": [
+          768,
+          390
+        ]
+      },
+      {
+        "level": "FAIL",
+        "id": "tiny-text",
+        "width": 1440,
+        "message": "30 text blocks under 11px: Community workspace 10px, YOUR WORKSPACE 9px, PRIVATE 7px, CHANNELS 9px.",
+        "fix": "Nothing below 11px; secondary text 12px, data 13\u201314px.",
+        "alsoAt": [
+          768,
+          390
+        ]
+      },
+      {
+        "level": "WARN",
+        "id": "ragged-row",
+        "width": 1440,
+        "message": "1 pair(s) of cards in one row end at different heights (by 77px).",
+        "fix": "Cards that share a row share a bottom edge: balance them by their content (the same number of rows, a block of similar height beside it), or stack them. In testing, ragged rows were marked down every time."
+      },
+      {
+        "level": "WARN",
+        "id": "app-title-size",
+        "width": 390,
+        "message": "The h1 is 29px (\"A little clarity, Operator.\").",
+        "fix": "An app screen is not a landing page: the title is 18-32px (20-24px on a phone)."
+      }
+    ],
+    "widths": [
+      1440,
+      768,
+      390
+    ]
+  },
+  "final": {
+    "at": "2026-10-29T02:43:06.040Z",
+    "allow": [
+      "palette-purple",
+      "heavy-shadow",
+      "hero-void"
+    ],
+    "findings": [],
+    "widths": [
+      1440,
+      768,
+      390
+    ]
+  }
+}

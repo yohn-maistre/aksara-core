@@ -84,7 +84,7 @@ export function MorningBriefCard({
       <DuetCard aria-label="Morning brief" role="region">
         <BuildIn className="px-4 pt-[18px]" order={0}>
           <p className="type-sub font-medium text-duet-ink-2">{date}</p>
-          <p className="type-display mt-0.5 font-semibold">{greeting}</p>
+          <h1 className="type-display mt-0.5 font-semibold">{greeting}</h1>
           {nothing && notes.length === 0 ? (
             <p className="type-sub mt-2 text-duet-ink-2">
               Nothing new needs you, and nothing is on your calendar today.

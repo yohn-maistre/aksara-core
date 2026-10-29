@@ -4,6 +4,7 @@ import {
   lazy,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type FormEvent,
@@ -17,17 +18,15 @@ import {
   AudioLines,
   BookOpen,
   Check,
-  ChevronDown,
   Circle,
   Cpu,
   FileText,
   Hash,
-  House,
   Layers,
   LockKeyhole,
-  Menu,
   MessageCircle,
   Moon,
+  Sun,
   Plus,
   Search,
   Settings2,
@@ -35,7 +34,6 @@ import {
   Volume2,
   Sparkles,
   Sprout,
-  Sun,
   X,
 } from "lucide-react";
 import { Dialog } from "@base-ui/react/dialog";
@@ -46,6 +44,8 @@ const MessageBody = lazy(() =>
 );
 import "./duet.css";
 import "./style.css";
+import { ShellHeader, TabBar, MenuSheet } from "./components/shell/chrome";
+import "./shell.css";
 
 type Data = Record<string, any>;
 type Profile = {
@@ -79,14 +79,6 @@ type Artifact = {
   sha256: string;
   owner: string;
 };
-const pages = [
-  ["Today", House],
-  ["Ask", MessageCircle],
-  ["Channels", Hash],
-  ["Library", BookOpen],
-  ["Tools", Layers],
-  ["Settings", Settings2],
-] as const;
 const key = () => crypto.randomUUID();
 const stateWord = (s: string) =>
   ({
@@ -141,6 +133,7 @@ function Empty({
   );
 }
 function App() {
+  const composerInput = useRef<HTMLTextAreaElement>(null);
   const [profiles, setProfiles] = useState<Profile[]>([]),
     [session, setSession] = useState<Session | null>(null),
     [page, setPage] = useState("Today"),
@@ -189,6 +182,12 @@ function App() {
       localStorage.getItem("aksara-theme") || "light",
     ),
     [device, setDevice] = useState<Data | null>(null);
+  useLayoutEffect(() => {
+    const el = composerInput.current;
+    if (!el) return;
+    el.style.height = "44px";
+    el.style.height = `${Math.min(120, el.scrollHeight)}px`;
+  }, [draft, page]);
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
     localStorage.setItem("aksara-theme", theme);
@@ -454,26 +453,9 @@ function App() {
     return (
       <div className="welcome">
         <PreviewNotice />
-        <div className="welcome-art">
-          <Mark />
-          <span className="eyebrow">A place for what matters</span>
-          <h1>
-            People. Knowledge.
-            <br />
-            <em>Possibility.</em>
-          </h1>
-          <p>
-            Your work has a home.
-            <br />
-            Meet Aksara.
-          </p>
-          <div className="orb orb-one" />
-          <div className="orb orb-two" />
-          <span className="welcome-foot">Built to belong to you.</span>
-        </div>
         <main className="welcome-form">
           <Mark />
-          <h2>Welcome to Aksara</h2>
+          <h1>Welcome to Aksara</h1>
           <p>
             {PREVIEW
               ? "Choose a sample persona to explore the interface. No account is created and no backend is connected."
@@ -517,114 +499,21 @@ function App() {
     );
   return (
     <div className="app-shell">
-      <aside className={`sidebar ${mobile ? "mobile-open" : ""}`}>
-        <a
-          className="brand"
-          href="#"
-          onClick={(e) => {
-            e.preventDefault();
-            navigate("Today");
-          }}
-        >
-          <Mark />
-          <span>
-            aksara<span className="brand-dot">.</span>
-          </span>
-        </a>
-        <button className="context-tile" onClick={() => navigate("Settings")}>
-          <span className="context-icon">
-            {session.profile.mode === "personal" ? (
-              <LockKeyhole size={19} />
-            ) : (
-              <Sprout size={20} />
-            )}
-          </span>
-          <span>
-            <strong>
-              {session.profile.mode === "personal"
-                ? "My personal space"
-                : "Aksara Commons"}
-            </strong>
-            <small>
-              {session.profile.mode === "personal"
-                ? "Only you"
-                : "Community workspace"}
-            </small>
-          </span>
-          <ChevronDown size={14} />
-        </button>
-        <div className="nav-label">YOUR WORKSPACE</div>
-        <nav>
-          {pages.map(([name, Icon]) => (
-            <button
-              key={name}
-              className={
-                page === name ||
-                (page === "Conversation" && name === "Channels")
-                  ? "nav-item active"
-                  : "nav-item"
-              }
-              onClick={() => navigate(name)}
-            >
-              <Icon size={19} />
-              <span>{name}</span>
-              {name === "Today" && needs.length > 0 && (
-                <span className="nav-count">{needs.length}</span>
-              )}
-              {name === "Ask" && <span className="private-tag">PRIVATE</span>}
-            </button>
-          ))}
-        </nav>
-        <div className="channels-heading">
-          <span className="nav-label">CHANNELS</span>
-          <button title="Create channel" onClick={() => navigate("Channels")}>
-            <Plus size={15} />
-          </button>
-        </div>
-        <div className="lane-list">
-          {session.lanes
-            .filter((l) => l.lane.audience.length > 1)
-            .map((l) => (
-              <button
-                key={l.lane.id}
-                className={session.lane === l.lane.id ? "lane-active" : ""}
-                onClick={() => {
-                  void switchContext(session.profile.id, l.lane.id);
-                  navigate("Channels");
-                }}
-              >
-                <Hash size={16} />
-                {l.name}
-              </button>
-            ))}
-        </div>
-        <div className="sidebar-bottom">
-          <div className="local-state">
-            <span />
-            {PREVIEW
-              ? "Preview · in this tab only"
-              : "Connected to your local host"}
-          </div>
-          <button className="profile" onClick={() => navigate("Settings")}>
-            <span className="avatar">{session.profile.name[0]}</span>
-            <span>
-              <strong>{session.profile.name}</strong>
-              <small>
-                {session.profile.mode === "personal" ? "Personal" : "Community"}{" "}
-                context
-              </small>
-            </span>
-            <Settings2 size={17} />
-          </button>
-        </div>
-      </aside>
-      {mobile && (
-        <button
-          className="sidebar-scrim"
-          aria-label="Close navigation"
-          onClick={() => setMobile(false)}
-        />
-      )}
+      <MenuSheet
+        open={mobile}
+        onOpenChange={setMobile}
+        page={page}
+        profile={session.profile}
+        lanes={session.lanes}
+        currentLane={session.lane}
+        navigate={navigate}
+        onChannel={(id) => {
+          void switchContext(session.profile.id, id);
+          navigate("Conversation");
+        }}
+        theme={theme}
+        onTheme={() => setTheme(theme === "light" ? "dark" : "light")}
+      />
       <div className="main-shell">
         <PreviewNotice />
         {!PREVIEW && session.test_host && (
@@ -634,1250 +523,1139 @@ function App() {
             volume; production enrollment is not enabled.
           </div>
         )}
-        <header className="topbar">
-          <button
-            className="mobile-menu"
-            aria-label="Open navigation"
-            onClick={() => setMobile(true)}
-          >
-            <Menu size={21} />
-          </button>
-          <div className="breadcrumb">
-            {session.profile.mode === "personal" ? "Personal" : "Commons"}{" "}
-            <span>/</span> <strong>{page}</strong>
-          </div>
-          <div className="topbar-actions">
-            <span className="host-pill">
-              <span />
-              {PREVIEW ? "UI preview" : "Local host"}
-            </span>
-            <button
-              aria-label="Toggle theme"
-              onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-            >
-              {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
-            </button>
-            <span className="avatar small">{session.profile.name[0]}</span>
-          </div>
-        </header>
-        <main className={`content page-${page.toLowerCase()}`}>
-          {error && (
-            <div role="alert" className="error toast">
-              {error}
-              <button aria-label="Dismiss error" onClick={() => setError("")}>
-                <X size={16} />
-              </button>
-            </div>
-          )}
-          {page === "Today" && (
-            <>
-              <div className="page-heading">
-                <div>
-                  <div className="eyebrow">
-                    {at ? "RECORDED HISTORY" : shortDate(new Date())}
-                  </div>
-                  <h1>
-                    {at
-                      ? "A moment in your workspace"
-                      : `A little clarity, ${session.profile.name}.`}
-                  </h1>
-                  <p>
-                    {at
-                      ? "Work as it was recorded. Your current access still applies."
-                      : "The things moving, the things that matter, and room for what’s next."}
-                  </p>
-                </div>
-                <label className="date-picker">
-                  <span>{at ? "Viewing history" : "Travel back"}</span>
-                  <input
-                    aria-label="Historical date"
-                    type="date"
-                    max={new Date().toLocaleDateString("en-CA")}
-                    value={at}
-                    onChange={(e) => setAt(e.target.value)}
-                  />
-                  {at && (
-                    <button
-                      onClick={() => setAt("")}
-                      aria-label="Return to now"
-                    >
-                      <X size={14} />
-                    </button>
-                  )}
-                </label>
+        <div
+          className={`duet-column ${["Today", "Ask", "Conversation"].includes(page) ? "phone-column" : "wide-column"}`}
+        >
+          <ShellHeader
+            name={session.profile.name}
+            page={page}
+            menuOpen={mobile}
+            onMenu={() => setMobile(true)}
+            onHome={() => navigate("Today")}
+            onSettings={() => navigate("Settings")}
+            onBack={() => navigate("Today")}
+            working={
+              working.length > 0 && ["Ask", "Conversation"].includes(page)
+            }
+            drafting={
+              draft.length > 0 && ["Ask", "Conversation"].includes(page)
+            }
+          />
+          <main className={`content page-${page.toLowerCase()}`}>
+            {error && (
+              <div role="alert" className="error toast">
+                {error}
+                <button aria-label="Dismiss error" onClick={() => setError("")}>
+                  <X size={16} />
+                </button>
               </div>
-              <section className="today-grid">
-                <div className="today-main">
-                  <div className="greeting-card">
-                    <div className="greeting-orbit">
-                      <Sprout size={36} />
-                    </div>
-                    <span className="eyebrow">YOUR LIVING WORKSPACE</span>
-                    <h2>
-                      Good work starts
-                      <br />
-                      with a little space.
-                    </h2>
-                    <p>
-                      {working.length
-                        ? `${working.length} thread${working.length === 1 ? " is" : "s are"} in motion. Let’s keep the important things in view.`
-                        : "A thought, a question, a small next step. I’m here when you’re ready."}
-                    </p>
-                    <button className="primary" onClick={() => navigate("Ask")}>
-                      Let’s think together <ArrowUpRight size={16} />
-                    </button>
-                    <span className="greeting-line" />
-                    <span className="greeting-circle" />
-                  </div>
-                  <div className="section-title">
-                    <h2>
-                      {at
-                        ? "Work at this moment"
-                        : "Your attention, gently organized"}
-                    </h2>
-                    <span>{privateLane ? "Private Ask" : lane?.name}</span>
-                  </div>
-                  <MorningBriefCard
-                    date={
-                      at
-                        ? shortDate(new Date(at + "T12:00:00"))
-                        : shortDate(new Date())
-                    }
-                    greeting={
-                      at ? "Recorded work" : "Here’s where things stand."
-                    }
-                    needsYou={visibleWorks
-                      .filter((w: Work) => w.state === "AWAITING_APPROVAL")
-                      .map((w: Work) => ({
-                        id: w.id,
-                        title: w.request,
-                        why: "Your approval is needed before this happens.",
-                        action: at
-                          ? undefined
-                          : {
-                              label: "Review proposal",
-                              name: `Review ${w.request}`,
-                              onPress: () => void openWork(w),
-                            },
-                      }))}
-                    canWait={visibleWorks
-                      .filter((w: Work) =>
-                        ["HEARD", "WORKING", "NEEDS_INPUT"].includes(w.state),
-                      )
-                      .map((w: Work) => ({
-                        id: w.id,
-                        title: w.request,
-                        why: stateWord(w.state),
-                        action: at
-                          ? undefined
-                          : {
-                              label: "Open thread",
-                              name: `Open ${w.request}`,
-                              onPress: () => void openWork(w),
-                            },
-                      }))}
-                    today={visibleWorks
-                      .filter((w: Work) =>
-                        ["COMPLETED", "FAILED", "CANCELLED"].includes(w.state),
-                      )
-                      .slice(0, 5)
-                      .map((w: Work) => ({
-                        id: w.id,
-                        title: w.request,
-                        why: stateWord(w.state),
-                      }))}
-                    notes={
-                      at
-                        ? [
-                            {
-                              id: "history-note",
-                              title: "A recorded view of work",
-                              why: "This view does not reconstruct past documents, messages, membership or unrecorded activity.",
-                            },
-                          ]
-                        : [
-                            {
-                              id: "connections-note",
-                              title: "External connections",
-                              why: "Calendars and mail are not connected. This brief covers recorded work in this conversation.",
-                            },
-                          ]
-                    }
-                  />
-                  {!visibleWorks.length && (
-                    <DuetCard>
-                      <Empty
-                        icon={<Circle size={25} />}
-                        title={
-                          at
-                            ? "No recorded work for this date"
-                            : "A clear starting point"
-                        }
-                      >
-                        {at
-                          ? "History begins when real work is recorded."
-                          : "Start a conversation, add a source, or draft your first document. Your activity will take shape here."}
-                      </Empty>
-                    </DuetCard>
-                  )}
-                </div>
-                <aside className="today-rail">
-                  <DuetCard className="pulse-card">
-                    <div className="rail-heading">
-                      <span className="pulse-dot" />
-                      <span>In your orbit</span>
-                      <Sparkles size={17} />
-                    </div>
-                    <div className="pulse-stats">
-                      <div>
-                        <strong>{working.length}</strong>
-                        <span>in motion</span>
-                      </div>
-                      <div>
-                        <strong>{needs.length}</strong>
-                        <span>need you</span>
-                      </div>
-                      <div>
-                        <strong>{artifacts.length}</strong>
-                        <span>in Library</span>
-                      </div>
-                    </div>
-                    <div className="rail-foot">
-                      <ShieldCheck size={15} />
-                      {privateLane
-                        ? "This view is private to you"
-                        : `Visible to ${lane?.lane.audience.length} members`}
-                    </div>
-                  </DuetCard>
-                  <DuetCard className="quick-card">
-                    <span className="eyebrow">MAKE A LITTLE PROGRESS</span>
-                    <button
-                      onClick={() => {
-                        navigate("Library");
-                        setShowDoc(true);
-                      }}
-                    >
-                      <span className="quick-icon">
-                        <FileText size={19} />
-                      </span>
-                      <span>
-                        <strong>Give an idea a page</strong>
-                        <small>Draft a document for review</small>
-                      </span>
-                      <ArrowUpRight size={16} />
-                    </button>
-                    <button onClick={() => navigate("Library")}>
-                      <span className="quick-icon sage">
-                        <BookOpen size={19} />
-                      </span>
-                      <span>
-                        <strong>Bring your knowledge</strong>
-                        <small>Add a source to your Library</small>
-                      </span>
-                      <ArrowUpRight size={16} />
-                    </button>
-                    <button onClick={() => navigate("Channels")}>
-                      <span className="quick-icon blue">
-                        <Hash size={19} />
-                      </span>
-                      <span>
-                        <strong>Find your people</strong>
-                        <small>A shared place to move work</small>
-                      </span>
-                      <ArrowUpRight size={16} />
-                    </button>
-                  </DuetCard>
-                  <div className="quiet-note">
-                    <Sprout size={23} />
-                    <p>
-                      Aksara keeps the thread.
-                      <br />
-                      You decide what happens next.
-                    </p>
-                  </div>
-                </aside>
-              </section>
-            </>
-          )}
-          {(page === "Ask" || page === "Conversation") && (
-            <>
-              <div className="page-heading">
-                <div>
-                  <span className="eyebrow">
-                    {privateLane
-                      ? "YOUR PRIVATE THREAD"
-                      : "SHARED CONVERSATION"}
+            )}
+            {page === "Today" && (
+              <>
+                <div className="scope-line">
+                  {privateLane ? <LockKeyhole size={13} /> : <Hash size={13} />}
+                  <span>
+                    {session.profile.mode === "personal"
+                      ? "Personal space"
+                      : "Aksara Commons"}{" "}
+                    · {privateLane ? "Private Ask" : lane?.name}
                   </span>
-                  <h1>
-                    {privateLane ? "A space to think out loud." : lane?.name}
-                  </h1>
-                  <p>
-                    {privateLane
-                      ? "An ongoing conversation, with the work it leads to kept alongside."
-                      : `This conversation is visible to ${lane?.lane.audience.length} current members.`}
-                  </p>
                 </div>
-                <span className="privacy-chip">
-                  <LockKeyhole size={14} />
-                  {privateLane ? "Private" : "Shared"}
-                </span>
-              </div>
-              {!privateLane && (
-                <div className="notice">
-                  You’re in a shared Channel.{" "}
-                  <button
-                    onClick={() => {
-                      const l = session.lanes.find(
-                        (l) => l.lane.audience.length === 1,
-                      );
-                      if (l) void switchContext(session.profile.id, l.lane.id);
-                    }}
-                  >
-                    Return to private Ask
-                  </button>
-                </div>
-              )}
-              <div className="conversation">
-                {messages.length >= 200 && (
-                  <p className="composer-note">
-                    Showing the latest 200 eligible messages. Earlier messages
-                    remain in canonical storage.
-                  </p>
-                )}
-                {!messages.length && (
-                  <Empty icon={<Mark />} title="Where shall we begin?">
-                    Ask a question, explore an idea, or work through something
-                    together. Choose a local model below, or explicitly opt in
-                    to a hosted free model.
-                  </Empty>
-                )}
-                {messages.map((m) => (
-                  <article key={m.seq} className={`message ${m.role}`}>
-                    <span className="avatar">
-                      {m.role === "assistant" ? (
-                        <Sprout size={18} />
-                      ) : m.run.owner === me.id ? (
-                        session.profile.name[0]
-                      ) : (
-                        "M"
-                      )}
-                    </span>
-                    <div>
-                      <span className="message-label">
-                        {m.role === "assistant"
-                          ? "Aksara · model draft"
-                          : m.run.owner === me.id
-                            ? "You"
-                            : "Member"}
-                        <small>
-                          {m.run.provider === "preview"
-                            ? "preview"
-                            : m.run.provider === "local"
-                              ? "local"
-                              : "hosted"}
-                        </small>
-                      </span>
-                      <Suspense
-                        fallback={<p className="message-text">{m.text}</p>}
-                      >
-                        <MessageBody text={m.text} />
-                      </Suspense>
-                      {m.role === "assistant" &&
-                        providers.voice?.configured && (
-                          <button
-                            className="text-button voice-button"
-                            disabled={busy}
-                            onClick={() => void speak(m.seq)}
-                          >
-                            <Volume2 size={14} />
-                            Read aloud locally
-                          </button>
-                        )}
-                      {m.role === "assistant" && (
-                        <button
-                          className="text-button"
-                          onClick={() => {
-                            setDocTitle("Conversation note");
-                            setDocContent(m.text);
-                            setDocSources(m.run.source_ids || []);
-                            setShowDoc(true);
-                          }}
-                        >
-                          Turn into a document <ArrowUpRight size={13} />
-                        </button>
-                      )}
-                    </div>
-                  </article>
-                ))}
-                {working.length > 0 && (
-                  <div className="turn-status">
-                    <span className="typing">
-                      <i />
-                      <i />
-                      <i />
-                    </span>
-                    <span>
-                      A turn is in progress. Results appear after the host
-                      accepts them.
-                    </span>
-                    <button
-                      onClick={() =>
-                        void run(async () => {
-                          for (const w of working)
-                            await api("kernel/model-interrupt", {
-                              work_id: w.id,
-                            });
-                          await refresh();
-                        })
-                      }
-                    >
-                      Interrupt / recover
-                    </button>
-                  </div>
-                )}
-                {works[0]?.state === "FAILED" && (
-                  <div className="notice" role="status">
-                    The latest model turn did not produce an accepted reply.
-                    Check the local worker or hosted quota, then send a new turn
-                    when ready. No effect was performed.
-                  </div>
-                )}
-                <div className="composer-wrap">
-                  <form className="composer" onSubmit={send}>
-                    <textarea
-                      aria-label="Message Aksara"
-                      placeholder="What’s on your mind?"
-                      value={draft}
-                      onChange={(e) => setDraft(e.target.value)}
-                      maxLength={16000}
-                      onKeyDown={(e) => {
-                        if (
-                          e.key === "Enter" &&
-                          !e.shiftKey &&
-                          !e.nativeEvent.isComposing
-                        ) {
-                          e.preventDefault();
-                          e.currentTarget.form?.requestSubmit();
-                        }
-                      }}
-                    />
-                    <div className="composer-tools">
-                      <span>
-                        <Sparkles size={15} />
-                        Aksara
-                      </span>
-                      <button
-                        type="submit"
-                        className="send"
-                        disabled={
-                          busy ||
-                          !draft.trim() ||
-                          !model ||
-                          working.length > 0 ||
-                          (provider !== "local" && !PREVIEW && !consent)
-                        }
-                        aria-label="Send message"
-                      >
-                        <ArrowUp size={19} />
-                      </button>
-                    </div>
-                  </form>
-                  {(provider === "local" || provider === "preview") &&
-                    artifacts.length > 0 && (
-                      <details className="source-picker">
-                        <summary>
-                          Reference Library sources locally{" "}
-                          {attached.length > 0 &&
-                            `· ${attached.length} selected`}
-                        </summary>
-                        {artifacts.map((a) => (
-                          <label key={a.id}>
-                            <input
-                              type="checkbox"
-                              checked={attached.includes(a.id)}
-                              disabled={
-                                !attached.includes(a.id) && attached.length >= 8
-                              }
-                              onChange={(e) =>
-                                setAttached((v) =>
-                                  e.target.checked
-                                    ? [...v, a.id]
-                                    : v.filter((id) => id !== a.id),
-                                )
-                              }
-                            />
-                            {a.title}
-                          </label>
-                        ))}
-                      </details>
-                    )}
-                  <div className="model-picker">
-                    <select
-                      aria-label="Model provider"
-                      value={provider}
-                      onChange={(e) => {
-                        setProvider(e.target.value);
-                        setConsent(false);
-                        setAttached([]);
-                        setModel(
-                          e.target.value === "local"
-                            ? providers.local?.models[0]?.id || ""
-                            : "big-pickle",
-                        );
-                      }}
-                    >
-                      {PREVIEW && (
-                        <option value="preview">
-                          Guided UI demo · no model calls
-                        </option>
-                      )}
-                      {!PREVIEW && (
-                        <option value="local">
-                          Local · stays on this host
-                        </option>
-                      )}
-                      {!PREVIEW && (
-                        <option value="opencode-free">
-                          OpenCode free · experimental
-                        </option>
-                      )}
-                    </select>
-                    <select
-                      aria-label="Model"
-                      value={model}
-                      onChange={(e) => setModel(e.target.value)}
-                    >
-                      <option value="">Choose a model</option>
-                      {(PREVIEW
-                        ? ["guided-demo"]
-                        : provider === "local"
-                          ? (providers.local?.models || []).map(
-                              (m: Data) => m.id,
-                            )
-                          : providers.opencode?.models || []
-                      ).map((id: string) => (
-                        <option value={id} key={id}>
-                          {id}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  {provider !== "local" && !PREVIEW ? (
-                    <label className="consent">
-                      <input
-                        type="checkbox"
-                        checked={consent}
-                        onChange={(e) => setConsent(e.target.checked)}
-                      />
-                      Send this prompt and earlier consented hosted turns to
-                      OpenCode. Experimental hosted data terms apply; Library
-                      and local-only turns are excluded.
-                    </label>
-                  ) : (
-                    !model && (
-                      <p className="composer-note">
-                        No local model found.{" "}
-                        <button onClick={() => navigate("Settings")}>
-                          Set up local models
-                        </button>
-                      </p>
+                <MorningBriefCard
+                  date={
+                    at
+                      ? shortDate(new Date(at + "T12:00:00"))
+                      : shortDate(new Date())
+                  }
+                  greeting={
+                    at ? "Recorded work" : `Hello, ${session.profile.name}.`
+                  }
+                  needsYou={visibleWorks
+                    .filter((w: Work) => w.state === "AWAITING_APPROVAL")
+                    .map((w: Work) => ({
+                      id: w.id,
+                      title: w.request,
+                      why: "Your approval is needed before this happens.",
+                      action: at
+                        ? undefined
+                        : {
+                            label: "Review proposal",
+                            name: `Review ${w.request}`,
+                            onPress: () => void openWork(w),
+                          },
+                    }))}
+                  canWait={visibleWorks
+                    .filter((w: Work) =>
+                      ["HEARD", "WORKING", "NEEDS_INPUT"].includes(w.state),
                     )
-                  )}
-                  <p className="composer-note">
-                    Model replies are drafts. Selected local sources are
-                    tracked; withdrawn evidence fences dependent replies. No
-                    computer tools are granted to this model adapter.
-                  </p>
-                </div>
-              </div>
-            </>
-          )}
-          {page === "Channels" && (
-            <>
-              <div className="page-heading">
-                <div>
-                  <span className="eyebrow">WORK, TOGETHER</span>
-                  <h1>Every shared effort has a place.</h1>
-                  <p>
-                    Channels keep a conversation, its work, and its artifacts in
-                    the same context.
-                  </p>
-                </div>
-              </div>
-              <div className="channel-grid">
-                {session.lanes
-                  .filter((l) => l.lane.audience.length > 1)
-                  .map((l) => (
-                    <DuetCard className="channel-card" key={l.lane.id}>
-                      <span className="channel-symbol">
-                        <Hash size={24} />
-                      </span>
-                      <h2>{l.name}</h2>
-                      <p>
-                        {l.lane.audience.length} members · shared conversation
-                      </p>
-                      <button
-                        className="secondary"
-                        onClick={() => {
-                          void run(async () => {
-                            const s = await api("scope", {
-                              profile: session.profile.id,
-                              lane: l.lane.id,
-                            });
-                            accept(s);
-                            setPage("Conversation");
-                          });
-                        }}
-                      >
-                        Open channel <ArrowUpRight size={15} />
-                      </button>
-                    </DuetCard>
-                  ))}
-              </div>
-              <DuetCard className="settings-card">
-                <h2>Create a conversation</h2>
-                <p>
-                  The new conversation inherits the audience of your current
-                  context:{" "}
-                  {privateLane
-                    ? "only you"
-                    : `${lane?.lane.audience.length} members`}
-                  . It grants no new access.
-                </p>
-                <form
-                  className="inline-form"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    void run(async () => {
-                      await api("kernel/channel-create", { name: channelName });
-                      const s = await api("session");
-                      setSession(s);
-                      setChannelName("");
-                    });
-                  }}
-                >
-                  <input
-                    aria-label="Channel name"
-                    placeholder="A name for this effort"
-                    value={channelName}
-                    onChange={(e) => setChannelName(e.target.value)}
-                    required
-                    maxLength={80}
-                  />
-                  <button className="primary" disabled={busy}>
-                    Create
-                  </button>
-                </form>
-              </DuetCard>
-              <div className="notice">
-                <Cpu size={19} />
-                Channel computers have not been provisioned. Conversation access
-                does not grant a shell.
-              </div>
-            </>
-          )}
-          {page === "Library" && (
-            <>
-              <div className="page-heading">
-                <div>
-                  <span className="eyebrow">KEEP WHAT YOU KNOW</span>
-                  <h1>A home for your knowledge.</h1>
-                  <p>
-                    Original sources, useful documents, and the evidence behind
-                    your work.
-                  </p>
-                </div>
-                <button
-                  className="primary"
-                  onClick={() => {
-                    setDocTitle("");
-                    setDocContent("");
-                    setDocSources([]);
-                    setShowDoc(true);
-                  }}
-                >
-                  <Plus size={16} />
-                  New document
-                </button>
-              </div>
-              <form
-                className="search-box"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  void run(async () =>
-                    setHits(
-                      await api(
-                        `kernel/search?query=${encodeURIComponent(query)}`,
-                      ),
-                    ),
-                  );
-                }}
-              >
-                <Search size={18} />
-                <input
-                  aria-label="Search Library"
-                  placeholder="Find something in your Library…"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                    .map((w: Work) => ({
+                      id: w.id,
+                      title: w.request,
+                      why: stateWord(w.state),
+                      action: at
+                        ? undefined
+                        : {
+                            label: "Open thread",
+                            name: `Open ${w.request}`,
+                            onPress: () => void openWork(w),
+                          },
+                    }))}
+                  today={visibleWorks
+                    .filter((w: Work) =>
+                      ["COMPLETED", "FAILED", "CANCELLED"].includes(w.state),
+                    )
+                    .slice(0, 5)
+                    .map((w: Work) => ({
+                      id: w.id,
+                      title: w.request,
+                      why: stateWord(w.state),
+                    }))}
+                  notes={
+                    at
+                      ? [
+                          {
+                            id: "history-note",
+                            title: "A recorded view of work",
+                            why: "This view does not reconstruct past documents, messages, membership or unrecorded activity.",
+                          },
+                        ]
+                      : [
+                          {
+                            id: "connections-note",
+                            title: "External connections",
+                            why: "Calendars and mail are not connected. This brief covers recorded work in this conversation.",
+                          },
+                        ]
+                  }
                 />
-                <button className="secondary" disabled={busy || !query.trim()}>
-                  Search
-                </button>
-              </form>
-              {hits.length > 0 && (
-                <div className="search-results">
-                  {hits.map((h) => (
-                    <button
-                      key={h.block_id}
-                      onClick={() =>
-                        void run(async () =>
-                          setDetail(
-                            await api(`kernel/artifact?id=${h.artifact_id}`),
-                          ),
-                        )
+                {!visibleWorks.length && (
+                  <DuetCard>
+                    <Empty
+                      icon={<Circle size={25} />}
+                      title={
+                        at
+                          ? "No recorded work for this date"
+                          : "A clear starting point"
                       }
                     >
-                      <strong>{h.title}</strong>
-                      <p>{h.text}</p>
-                    </button>
-                  ))}
-                </div>
-              )}
-              <div className="section-title">
-                <h2>Your sources & documents</h2>
-                <span>{artifacts.length} items visible here</span>
-              </div>
-              <DuetCard>
-                {artifacts.length ? (
-                  artifacts.map((a) => (
-                    <button
-                      className="library-row"
-                      key={a.id}
-                      onClick={() =>
-                        void run(async () =>
-                          setDetail(await api(`kernel/artifact?id=${a.id}`)),
-                        )
-                      }
-                    >
-                      <span className="file-icon">
-                        <FileText size={20} />
-                      </span>
-                      <span>
-                        <strong>{a.title}</strong>
-                        <small>
-                          {a.visibility === "private" ? "Private" : "Community"}{" "}
-                          · {a.bytes.toLocaleString()} bytes · Original
-                          preserved
-                        </small>
-                      </span>
-                      <ArrowUpRight size={17} />
-                    </button>
-                  ))
-                ) : (
-                  <Empty
-                    icon={<BookOpen size={28} />}
-                    title="Make room for what you know."
-                  >
-                    Add a source below, or create a document. Sources become
-                    searchable only where they’re eligible.
-                  </Empty>
+                      {at
+                        ? "History begins when real work is recorded."
+                        : "Start a conversation, add a source, or draft your first document. Your activity will take shape here."}
+                    </Empty>
+                  </DuetCard>
                 )}
-              </DuetCard>
-              <DuetCard className="settings-card">
-                <h2>Bring in a source</h2>
-                <p>
-                  Add UTF-8 text or Markdown. Original bytes are kept locally,
-                  with a SHA-256 fingerprint.
-                </p>
-                <form
-                  className="source-form"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    const form = e.currentTarget;
-                    const fields = new FormData(form);
-                    void run(async () => {
-                      await api("kernel/ingest", {
-                        title: fields.get("title"),
-                        content: uploadedText ?? fields.get("content"),
-                        visibility: privateLane ? "private" : "institution",
-                        purpose: "knowledge",
-                        provenance: "Aksara Library · manual text input",
-                      });
-                      form.reset();
-                      setUploadedText(null);
-                      await refresh();
-                    });
-                  }}
-                >
-                  <input
-                    name="title"
-                    aria-label="Source title"
-                    placeholder="Source title"
-                    required
-                    maxLength={256}
-                  />
-                  <textarea
-                    name="content"
-                    aria-label="Source content"
-                    onChange={() => setUploadedText(null)}
-                    placeholder="Paste the original text…"
-                    required
-                    maxLength={1000000}
-                  />
-                  <div className="form-footer">
-                    <label className="file-upload">
-                      Or choose .txt / .md
-                      <input
-                        type="file"
-                        accept="text/plain,text/markdown,.txt,.md"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (!file) return;
-                          if (file.size > 1048576) {
-                            setError("Maximum source size is 1 MiB");
-                            return;
-                          }
-                          const form = e.currentTarget.form!;
-                          void file
-                            .arrayBuffer()
-                            .then((bytes) =>
-                              new TextDecoder("utf-8", {
-                                fatal: true,
-                                ignoreBOM: true,
-                              }).decode(bytes),
-                            )
-                            .then((text) => {
-                              (
-                                form.elements.namedItem(
-                                  "title",
-                                ) as HTMLInputElement
-                              ).value = file.name;
-                              (
-                                form.elements.namedItem(
-                                  "content",
-                                ) as HTMLTextAreaElement
-                              ).value = text;
-                              setUploadedText(text);
-                            })
-                            .catch(() =>
-                              setError("This file is not valid UTF-8 text."),
-                            );
-                        }}
-                      />
-                    </label>
-                    <button className="primary" disabled={busy}>
-                      Add source
-                    </button>
-                  </div>
-                </form>
-              </DuetCard>
-            </>
-          )}
-          {page === "Tools" && (
-            <>
-              <div className="page-heading">
-                <div>
-                  <span className="eyebrow">CAPABILITIES, WITH CARE</span>
-                  <h1>The right tools. Clear boundaries.</h1>
-                  <p>
-                    Tools act through reviewed proposals. Adding a screen never
-                    grants authority.
-                  </p>
-                </div>
-              </div>
-              <div className="tool-grid">
-                {packs.map((p) => (
-                  <DuetCard className="tool-card" key={p.id}>
-                    <Layers size={21} />
-                    <h3>{p.title}</h3>
-                    <OutcomePill tone="green" icon={null}>
-                      Bundled Pack · {p.version}
-                    </OutcomePill>
-                    <p>
-                      {p.screens.length} registered screen profile ·{" "}
-                      {p.capabilities.join(", ")}. Manifest declarations grant
-                      no authority.
-                    </p>
-                  </DuetCard>
-                ))}
-                {[
-                  [
-                    "Library lookup",
-                    "Working",
-                    "Search eligible original sources.",
-                  ],
-                  [
-                    "Document creation",
-                    "Working",
-                    "Review exact content before an atomic effect and receipt.",
-                  ],
-                  [
-                    "Memory review",
-                    "Working",
-                    `${candidates.length} candidates · ${memories.length} approved records visible here.`,
-                  ],
-                  [
-                    "Device SDK simulator",
-                    "Working in community mode",
-                    "Independent controller, typed indications, durable receipts.",
-                  ],
-                  [
-                    "Local models",
-                    "Optional",
-                    "Discover and download through a local Ollama-compatible service.",
-                  ],
-                  [
-                    "OpenUI screens",
-                    "Experimental",
-                    "Text-only registered cards; no ambient queries or mutations.",
-                  ],
-                  [
-                    "Private / Channel computer",
-                    "Not provisioned",
-                    "Controller leases and isolated execution need qualification.",
-                  ],
-                  [
-                    "Ruara / PyFedi",
-                    "Contract stage",
-                    "Reviewed publication boundary; no forum posts are sent.",
-                  ],
-                  [
-                    "Pocket TTS voice",
-                    providers.voice?.configured
-                      ? "Opt-in local read-aloud"
-                      : "Not configured",
-                    "Read an eligible short reply through a local Pocket TTS worker. No microphone is active.",
-                  ],
-                ].map(([name, status, desc]) => (
-                  <DuetCard className="tool-card" key={name}>
-                    <Layers size={21} />
-                    <h3>{name}</h3>
-                    <OutcomePill
-                      tone={
-                        !PREVIEW && status === "Working" ? "green" : "neutral"
-                      }
-                      icon={null}
-                    >
-                      {PREVIEW ? "Preview only" : status}
-                    </OutcomePill>
-                    <p>{desc}</p>
-                  </DuetCard>
-                ))}
-              </div>
-              {!PREVIEW && session.profile.mode === "community" && (
-                <DuetCard className="settings-card">
-                  <h2>Device simulator</h2>
-                  <p>
-                    Inspect the independent controller. Indications still need a
-                    scoped WorkObject, proposal and Operator approval.
-                  </p>
-                  <button
-                    className="secondary"
-                    onClick={() =>
-                      void run(async () =>
-                        setDevice(await api("kernel/simulator-status")),
-                      )
-                    }
-                  >
-                    Read device state
-                  </button>
-                  {device && <pre>{JSON.stringify(device, null, 2)}</pre>}
+                <div className="today-actions">
                   <button
                     className="text-button"
-                    disabled={PREVIEW}
-                    onClick={() =>
-                      void run(async () => {
-                        const w = await api("kernel/delegate", {
-                          request: "Show a safe device indication",
-                          idempotency_key: key(),
-                        });
-                        await api("kernel/prepare", {
-                          work_id: w.id,
-                          revision: w.revision,
-                          generation: w.generation,
-                          idempotency_key: key(),
-                          capability: "device.indicate",
-                          args: {
-                            device: "presence",
-                            state: "working",
-                            controller_generation: (
-                              await api("kernel/simulator-status")
-                            ).generation,
-                          },
-                        });
-                        await openWork(w);
-                        await refresh();
-                      })
-                    }
+                    onClick={() => navigate("Ask")}
                   >
-                    Prepare a test indication
+                    Message Aksara <ArrowUpRight size={16} />
                   </button>
-                </DuetCard>
-              )}
-              <DuetCard className="settings-card">
-                <h2>Memory review</h2>
-                <p>
-                  Only reviewed evidence excerpts enter governed memory.
-                  Withdrawal of the source blocks dependent reads.
-                </p>
-                {candidates.map((c) => (
-                  <div className="memory-row" key={c.id}>
-                    <p>{c.text}</p>
-                    <button
-                      className="secondary"
-                      disabled={me.role !== "operator"}
-                      onClick={() =>
-                        void run(async () => {
-                          await api("kernel/memory-approve", { id: c.id });
-                          await refresh();
-                        })
-                      }
-                    >
-                      Approve candidate
-                    </button>
-                  </div>
-                ))}
-                {memories.map((m) => (
-                  <div className="memory-row" key={m.id}>
-                    <p>{m.text}</p>
-                    <button
-                      className="text-button"
-                      onClick={() =>
-                        void run(async () => {
-                          await api("kernel/memory-revoke", { id: m.id });
-                          await refresh();
-                        })
-                      }
-                    >
-                      Revoke
-                    </button>
-                  </div>
-                ))}
-                {!memories.length && !candidates.length && (
-                  <p>No eligible memory records in this context.</p>
-                )}
-              </DuetCard>
-            </>
-          )}
-          {page === "Settings" && (
-            <>
-              <div className="page-heading">
-                <div>
-                  <span className="eyebrow">MAKE IT YOURS</span>
-                  <h1>Your space, your choices.</h1>
-                  <p>
-                    Choose where you work, where models run, and what leaves
-                    this host.
-                  </p>
-                </div>
-              </div>
-              <div className="settings-grid">
-                <DuetCard className="settings-card">
-                  <h2>Personal & community</h2>
-                  <p>
-                    {PREVIEW
-                      ? "The sample personal context is kept separate inside this tab. The live platform uses a separate authority host and database."
-                      : "Personal mode has a separate authority host and database. Switching clears the current view and unsent drafts."}
-                  </p>
-                  <div className="context-options">
-                    {profiles
-                      .filter((p) => p.name === session.profile.name)
-                      .map((p) => (
-                        <button
-                          className={
-                            p.id === session.profile.id
-                              ? "selected-context"
-                              : ""
-                          }
-                          key={p.id}
-                          onClick={() => void switchContext(p.id)}
-                        >
-                          {p.mode === "personal" ? (
-                            <LockKeyhole size={18} />
-                          ) : (
-                            <Sprout size={18} />
-                          )}
-                          <span>
-                            {p.mode === "personal"
-                              ? "My personal space"
-                              : "Community workspace"}
-                          </span>
-                          {p.id === session.profile.id && <Check size={17} />}
-                        </button>
-                      ))}
-                  </div>
-                  <label className="field-label">
-                    Current conversation
-                    <select
-                      aria-label="Current conversation"
-                      value={session.lane}
-                      onChange={(e) =>
-                        void switchContext(session.profile.id, e.target.value)
-                      }
-                    >
-                      {session.lanes.map((l) => (
-                        <option key={l.lane.id} value={l.lane.id}>
-                          {l.name} ·{" "}
-                          {l.lane.audience.length === 1
-                            ? "private"
-                            : `${l.lane.audience.length} members`}
-                        </option>
-                      ))}
-                    </select>
+                  <label className="date-picker">
+                    <span>{at ? "Viewing history" : "History"}</span>
+                    <input
+                      aria-label="Historical date"
+                      type="date"
+                      max={new Date().toLocaleDateString("en-CA")}
+                      value={at}
+                      onChange={(e) => setAt(e.target.value)}
+                    />
+                    {at && (
+                      <button
+                        onClick={() => setAt("")}
+                        aria-label="Return to now"
+                      >
+                        <X size={16} />
+                      </button>
+                    )}
                   </label>
-                </DuetCard>
-                <DuetCard className="settings-card">
-                  <h2>Local models & offline use</h2>
-                  <p>
-                    Start Ollama or a llama.cpp OpenAI-compatible server on this
-                    host at 127.0.0.1:11434. Installed models can answer without
-                    WAN. Downloads require a connection and may be large.
-                  </p>
-                  <div className="model-list">
-                    {providers.local?.models?.map((m: Data) => (
-                      <div key={m.id}>
-                        <Cpu size={16} />
-                        {m.id}
-                        <small>
-                          {m.bytes
-                            ? `${Math.round(m.bytes / 1048576)} MiB`
-                            : "Local service"}
-                        </small>
+                </div>
+              </>
+            )}
+            {(page === "Ask" || page === "Conversation") && (
+              <>
+                <div className="page-heading chat-heading">
+                  <h1>{privateLane ? "Private Ask" : lane?.name}</h1>
+                  <span className="privacy-chip">
+                    <LockKeyhole size={14} />
+                    {privateLane
+                      ? "Only you"
+                      : `${lane?.lane.audience.length} members`}
+                  </span>
+                </div>
+                {!privateLane && (
+                  <div className="notice">
+                    You’re in a shared Channel.{" "}
+                    <button
+                      onClick={() => {
+                        const l = session.lanes.find(
+                          (l) => l.lane.audience.length === 1,
+                        );
+                        if (l)
+                          void switchContext(session.profile.id, l.lane.id);
+                      }}
+                    >
+                      Return to private Ask
+                    </button>
+                  </div>
+                )}
+                <div className="conversation">
+                  <div className="conversation-scroll">
+                    {messages.length >= 200 && (
+                      <p className="composer-note">
+                        Showing the latest 200 eligible messages. Earlier
+                        messages remain in canonical storage.
+                      </p>
+                    )}
+                    {!messages.length && (
+                      <Empty icon={<Mark />} title="Where shall we begin?">
+                        {PREVIEW
+                          ? "Try a conversation with the guided UI demo."
+                          : "Ask a question or work through an idea. Choose your model below."}
+                      </Empty>
+                    )}
+                    {messages.map((m) => (
+                      <article key={m.seq} className={`message ${m.role}`}>
+                        <span className="avatar">
+                          {m.role === "assistant" ? (
+                            <Sprout size={18} />
+                          ) : m.run.owner === me.id ? (
+                            session.profile.name[0]
+                          ) : (
+                            "M"
+                          )}
+                        </span>
+                        <div>
+                          <span className="message-label">
+                            {m.role === "assistant"
+                              ? "Aksara · model draft"
+                              : m.run.owner === me.id
+                                ? "You"
+                                : "Member"}
+                            <small>
+                              {m.run.provider === "preview"
+                                ? "preview"
+                                : m.run.provider === "local"
+                                  ? "local"
+                                  : "hosted"}
+                            </small>
+                          </span>
+                          <Suspense
+                            fallback={<p className="message-text">{m.text}</p>}
+                          >
+                            <MessageBody text={m.text} />
+                          </Suspense>
+                          {m.role === "assistant" &&
+                            providers.voice?.configured && (
+                              <button
+                                className="text-button voice-button"
+                                disabled={busy}
+                                onClick={() => void speak(m.seq)}
+                              >
+                                <Volume2 size={14} />
+                                Read aloud locally
+                              </button>
+                            )}
+                          {m.role === "assistant" && (
+                            <button
+                              className="text-button"
+                              onClick={() => {
+                                setDocTitle("Conversation note");
+                                setDocContent(m.text);
+                                setDocSources(m.run.source_ids || []);
+                                setShowDoc(true);
+                              }}
+                            >
+                              Turn into a document <ArrowUpRight size={13} />
+                            </button>
+                          )}
+                        </div>
+                      </article>
+                    ))}
+                    {working.length > 0 && (
+                      <div className="turn-status">
+                        <span className="typing">
+                          <i />
+                          <i />
+                          <i />
+                        </span>
+                        <span>
+                          A turn is in progress. Results appear after the host
+                          accepts them.
+                        </span>
+                        <button
+                          onClick={() =>
+                            void run(async () => {
+                              for (const w of working)
+                                await api("kernel/model-interrupt", {
+                                  work_id: w.id,
+                                });
+                              await refresh();
+                            })
+                          }
+                        >
+                          Interrupt / recover
+                        </button>
                       </div>
+                    )}
+                    {works[0]?.state === "FAILED" && (
+                      <div className="notice" role="status">
+                        The latest model turn did not produce an accepted reply.
+                        Check the local worker or hosted quota, then send a new
+                        turn when ready. No effect was performed.
+                      </div>
+                    )}
+                  </div>
+                  <div className="composer-wrap">
+                    <details className="composer-options">
+                      <summary>
+                        Model &amp; sources ·{" "}
+                        {PREVIEW
+                          ? "Guided demo"
+                          : provider === "local"
+                            ? "Local"
+                            : "Hosted"}
+                        {attached.length > 0
+                          ? ` · ${attached.length} sources`
+                          : ""}
+                      </summary>
+                      <div className="composer-options-body">
+                        {(provider === "local" || provider === "preview") &&
+                          artifacts.length > 0 && (
+                            <details className="source-picker">
+                              <summary>
+                                Reference Library sources locally{" "}
+                                {attached.length > 0 &&
+                                  `· ${attached.length} selected`}
+                              </summary>
+                              {artifacts.map((a) => (
+                                <label key={a.id}>
+                                  <input
+                                    type="checkbox"
+                                    checked={attached.includes(a.id)}
+                                    disabled={
+                                      !attached.includes(a.id) &&
+                                      attached.length >= 8
+                                    }
+                                    onChange={(e) =>
+                                      setAttached((v) =>
+                                        e.target.checked
+                                          ? [...v, a.id]
+                                          : v.filter((id) => id !== a.id),
+                                      )
+                                    }
+                                  />
+                                  {a.title}
+                                </label>
+                              ))}
+                            </details>
+                          )}
+                        <div className="model-picker">
+                          <select
+                            aria-label="Model provider"
+                            value={provider}
+                            onChange={(e) => {
+                              setProvider(e.target.value);
+                              setConsent(false);
+                              setAttached([]);
+                              setModel(
+                                e.target.value === "local"
+                                  ? providers.local?.models[0]?.id || ""
+                                  : "big-pickle",
+                              );
+                            }}
+                          >
+                            {PREVIEW && (
+                              <option value="preview">
+                                Guided UI demo · no model calls
+                              </option>
+                            )}
+                            {!PREVIEW && (
+                              <option value="local">
+                                Local · stays on this host
+                              </option>
+                            )}
+                            {!PREVIEW && (
+                              <option value="opencode-free">
+                                OpenCode free · experimental
+                              </option>
+                            )}
+                          </select>
+                          <select
+                            aria-label="Model"
+                            value={model}
+                            onChange={(e) => setModel(e.target.value)}
+                          >
+                            <option value="">Choose a model</option>
+                            {(PREVIEW
+                              ? ["guided-demo"]
+                              : provider === "local"
+                                ? (providers.local?.models || []).map(
+                                    (m: Data) => m.id,
+                                  )
+                                : providers.opencode?.models || []
+                            ).map((id: string) => (
+                              <option value={id} key={id}>
+                                {id}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </details>
+                    {provider !== "local" && !PREVIEW ? (
+                      <label className="consent">
+                        <input
+                          type="checkbox"
+                          checked={consent}
+                          onChange={(e) => setConsent(e.target.checked)}
+                        />
+                        Send this prompt and earlier consented hosted turns to
+                        OpenCode. Experimental hosted data terms apply; Library
+                        and local-only turns are excluded.
+                      </label>
+                    ) : (
+                      !model && (
+                        <p className="composer-note">
+                          No local model found.{" "}
+                          <button onClick={() => navigate("Settings")}>
+                            Set up local models
+                          </button>
+                        </p>
+                      )
+                    )}
+                    <form className="composer" onSubmit={send}>
+                      <textarea
+                        ref={composerInput}
+                        aria-label="Message Aksara"
+                        placeholder="What’s on your mind?"
+                        value={draft}
+                        onChange={(e) => setDraft(e.target.value)}
+                        maxLength={16000}
+                        onKeyDown={(e) => {
+                          if (
+                            e.key === "Enter" &&
+                            !e.shiftKey &&
+                            !e.nativeEvent.isComposing
+                          ) {
+                            e.preventDefault();
+                            e.currentTarget.form?.requestSubmit();
+                          }
+                        }}
+                      />
+                      <div className="composer-tools">
+                        <span>
+                          <Sparkles size={15} />
+                          Aksara
+                        </span>
+                        <button
+                          type="submit"
+                          className="send"
+                          disabled={
+                            busy ||
+                            !draft.trim() ||
+                            !model ||
+                            working.length > 0 ||
+                            (provider !== "local" && !PREVIEW && !consent)
+                          }
+                          aria-label="Send message"
+                        >
+                          <ArrowUp size={19} />
+                        </button>
+                      </div>
+                    </form>
+                    <p className="composer-note reply-disclosure">
+                      {PREVIEW
+                        ? "Guided demo · no model or backend connected"
+                        : "Model replies are drafts. Review before acting."}
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
+            {page === "Channels" && (
+              <>
+                <div className="page-heading">
+                  <div>
+                    <h1>Channels</h1>
+                    <p>
+                      Channels keep a conversation, its work, and its artifacts
+                      in the same context.
+                    </p>
+                  </div>
+                </div>
+                <div className="channel-grid">
+                  {session.lanes
+                    .filter((l) => l.lane.audience.length > 1)
+                    .map((l) => (
+                      <DuetCard className="channel-card" key={l.lane.id}>
+                        <span className="channel-symbol">
+                          <Hash size={24} />
+                        </span>
+                        <h2>{l.name}</h2>
+                        <p>
+                          {l.lane.audience.length} members · shared conversation
+                        </p>
+                        <button
+                          className="secondary"
+                          onClick={() => {
+                            void run(async () => {
+                              const s = await api("scope", {
+                                profile: session.profile.id,
+                                lane: l.lane.id,
+                              });
+                              accept(s);
+                              setPage("Conversation");
+                            });
+                          }}
+                        >
+                          Open channel <ArrowUpRight size={15} />
+                        </button>
+                      </DuetCard>
+                    ))}
+                </div>
+                <DuetCard className="settings-card">
+                  <h2>Create a conversation</h2>
+                  <p>
+                    The new conversation inherits the audience of your current
+                    context:{" "}
+                    {privateLane
+                      ? "only you"
+                      : `${lane?.lane.audience.length} members`}
+                    . It grants no new access.
+                  </p>
+                  <form
+                    className="inline-form"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      void run(async () => {
+                        await api("kernel/channel-create", {
+                          name: channelName,
+                        });
+                        const s = await api("session");
+                        setSession(s);
+                        setChannelName("");
+                      });
+                    }}
+                  >
+                    <input
+                      aria-label="Channel name"
+                      placeholder="A name for this effort"
+                      value={channelName}
+                      onChange={(e) => setChannelName(e.target.value)}
+                      required
+                      maxLength={80}
+                    />
+                    <button className="primary" disabled={busy}>
+                      Create
+                    </button>
+                  </form>
+                </DuetCard>
+                <div className="notice">
+                  <Cpu size={19} />
+                  Channel computers have not been provisioned. Conversation
+                  access does not grant a shell.
+                </div>
+              </>
+            )}
+            {page === "Library" && (
+              <>
+                <div className="page-heading">
+                  <div>
+                    <h1>Library</h1>
+                    <p>
+                      Original sources, useful documents, and the evidence
+                      behind your work.
+                    </p>
+                  </div>
+                  <button
+                    className="primary"
+                    onClick={() => {
+                      setDocTitle("");
+                      setDocContent("");
+                      setDocSources([]);
+                      setShowDoc(true);
+                    }}
+                  >
+                    <Plus size={16} />
+                    New document
+                  </button>
+                </div>
+                <form
+                  className="search-box"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    void run(async () =>
+                      setHits(
+                        await api(
+                          `kernel/search?query=${encodeURIComponent(query)}`,
+                        ),
+                      ),
+                    );
+                  }}
+                >
+                  <Search size={18} />
+                  <input
+                    aria-label="Search Library"
+                    placeholder="Find something in your Library…"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                  />
+                  <button
+                    className="secondary"
+                    disabled={busy || !query.trim()}
+                  >
+                    Search
+                  </button>
+                </form>
+                {hits.length > 0 && (
+                  <div className="search-results">
+                    {hits.map((h) => (
+                      <button
+                        key={h.block_id}
+                        onClick={() =>
+                          void run(async () =>
+                            setDetail(
+                              await api(`kernel/artifact?id=${h.artifact_id}`),
+                            ),
+                          )
+                        }
+                      >
+                        <strong>{h.title}</strong>
+                        <p>{h.text}</p>
+                      </button>
                     ))}
                   </div>
+                )}
+                <div className="section-title">
+                  <h2>Your sources & documents</h2>
+                  <span>{artifacts.length} items visible here</span>
+                </div>
+                <DuetCard>
+                  {artifacts.length ? (
+                    artifacts.map((a) => (
+                      <button
+                        className="library-row"
+                        key={a.id}
+                        onClick={() =>
+                          void run(async () =>
+                            setDetail(await api(`kernel/artifact?id=${a.id}`)),
+                          )
+                        }
+                      >
+                        <span className="file-icon">
+                          <FileText size={20} />
+                        </span>
+                        <span>
+                          <strong>{a.title}</strong>
+                          <small>
+                            {a.visibility === "private"
+                              ? "Private"
+                              : "Community"}{" "}
+                            · {a.bytes.toLocaleString()} bytes · Original
+                            preserved
+                          </small>
+                        </span>
+                        <ArrowUpRight size={17} />
+                      </button>
+                    ))
+                  ) : (
+                    <Empty
+                      icon={<BookOpen size={28} />}
+                      title="Make room for what you know."
+                    >
+                      Add a source below, or create a document. Sources become
+                      searchable only where they’re eligible.
+                    </Empty>
+                  )}
+                </DuetCard>
+                <DuetCard className="settings-card">
+                  <h2>Bring in a source</h2>
+                  <p>
+                    Add UTF-8 text or Markdown. Original bytes are kept locally,
+                    with a SHA-256 fingerprint.
+                  </p>
                   <form
                     className="source-form"
                     onSubmit={(e) => {
                       e.preventDefault();
+                      const form = e.currentTarget;
+                      const fields = new FormData(form);
                       void run(async () => {
-                        await api("models/pull", {
-                          model: localModel,
-                          confirm_download: true,
+                        await api("kernel/ingest", {
+                          title: fields.get("title"),
+                          content: uploadedText ?? fields.get("content"),
+                          visibility: privateLane ? "private" : "institution",
+                          purpose: "knowledge",
+                          provenance: "Aksara Library · manual text input",
                         });
-                        setProviders(await api("providers"));
+                        form.reset();
+                        setUploadedText(null);
+                        await refresh();
                       });
                     }}
                   >
-                    <label className="field-label">
-                      Model to download
-                      <input
-                        aria-label="Local model to download"
-                        value={localModel}
-                        onChange={(e) => setLocalModel(e.target.value)}
-                        required
-                      />
-                    </label>
+                    <input
+                      name="title"
+                      aria-label="Source title"
+                      placeholder="Source title"
+                      required
+                      maxLength={256}
+                    />
+                    <textarea
+                      name="content"
+                      aria-label="Source content"
+                      onChange={() => setUploadedText(null)}
+                      placeholder="Paste the original text…"
+                      required
+                      maxLength={1000000}
+                    />
+                    <div className="form-footer">
+                      <label className="file-upload">
+                        Or choose .txt / .md
+                        <input
+                          type="file"
+                          accept="text/plain,text/markdown,.txt,.md"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            if (file.size > 1048576) {
+                              setError("Maximum source size is 1 MiB");
+                              return;
+                            }
+                            const form = e.currentTarget.form!;
+                            void file
+                              .arrayBuffer()
+                              .then((bytes) =>
+                                new TextDecoder("utf-8", {
+                                  fatal: true,
+                                  ignoreBOM: true,
+                                }).decode(bytes),
+                              )
+                              .then((text) => {
+                                (
+                                  form.elements.namedItem(
+                                    "title",
+                                  ) as HTMLInputElement
+                                ).value = file.name;
+                                (
+                                  form.elements.namedItem(
+                                    "content",
+                                  ) as HTMLTextAreaElement
+                                ).value = text;
+                                setUploadedText(text);
+                              })
+                              .catch(() =>
+                                setError("This file is not valid UTF-8 text."),
+                              );
+                          }}
+                        />
+                      </label>
+                      <button className="primary" disabled={busy}>
+                        Add source
+                      </button>
+                    </div>
+                  </form>
+                </DuetCard>
+              </>
+            )}
+            {page === "Tools" && (
+              <>
+                <div className="page-heading">
+                  <div>
+                    <h1>Tools</h1>
+                    <p>
+                      Tools act through reviewed proposals. Adding a screen
+                      never grants authority.
+                    </p>
+                  </div>
+                </div>
+                <div className="tool-grid">
+                  {packs.map((p) => (
+                    <DuetCard className="tool-card" key={p.id}>
+                      <Layers size={21} />
+                      <h3>{p.title}</h3>
+                      <OutcomePill tone="green" icon={null}>
+                        Bundled Pack · {p.version}
+                      </OutcomePill>
+                      <p>
+                        {p.screens.length} registered screen profile ·{" "}
+                        {p.capabilities.join(", ")}. Manifest declarations grant
+                        no authority.
+                      </p>
+                    </DuetCard>
+                  ))}
+                  {[
+                    [
+                      "Library lookup",
+                      "Working",
+                      "Search eligible original sources.",
+                    ],
+                    [
+                      "Document creation",
+                      "Working",
+                      "Review exact content before an atomic effect and receipt.",
+                    ],
+                    [
+                      "Memory review",
+                      "Working",
+                      `${candidates.length} candidates · ${memories.length} approved records visible here.`,
+                    ],
+                    [
+                      "Device SDK simulator",
+                      "Working in community mode",
+                      "Independent controller, typed indications, durable receipts.",
+                    ],
+                    [
+                      "Local models",
+                      "Optional",
+                      "Discover and download through a local Ollama-compatible service.",
+                    ],
+                    [
+                      "OpenUI screens",
+                      "Experimental",
+                      "Text-only registered cards; no ambient queries or mutations.",
+                    ],
+                    [
+                      "Private / Channel computer",
+                      "Not provisioned",
+                      "Controller leases and isolated execution need qualification.",
+                    ],
+                    [
+                      "Ruara / PyFedi",
+                      "Contract stage",
+                      "Reviewed publication boundary; no forum posts are sent.",
+                    ],
+                    [
+                      "Pocket TTS voice",
+                      providers.voice?.configured
+                        ? "Opt-in local read-aloud"
+                        : "Not configured",
+                      "Read an eligible short reply through a local Pocket TTS worker. No microphone is active.",
+                    ],
+                  ].map(([name, status, desc]) => (
+                    <DuetCard className="tool-card" key={name}>
+                      <Layers size={21} />
+                      <h3>{name}</h3>
+                      <OutcomePill
+                        tone={
+                          !PREVIEW && status === "Working" ? "green" : "neutral"
+                        }
+                        icon={null}
+                      >
+                        {PREVIEW ? "Preview only" : status}
+                      </OutcomePill>
+                      <p>{desc}</p>
+                    </DuetCard>
+                  ))}
+                </div>
+                {!PREVIEW && session.profile.mode === "community" && (
+                  <DuetCard className="settings-card">
+                    <h2>Device simulator</h2>
+                    <p>
+                      Inspect the independent controller. Indications still need
+                      a scoped WorkObject, proposal and Operator approval.
+                    </p>
                     <button
                       className="secondary"
-                      disabled={busy || !providers.local?.can_pull}
+                      onClick={() =>
+                        void run(async () =>
+                          setDevice(await api("kernel/simulator-status")),
+                        )
+                      }
                     >
-                      {busy ? "Working…" : "Download model to this host"}
+                      Read device state
                     </button>
-                  </form>
-                  {!providers.local?.available && (
-                    <p className="muted">No local model server detected.</p>
+                    {device && <pre>{JSON.stringify(device, null, 2)}</pre>}
+                    <button
+                      className="text-button"
+                      disabled={PREVIEW}
+                      onClick={() =>
+                        void run(async () => {
+                          const w = await api("kernel/delegate", {
+                            request: "Show a safe device indication",
+                            idempotency_key: key(),
+                          });
+                          await api("kernel/prepare", {
+                            work_id: w.id,
+                            revision: w.revision,
+                            generation: w.generation,
+                            idempotency_key: key(),
+                            capability: "device.indicate",
+                            args: {
+                              device: "presence",
+                              state: "working",
+                              controller_generation: (
+                                await api("kernel/simulator-status")
+                              ).generation,
+                            },
+                          });
+                          await openWork(w);
+                          await refresh();
+                        })
+                      }
+                    >
+                      Prepare a test indication
+                    </button>
+                  </DuetCard>
+                )}
+                <DuetCard className="settings-card">
+                  <h2>Memory review</h2>
+                  <p>
+                    Only reviewed evidence excerpts enter governed memory.
+                    Withdrawal of the source blocks dependent reads.
+                  </p>
+                  {candidates.map((c) => (
+                    <div className="memory-row" key={c.id}>
+                      <p>{c.text}</p>
+                      <button
+                        className="secondary"
+                        disabled={me.role !== "operator"}
+                        onClick={() =>
+                          void run(async () => {
+                            await api("kernel/memory-approve", { id: c.id });
+                            await refresh();
+                          })
+                        }
+                      >
+                        Approve candidate
+                      </button>
+                    </div>
+                  ))}
+                  {memories.map((m) => (
+                    <div className="memory-row" key={m.id}>
+                      <p>{m.text}</p>
+                      <button
+                        className="text-button"
+                        onClick={() =>
+                          void run(async () => {
+                            await api("kernel/memory-revoke", { id: m.id });
+                            await refresh();
+                          })
+                        }
+                      >
+                        Revoke
+                      </button>
+                    </div>
+                  ))}
+                  {!memories.length && !candidates.length && (
+                    <p>No eligible memory records in this context.</p>
                   )}
                 </DuetCard>
-                <DuetCard className="settings-card">
-                  <h2>Appearance</h2>
-                  <p>A quieter workspace, in the light that suits you.</p>
-                  <div className="context-options">
-                    <button
-                      onClick={() => setTheme("light")}
-                      className={theme === "light" ? "selected-context" : ""}
-                    >
-                      <Sun size={18} />
-                      Light
-                    </button>
-                    <button
-                      onClick={() => setTheme("dark")}
-                      className={theme === "dark" ? "selected-context" : ""}
-                    >
-                      <Moon size={18} />
-                      Dark
-                    </button>
+              </>
+            )}
+            {page === "Settings" && (
+              <>
+                <div className="page-heading">
+                  <div>
+                    <h1>Settings</h1>
+                    <p>
+                      Choose where you work, where models run, and what leaves
+                      this host.
+                    </p>
                   </div>
-                </DuetCard>
-                <DuetCard className="settings-card">
-                  <h2>Hosted free models</h2>
-                  <p>
-                    OpenCode supports public keyless access to free models. The
-                    live completion probe returned HTTP 429 (free usage limit
-                    reached) during qualification here. Availability and
-                    data-use terms may change.
-                  </p>
-                  <p>
-                    No paid provider fallback. Each hosted prompt requires
-                    explicit consent. Local-only conversation turns and the
-                    Library stay out of hosted context.
-                  </p>
-                  <a
-                    href="https://opencode.ai/docs/zen/"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Read provider documentation <ArrowUpRight size={13} />
-                  </a>
-                </DuetCard>
-                <DuetCard className="settings-card">
-                  <h2>Voice & native surfaces</h2>
-                  <AudioLines size={23} />
-                  <p>
-                    Pocket TTS is the intended local voice worker. Its small
-                    English models are promising for phone-class hardware;
-                    Indonesian support is not listed upstream. Opt-in read-aloud
-                    uses a local worker; this build does not record microphone
-                    input.
-                  </p>
-                  <p>
-                    PWA comes first. Expo and desktop wrappers remain
-                    conditional on measured native needs.
-                  </p>
-                </DuetCard>
-                <DuetCard className="settings-card">
-                  <h2>
-                    {PREVIEW ? "About this preview" : "Development setup"}
-                  </h2>
-                  <p>
-                    {PREVIEW
-                      ? "This hosted build runs a disposable sample workspace in your browser tab. It has no sign-in, private database, live model, voice worker or physical device. Do not use it to store important work."
-                      : "Individual tokens stay in the host. The browser uses an HttpOnly session cookie and a context fence. This is a loopback development setup, not an enrolled community deployment."}
-                  </p>
-                  <p>
-                    For a phone, run the host on that phone and open its
-                    loopback URL. LAN pairing, HTTPS installation, and Android
-                    background survival still need qualification.
-                  </p>
-                  <button
-                    className="secondary"
-                    onClick={() => {
-                      void run(async () => {
-                        await api("logout", {});
-                        scope.current = "";
-                        setSession(null);
-                        setPage("Today");
-                      });
-                    }}
-                  >
-                    {PREVIEW
-                      ? "Choose a sample persona"
-                      : "Choose a development identity"}
-                  </button>
-                </DuetCard>
-              </div>
-            </>
-          )}
-        </main>
-        <footer className="app-footer">
-          <span>
-            AKSARA <span className="footer-dot">·</span> A place for what’s next
-          </span>
-          <span>
-            Foundation preview <span className="footer-dot">·</span> Local
-            authority
-          </span>
-        </footer>
+                </div>
+                <div className="settings-grid">
+                  <DuetCard className="settings-card">
+                    <h2>Personal & community</h2>
+                    <p>
+                      {PREVIEW
+                        ? "The sample personal context is kept separate inside this tab. The live platform uses a separate authority host and database."
+                        : "Personal mode has a separate authority host and database. Switching clears the current view and unsent drafts."}
+                    </p>
+                    <div className="context-options">
+                      {profiles
+                        .filter((p) => p.name === session.profile.name)
+                        .map((p) => (
+                          <button
+                            className={
+                              p.id === session.profile.id
+                                ? "selected-context"
+                                : ""
+                            }
+                            key={p.id}
+                            onClick={() => void switchContext(p.id)}
+                          >
+                            {p.mode === "personal" ? (
+                              <LockKeyhole size={18} />
+                            ) : (
+                              <Sprout size={18} />
+                            )}
+                            <span>
+                              {p.mode === "personal"
+                                ? "My personal space"
+                                : "Community workspace"}
+                            </span>
+                            {p.id === session.profile.id && <Check size={17} />}
+                          </button>
+                        ))}
+                    </div>
+                    <label className="field-label">
+                      Current conversation
+                      <select
+                        aria-label="Current conversation"
+                        value={session.lane}
+                        onChange={(e) =>
+                          void switchContext(session.profile.id, e.target.value)
+                        }
+                      >
+                        {session.lanes.map((l) => (
+                          <option key={l.lane.id} value={l.lane.id}>
+                            {l.name} ·{" "}
+                            {l.lane.audience.length === 1
+                              ? "private"
+                              : `${l.lane.audience.length} members`}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </DuetCard>
+                  <DuetCard className="settings-card">
+                    <h2>Local models & offline use</h2>
+                    <p>
+                      Start Ollama or a llama.cpp OpenAI-compatible server on
+                      this host at 127.0.0.1:11434. Installed models can answer
+                      without WAN. Downloads require a connection and may be
+                      large.
+                    </p>
+                    <div className="model-list">
+                      {providers.local?.models?.map((m: Data) => (
+                        <div key={m.id}>
+                          <Cpu size={16} />
+                          {m.id}
+                          <small>
+                            {m.bytes
+                              ? `${Math.round(m.bytes / 1048576)} MiB`
+                              : "Local service"}
+                          </small>
+                        </div>
+                      ))}
+                    </div>
+                    <form
+                      className="source-form"
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        void run(async () => {
+                          await api("models/pull", {
+                            model: localModel,
+                            confirm_download: true,
+                          });
+                          setProviders(await api("providers"));
+                        });
+                      }}
+                    >
+                      <label className="field-label">
+                        Model to download
+                        <input
+                          aria-label="Local model to download"
+                          value={localModel}
+                          onChange={(e) => setLocalModel(e.target.value)}
+                          required
+                        />
+                      </label>
+                      <button
+                        className="secondary"
+                        disabled={busy || !providers.local?.can_pull}
+                      >
+                        {busy ? "Working…" : "Download model to this host"}
+                      </button>
+                    </form>
+                    {!providers.local?.available && (
+                      <p className="muted">No local model server detected.</p>
+                    )}
+                  </DuetCard>
+                  <DuetCard className="settings-card">
+                    <h2>Appearance</h2>
+                    <p>A quieter workspace, in the light that suits you.</p>
+                    <div className="context-options">
+                      <button
+                        onClick={() => setTheme("light")}
+                        className={theme === "light" ? "selected-context" : ""}
+                      >
+                        <Sun size={18} />
+                        Light
+                      </button>
+                      <button
+                        onClick={() => setTheme("dark")}
+                        className={theme === "dark" ? "selected-context" : ""}
+                      >
+                        <Moon size={18} />
+                        Dark
+                      </button>
+                    </div>
+                  </DuetCard>
+                  <DuetCard className="settings-card">
+                    <h2>Hosted free models</h2>
+                    <p>
+                      OpenCode supports public keyless access to free models.
+                      The live completion probe returned HTTP 429 (free usage
+                      limit reached) during qualification here. Availability and
+                      data-use terms may change.
+                    </p>
+                    <p>
+                      No paid provider fallback. Each hosted prompt requires
+                      explicit consent. Local-only conversation turns and the
+                      Library stay out of hosted context.
+                    </p>
+                    <a
+                      href="https://opencode.ai/docs/zen/"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Read provider documentation <ArrowUpRight size={13} />
+                    </a>
+                  </DuetCard>
+                  <DuetCard className="settings-card">
+                    <h2>Voice & native surfaces</h2>
+                    <AudioLines size={23} />
+                    <p>
+                      Pocket TTS is the intended local voice worker. Its small
+                      English models are promising for phone-class hardware;
+                      Indonesian support is not listed upstream. Opt-in
+                      read-aloud uses a local worker; this build does not record
+                      microphone input.
+                    </p>
+                    <p>
+                      PWA comes first. Expo and desktop wrappers remain
+                      conditional on measured native needs.
+                    </p>
+                  </DuetCard>
+                  <DuetCard className="settings-card">
+                    <h2>
+                      {PREVIEW ? "About this preview" : "Development setup"}
+                    </h2>
+                    <p>
+                      {PREVIEW
+                        ? "This hosted build runs a disposable sample workspace in your browser tab. It has no sign-in, private database, live model, voice worker or physical device. Do not use it to store important work."
+                        : "Individual tokens stay in the host. The browser uses an HttpOnly session cookie and a context fence. This is a loopback development setup, not an enrolled community deployment."}
+                    </p>
+                    <p>
+                      For a phone, run the host on that phone and open its
+                      loopback URL. LAN pairing, HTTPS installation, and Android
+                      background survival still need qualification.
+                    </p>
+                    <button
+                      className="secondary"
+                      onClick={() => {
+                        void run(async () => {
+                          await api("logout", {});
+                          scope.current = "";
+                          setSession(null);
+                          setPage("Today");
+                        });
+                      }}
+                    >
+                      {PREVIEW
+                        ? "Choose a sample persona"
+                        : "Choose a development identity"}
+                    </button>
+                  </DuetCard>
+                </div>
+              </>
+            )}
+          </main>
+          <TabBar current={page} waiting={needs.length} navigate={navigate} />
+        </div>
       </div>
       {audioSeq !== null && (
         <aside className="voice-player" aria-label="Local read-aloud controls">

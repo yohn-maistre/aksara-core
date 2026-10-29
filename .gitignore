@@ -15,3 +15,5 @@ dist/
 dist-preview/
 .dev.vars*
 .wrangler/
+
+.taste-skill/
