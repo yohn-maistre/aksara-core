@@ -17,7 +17,8 @@
     "build": "npm run build -w @aksara/platform",
     "platform": "python3 scripts/start_platform.py",
     "test:platform": "node --test packages/workbench/*.test.mjs packages/runtime-mastra/*.test.mjs packages/contracts/*.test.mjs",
-    "check": "npm run typecheck -w @aksara/platform"
+    "check": "npm run typecheck -w @aksara/platform",
+    "build:preview": "npm run build:preview -w @aksara/platform"
   },
   "devDependencies": {
     "playwright": "1.63.0"

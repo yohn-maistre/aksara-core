@@ -28,6 +28,18 @@ Try this path:
 7. In community Tools, prepare, approve and execute a semantic simulator indication.
 8. Select a past date in Today. Dates before recorded work remain empty.
 
+## Hosted UI preview
+
+`npm run build:preview` creates `apps/platform/dist-preview` for Cloudflare Pages. It uses the same UI with a build-time, tab-local sample transport. The regular `npm run build` still talks exclusively to the real host and excludes that sample module.
+
+The hosted preview opens on Today with labeled sample work. You can explore private/shared sample contexts, Library search, document review, memory controls and a guided OpenUI response. These are UI demonstrations, not Rust authorization/effect proofs. Every simulated result is labeled `PREVIEW_ONLY`. No model, device, private backend, account or remote user-data store is connected. Reload resets tab-local data; other visitors have separate state. Do not put important work into the preview.
+
+Pages serves static assets. A minimal `/api/*` guard returns HTTP 501 to explicitly reject live-backend requests; the UI sample transport never makes those requests. Camera/microphone access is disabled for the preview origin. Eleven browser checks cover disclosure, sample review, tab isolation, no network data egress, reset, history, responsive layout and the API guard. `node tests/preview-browser.mjs` tests the build locally; `AKSARA_PREVIEW_URL=https://… node tests/preview-browser.mjs` checks a deployed version.
+
+Pages build settings: repository root, `npm run build:preview`, output `apps/platform/dist-preview`, Node `24.19.0`, production branch `main`. `deploy/pages/` contains the guard, routing and response headers. This deployment is separate from the production architecture.
+
+A live Rust/SQLite backend needs a Linux host and a persistent volume. The connected Cloudflare account rejected Containers with “Workers Paid plan required.” Cloudflare also documents container-local disks as temporary. No billing plan is changed and the canonical database is not moved into a throwaway container filesystem.
+
 ## Architecture and repository boundaries
 
 One monorepo currently keeps authority changes, adapter changes and first-party client changes reviewable together. Rust never delegates authorization to a frontend, model, runtime thread ID, Pack manifest or device connection.

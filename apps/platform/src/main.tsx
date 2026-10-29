@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { createRoot } from "react-dom/client";
+import { apiFetch, PREVIEW } from "./transport";
 import {
   ArrowUp,
   ArrowUpRight,
@@ -102,6 +103,18 @@ const shortDate = (v: Date) =>
     month: "long",
     day: "numeric",
   });
+function PreviewNotice() {
+  return PREVIEW ? (
+    <div className="preview-notice" role="status">
+      <Sparkles size={16} />
+      <span>
+        <strong>Interactive UI preview</strong> · Sample workspace. Changes stay
+        in this tab and reset on reload. Models, devices and the Rust backend
+        are disconnected.
+      </span>
+    </div>
+  ) : null;
+}
 function Mark() {
   return (
     <span className="mark" aria-hidden>
@@ -153,7 +166,7 @@ function App() {
     [me, setMe] = useState<Data>({});
   const [attached, setAttached] = useState<string[]>([]),
     [draft, setDraft] = useState(""),
-    [provider, setProvider] = useState("local"),
+    [provider, setProvider] = useState(PREVIEW ? "preview" : "local"),
     [model, setModel] = useState(""),
     [consent, setConsent] = useState(false),
     [uploadedText, setUploadedText] = useState<string | null>(null),
@@ -182,7 +195,7 @@ function App() {
   const api = useCallback(
     async (path: string, body?: unknown): Promise<any> => {
       const started = scope.current;
-      const r = await fetch(`/api/${path}`, {
+      const r = await apiFetch(`/api/${path}`, {
         method: body === undefined ? "GET" : "POST",
         headers: {
           "content-type": "application/json",
@@ -242,11 +255,11 @@ function App() {
     setDevice(null);
   }
   useEffect(() => {
-    fetch("/api/profiles")
+    apiFetch("/api/profiles")
       .then((r) => r.json())
       .then(setProfiles)
       .catch(() => setError("Cannot reach Aksara"));
-    fetch("/api/session")
+    apiFetch("/api/session")
       .then((r) => (r.ok ? r.json() : null))
       .then((s) => {
         if (s) accept(s);
@@ -287,7 +300,7 @@ function App() {
     api("providers")
       .then((p) => {
         setProviders(p);
-        setModel(p.local.models[0]?.id || "");
+        setModel(PREVIEW ? "guided-demo" : p.local.models[0]?.id || "");
       })
       .catch((e) => setError(e.message));
     const timer = setInterval(() => {
@@ -318,7 +331,7 @@ function App() {
     await run(async () => {
       stopAudio();
       const current = scope.current;
-      const response = await fetch("/api/speech", {
+      const response = await apiFetch("/api/speech", {
         method: "POST",
         headers: {
           "content-type": "application/json",
@@ -434,6 +447,7 @@ function App() {
   if (!session)
     return (
       <div className="welcome">
+        <PreviewNotice />
         <div className="welcome-art">
           <Mark />
           <span className="eyebrow">A place for what matters</span>
@@ -455,8 +469,9 @@ function App() {
           <Mark />
           <h2>Welcome to Aksara</h2>
           <p>
-            Choose a development identity to explore your workspace. Personal
-            spaces have their own database.
+            {PREVIEW
+              ? "Choose a sample persona to explore the interface. No account is created and no backend is connected."
+              : "Choose a development identity to explore your workspace. Personal spaces have their own database."}
           </p>
           <div className="profile-list">
             {profiles
@@ -481,8 +496,10 @@ function App() {
               ))}
           </div>
           <p className="dev-note">
-            <ShieldCheck size={16} /> Local development setup. This chooser is
-            not production sign-in.
+            <ShieldCheck size={16} />{" "}
+            {PREVIEW
+              ? "Sample personas only. Nothing entered here is uploaded."
+              : "Local development setup. This chooser is not production sign-in."}
           </p>
           {error && (
             <p role="alert" className="error">
@@ -578,7 +595,9 @@ function App() {
         <div className="sidebar-bottom">
           <div className="local-state">
             <span />
-            Connected to your local host
+            {PREVIEW
+              ? "Preview · in this tab only"
+              : "Connected to your local host"}
           </div>
           <button className="profile" onClick={() => navigate("Settings")}>
             <span className="avatar">{session.profile.name[0]}</span>
@@ -601,6 +620,7 @@ function App() {
         />
       )}
       <div className="main-shell">
+        <PreviewNotice />
         <header className="topbar">
           <button
             className="mobile-menu"
@@ -616,7 +636,7 @@ function App() {
           <div className="topbar-actions">
             <span className="host-pill">
               <span />
-              Local host
+              {PREVIEW ? "UI preview" : "Local host"}
             </span>
             <button
               aria-label="Toggle theme"
@@ -937,7 +957,11 @@ function App() {
                             ? "You"
                             : "Member"}
                         <small>
-                          {m.run.provider === "local" ? "local" : "hosted"}
+                          {m.run.provider === "preview"
+                            ? "preview"
+                            : m.run.provider === "local"
+                              ? "local"
+                              : "hosted"}
                         </small>
                       </span>
                       <Suspense
@@ -1037,7 +1061,7 @@ function App() {
                           !draft.trim() ||
                           !model ||
                           working.length > 0 ||
-                          (provider !== "local" && !consent)
+                          (provider !== "local" && !PREVIEW && !consent)
                         }
                         aria-label="Send message"
                       >
@@ -1045,33 +1069,35 @@ function App() {
                       </button>
                     </div>
                   </form>
-                  {provider === "local" && artifacts.length > 0 && (
-                    <details className="source-picker">
-                      <summary>
-                        Reference Library sources locally{" "}
-                        {attached.length > 0 && `· ${attached.length} selected`}
-                      </summary>
-                      {artifacts.map((a) => (
-                        <label key={a.id}>
-                          <input
-                            type="checkbox"
-                            checked={attached.includes(a.id)}
-                            disabled={
-                              !attached.includes(a.id) && attached.length >= 8
-                            }
-                            onChange={(e) =>
-                              setAttached((v) =>
-                                e.target.checked
-                                  ? [...v, a.id]
-                                  : v.filter((id) => id !== a.id),
-                              )
-                            }
-                          />
-                          {a.title}
-                        </label>
-                      ))}
-                    </details>
-                  )}
+                  {(provider === "local" || provider === "preview") &&
+                    artifacts.length > 0 && (
+                      <details className="source-picker">
+                        <summary>
+                          Reference Library sources locally{" "}
+                          {attached.length > 0 &&
+                            `· ${attached.length} selected`}
+                        </summary>
+                        {artifacts.map((a) => (
+                          <label key={a.id}>
+                            <input
+                              type="checkbox"
+                              checked={attached.includes(a.id)}
+                              disabled={
+                                !attached.includes(a.id) && attached.length >= 8
+                              }
+                              onChange={(e) =>
+                                setAttached((v) =>
+                                  e.target.checked
+                                    ? [...v, a.id]
+                                    : v.filter((id) => id !== a.id),
+                                )
+                              }
+                            />
+                            {a.title}
+                          </label>
+                        ))}
+                      </details>
+                    )}
                   <div className="model-picker">
                     <select
                       aria-label="Model provider"
@@ -1087,10 +1113,21 @@ function App() {
                         );
                       }}
                     >
-                      <option value="local">Local · stays on this host</option>
-                      <option value="opencode-free">
-                        OpenCode free · experimental
-                      </option>
+                      {PREVIEW && (
+                        <option value="preview">
+                          Guided UI demo · no model calls
+                        </option>
+                      )}
+                      {!PREVIEW && (
+                        <option value="local">
+                          Local · stays on this host
+                        </option>
+                      )}
+                      {!PREVIEW && (
+                        <option value="opencode-free">
+                          OpenCode free · experimental
+                        </option>
+                      )}
                     </select>
                     <select
                       aria-label="Model"
@@ -1098,9 +1135,13 @@ function App() {
                       onChange={(e) => setModel(e.target.value)}
                     >
                       <option value="">Choose a model</option>
-                      {(provider === "local"
-                        ? (providers.local?.models || []).map((m: Data) => m.id)
-                        : providers.opencode?.models || []
+                      {(PREVIEW
+                        ? ["guided-demo"]
+                        : provider === "local"
+                          ? (providers.local?.models || []).map(
+                              (m: Data) => m.id,
+                            )
+                          : providers.opencode?.models || []
                       ).map((id: string) => (
                         <option value={id} key={id}>
                           {id}
@@ -1108,7 +1149,7 @@ function App() {
                       ))}
                     </select>
                   </div>
-                  {provider !== "local" ? (
+                  {provider !== "local" && !PREVIEW ? (
                     <label className="consent">
                       <input
                         type="checkbox"
@@ -1499,16 +1540,18 @@ function App() {
                     <Layers size={21} />
                     <h3>{name}</h3>
                     <OutcomePill
-                      tone={status === "Working" ? "green" : "neutral"}
+                      tone={
+                        !PREVIEW && status === "Working" ? "green" : "neutral"
+                      }
                       icon={null}
                     >
-                      {status}
+                      {PREVIEW ? "Preview only" : status}
                     </OutcomePill>
                     <p>{desc}</p>
                   </DuetCard>
                 ))}
               </div>
-              {session.profile.mode === "community" && (
+              {!PREVIEW && session.profile.mode === "community" && (
                 <DuetCard className="settings-card">
                   <h2>Device simulator</h2>
                   <p>
@@ -1528,6 +1571,7 @@ function App() {
                   {device && <pre>{JSON.stringify(device, null, 2)}</pre>}
                   <button
                     className="text-button"
+                    disabled={PREVIEW}
                     onClick={() =>
                       void run(async () => {
                         const w = await api("kernel/delegate", {
@@ -1618,8 +1662,9 @@ function App() {
                 <DuetCard className="settings-card">
                   <h2>Personal & community</h2>
                   <p>
-                    Personal mode has a separate authority host and database.
-                    Switching clears the current view and unsent drafts.
+                    {PREVIEW
+                      ? "The sample personal context is kept separate inside this tab. The live platform uses a separate authority host and database."
+                      : "Personal mode has a separate authority host and database. Switching clears the current view and unsent drafts."}
                   </p>
                   <div className="context-options">
                     {profiles
@@ -1778,12 +1823,13 @@ function App() {
                   </p>
                 </DuetCard>
                 <DuetCard className="settings-card">
-                  <h2>Development setup</h2>
+                  <h2>
+                    {PREVIEW ? "About this preview" : "Development setup"}
+                  </h2>
                   <p>
-                    Individual tokens stay in the host. The browser uses an
-                    HttpOnly session cookie and a context fence. This is a
-                    loopback development setup, not an enrolled community
-                    deployment.
+                    {PREVIEW
+                      ? "This hosted build runs a disposable sample workspace in your browser tab. It has no sign-in, private database, live model, voice worker or physical device. Do not use it to store important work."
+                      : "Individual tokens stay in the host. The browser uses an HttpOnly session cookie and a context fence. This is a loopback development setup, not an enrolled community deployment."}
                   </p>
                   <p>
                     For a phone, run the host on that phone and open its
@@ -1801,7 +1847,9 @@ function App() {
                       });
                     }}
                   >
-                    Choose a development identity
+                    {PREVIEW
+                      ? "Choose a sample persona"
+                      : "Choose a development identity"}
                   </button>
                 </DuetCard>
               </div>
@@ -1864,7 +1912,8 @@ function App() {
                     {e.receipt ? (
                       <div className="notice">
                         <ShieldCheck size={18} />
-                        Receipt: {e.receipt.outcome} ·{" "}
+                        {PREVIEW ? "Preview result:" : "Receipt:"}{" "}
+                        {e.receipt.outcome} ·{" "}
                         {e.receipt.verified_sha256?.slice(0, 16)}
                       </div>
                     ) : (
@@ -1894,7 +1943,9 @@ function App() {
                         >
                           {approved[e.prepared.id]
                             ? "Approved for exact arguments"
-                            : "Approve exact proposal"}
+                            : PREVIEW
+                              ? "Try sample approval"
+                              : "Approve exact proposal"}
                         </button>
                         <button
                           className="primary"
@@ -1911,7 +1962,9 @@ function App() {
                             })
                           }
                         >
-                          Execute approved effect
+                          {PREVIEW
+                            ? "Create sample document"
+                            : "Execute approved effect"}
                         </button>
                       </div>
                     )}

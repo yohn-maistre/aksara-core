@@ -1854,3 +1854,42 @@ pre {
   background: var(--soft);
   padding: 0 10px;
 }
+
+.preview-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 11px 24px;
+  background: #e9efdd;
+  color: #435e39;
+  border-bottom: 1px solid #d5dfc4;
+  font-size: 11px;
+  line-height: 1.7;
+}
+.preview-notice svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.preview-notice strong {
+  font-weight: 650;
+}
+.dark .preview-notice {
+  background: #263b29;
+  color: #d5e6c8;
+  border-color: #41553b;
+}
+.welcome > .preview-notice {
+  grid-column: 1/-1;
+}
+.welcome:has(> .preview-notice) {
+  grid-template-rows: auto 1fr;
+}
+.preview-notice + header.topbar {
+  top: 0;
+}
+@media (max-width: 700px) {
+  .preview-notice {
+    padding: 11px 20px;
+    font-size: 10px;
+  }
+}

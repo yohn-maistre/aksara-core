@@ -34,7 +34,9 @@ jobs:
       - name: Dependency install
         run: npm ci
       - name: Build platform PWA
-        run: npm run build
+        run: |
+          npm run build
+          npm run build:preview
       - name: Rust authority checks
         run: |
           cargo fmt --all -- --check
@@ -51,6 +53,7 @@ jobs:
           python3 scripts/browser_smoke.py
           npm run test:platform
           node tests/platform-browser.mjs
+          node tests/preview-browser.mjs
       - name: Static phone host
         env:
           CC: musl-gcc

@@ -11,3 +11,7 @@ dist/
 
 .venv/
 .venv-voice/
+
+dist-preview/
+.dev.vars*
+.wrangler/
