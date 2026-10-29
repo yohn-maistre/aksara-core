@@ -2,11 +2,16 @@
 
 Accepted direction implemented from the v2.5.5 review, 29 October 2026.
 
+Presentation update: the user selected an Octopus-derived fluid desktop workspace,
+shadcn inset/collapsed sidebar and Cult/Gooey interaction direction. The
+[implementation plan](fluid-workspace-plan.md) and developer tooling are prepared;
+the shipped OpenDuet UI is the current checkpoint until that port is implemented.
+
 | Decision                                                     | Implementation / qualification                                                                                            |
 | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
 | Rust stays authoritative; evolve the existing alpha          | Schema 3 and new APIs; original effect, lineage and Pi regressions retained                                               |
 | One current product monorepo                                 | Core, first-party PWA, broker and adapters change together; independent social/hardware release boundaries retained       |
-| React/PWA first; OpenDuet presentation                       | MIT shell/card/orb/motion code and tokens reused; phone-width Today/Ask; no required Intelligence account                                                     |
+| React/PWA first; fluid workspace direction                       | Next: Octopus/shadcn/Cult source port; shipped OpenDuet checkpoint retained until implementation                                                     |
 | Mastra qualification, Pi preservation                        | Actual bounded Mastra model turn works; Pi durable retrieval remains tested; Mastra durable tool/recovery gate still open |
 | Actual-read dependencies, eligibility before context         | Frozen input digest, conservative read union, source withdrawal tests across reply/follow-up                              |
 | Canonical work/messages outlive vendor cache                 | Rust persistence; at-most-one automatic provider invocation per claimed run; no automatic crash replay                    |

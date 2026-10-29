@@ -1,0 +1,6 @@
+# Cult UI is served through the shadcn MCP registry server.
+# Run Codex from the repository root. Restart the client to discover this server.
+[mcp_servers.shadcn]
+command = "node"
+args = ["scripts/cult_ui_mcp.mjs"]
+startup_timeout_sec = 60

@@ -72,3 +72,21 @@ Inter Variable is self-hosted using exact npm dependency
 `@fontsource-variable/inter@5.3.0`, OFL-1.1. The package CSS/font exports and
 license were inspected; its original license is distributed with the static
 site in `public/licenses/inter-OFL.txt`. No font CDN is contacted.
+
+## Fluid workspace planning study — 29 October 2026
+
+The user selected a new visual direction before implementation. No Octopus,
+Cult component or Gooey runtime source has been imported into the product in
+this pass. [Detailed reuse plan and findings](platform/fluid-workspace-plan.md).
+
+| Donor | Pin / license | Studied source and intended reuse |
+| --- | --- | --- |
+| Octopus SI OS | `49ba24226981dcdaadf32ff124dd3dc3a303371f`, MIT | `app/package.json`, `docs/client.md`, `components/shell/{AppShell,HomeSurface,SurfacePage,WorkspacePaneManager,PanelResizeHandle}.tsx`, associated CSS, `NavigationRail.tsx`, Home/voice composition, `client-surfaces/{types,documentRegistry,homePresentation,useHomeSurfaceDocuments}.ts`. Source port candidate for continuing Home, panes and bounded surfaces; replace Electron/runtime/identity/command bindings. Closing-pane child retention must respect immediate scope invalidation. |
+| Cult UI | `d71b1428b811c2779d46ea41b7ef8c9f9c9991c2`, MIT | Actual `apps/www/registry/default/ui/{expandable-screen,expandable,morph-surface,floating-panel,speech-bubble,halo-progress,collab-toolbar,ai-blob-warp}.tsx`, official markdown docs, agent guidance, MCP setup and registry. Component-by-component adaptation plan records focus/scroll handling, submit-success semantics, external avatar fallback and shader dependency. No product components installed. |
+| shadcn/ui | CLI `4.23.0`, MIT; official Base Nova sidebar-08/sidebar registry snapshot retrieved 29 October | Six block files and sidebar primitives studied. `variant=inset` is already present; explicitly set `collapsible=icon` and `defaultOpen=false`. App configured for Base UI, Cult registry and existing aliases. Separate MCP process initialize/list/search succeeded through the project launcher. |
+| Libraries.dev / Gooey | Repository `bad63221ebafa08d830586aa1721ecbd4ea02fcb`; `liquid-gooey@0.2.2`, MIT | Package manifest/LICENSE, public README, Gooey skill reference, `src/Gooey.tsx`, observer wake/settle/dispose loop and reduced-motion helpers. Small interaction enhancement candidate; silhouette filter keeps DOM content crisp. No runtime dependency installed, no Studio/Pro recipes or model assets copied, no A12 performance claim. |
+
+The project-authored Cult skill copies/adapts the official agent guidance with
+its upstream MIT license. `@paper-design/shaders-react` is a possible later
+AI Blob dependency (current manifest 0.0.82, Apache-2.0); importing it later
+requires the usual package notices and rendering-cost checks.

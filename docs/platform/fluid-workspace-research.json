@@ -1,0 +1,46 @@
+{
+  "date": "2026-10-29",
+  "timezone": "Asia/Bangkok",
+  "shadcn_cli": "4.23.0",
+  "cult_revision": "d71b1428b811c2779d46ea41b7ef8c9f9c9991c2",
+  "octopus_revision": "49ba24226981dcdaadf32ff124dd3dc3a303371f",
+  "gooey_revision": "bad63221ebafa08d830586aa1721ecbd4ea02fcb",
+  "liquid_gooey_package": "0.2.2",
+  "mcp": {
+    "initialize": true,
+    "server": {
+      "name": "shadcn",
+      "version": "1.0.0"
+    },
+    "tools": [
+      "get_project_registries",
+      "list_items_in_registries",
+      "search_items_in_registries",
+      "view_items_in_registries",
+      "get_item_examples_from_registries",
+      "get_add_command_for_items",
+      "get_audit_checklist"
+    ],
+    "cult_search": true,
+    "search_query": "expandable-screen",
+    "host_tool_hot_reload": false,
+    "tested_os": "Linux"
+  },
+  "source_checksums": {
+    "expandable-screen": "c62c706eece6f5a7be84071fc82d41e7631a136fecad04067363c92ef0872b6a",
+    "speech-bubble": "d7aaa5df4aec8a60950fc4a300f2d35a2b1ec62e1f4e026de290c813f2d085c9",
+    "expandable": "49470c2fe5badf937c3a9ff523aef703cf9da9853f667a54da437ed0609e59a7",
+    "morph-surface": "f8ab774c836382307e1a298ff21398718489cbf21d29e77e7344d240dc58ebc9",
+    "floating-panel": "009eaa383306d9d0566dc5a22f595f09dd1fe1f09c6f9b32c833c0dc75226533",
+    "halo-progress": "1ded8f484c68d9986771b2190e86044be629425d78a01b1ae1e32bf7d0e92ef9",
+    "collab-toolbar": "fa5095fc644e30d371b66ecda04b9ae4846a6c4004c8175f46ac5c0ce201c9f2",
+    "ai-blob-warp": "f0fb2fc4b0c9ec13d3f8b881ed783c0ddfbc8ffb78ea6fe990a248dabe65c72c"
+  },
+  "product_changes": false,
+  "components_installed": [],
+  "notes": [
+    "Source study and configuration checks only. No donor app or new visual components were run or integrated.",
+    "MCP was exercised as a separate stdio process; a client configuration reload is needed for tool discovery.",
+    "No performance result for Surface Pro or Samsung A12 is claimed."
+  ]
+}

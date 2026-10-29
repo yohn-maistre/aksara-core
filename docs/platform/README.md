@@ -28,6 +28,14 @@ Try this path:
 7. In community Tools, prepare, approve and execute a semantic simulator indication.
 8. Select a past date in Today. Dates before recorded work remain empty.
 
+## Next presentation direction
+
+The user selected an Octopus-derived fluid workspace with an embedded composer,
+shadcn inset sidebar and selectively adapted Cult/Gooey components. Read the
+[donor study and implementation plan](fluid-workspace-plan.md). This planning
+checkpoint installs developer registry/MCP guidance; the running UI below remains
+the OpenDuet checkpoint.
+
 ## Hosted UI preview
 
 [Open the hosted preview](https://aksara-core-preview.pages.dev). [Pages deployment details](../../deploy/pages/README.md).

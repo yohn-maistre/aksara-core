@@ -37,3 +37,8 @@ The platform bundles Inter Variable through @fontsource-variable/inter 5.3.0.
 Copyright 2016 The Inter Project Authors. SIL Open Font License 1.1 is
 reproduced in apps/platform/public/licenses/inter-OFL.txt and included in
 the static site. Fonts load from the application origin.
+
+The project-local Cult UI integration guidance adapts official Cult UI agent
+rules, MIT, Copyright (c) 2023 Jordan-Gilliam. Its original license is retained
+in .agents/skills/cult-ui/LICENSE.md. No Cult UI product component is bundled
+by this planning/tooling checkpoint.
