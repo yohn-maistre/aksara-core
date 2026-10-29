@@ -58,9 +58,13 @@ try{
   await maria.getByRole('button',{name:'Refresh memory'}).click();await maria.getByText('APPROVED · source',{exact:false}).waitFor();
   check('memory candidate remains separate until explicit Operator review');
   await tab(operator,'Devices');await operator.getByRole('button',{name:'Physical stop',exact:true}).click();await operator.getByRole('button',{name:'Release stop',exact:true}).click();
-  await tab(maria,'Devices');await maria.getByRole('button',{name:'Propose Presence: working'}).click();
-  await tab(operator,'Threads');await refresh(operator);await operator.getByRole('button',{name:'Approve exact proposal'}).click();
-  await tab(maria,'Threads');await refresh(maria);await maria.getByRole('button',{name:'Execute approved effect'}).click();
+  await tab(maria,'Devices');
+  const devicePrepared=maria.waitForResponse(r=>r.url().includes('/api/prepare')&&r.request().method()==='POST');
+  await maria.getByRole('button',{name:'Propose Presence: working'}).click();
+  const deviceResponse=await devicePrepared;assert.equal(deviceResponse.status(),200);
+  const deviceWork={id:(await deviceResponse.json()).work_id};
+  await tab(operator,'Threads');await refresh(operator);await card(operator,deviceWork.id).getByRole('button',{name:'Approve exact proposal'}).click();await effectState(operator,deviceWork,'AUTHORIZED');
+  await tab(maria,'Threads');await refresh(maria);await card(maria,deviceWork.id).getByRole('button',{name:'Execute approved effect'}).click();await effectState(maria,deviceWork,'COMPLETED');
   await tab(maria,'Devices');await maria.locator('#hardware-refresh').click();
   await maria.waitForFunction(()=>[...document.querySelectorAll('#device-list .card')].some(c=>c.textContent.includes('presence')&&c.textContent.includes('working')));
   check('approved semantic device command appears in the independent simulator');
