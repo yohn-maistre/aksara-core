@@ -571,23 +571,29 @@ function App() {
                     at ? "Recorded work" : `Hello, ${session.profile.name}.`
                   }
                   needsYou={visibleWorks
-                    .filter((w: Work) => w.state === "AWAITING_APPROVAL")
+                    .filter((w: Work) =>
+                      ["AWAITING_APPROVAL", "NEEDS_INPUT"].includes(w.state),
+                    )
                     .map((w: Work) => ({
                       id: w.id,
                       title: w.request,
-                      why: "Your approval is needed before this happens.",
+                      why:
+                        w.state === "AWAITING_APPROVAL"
+                          ? "Your approval is needed before this happens."
+                          : "A decision from you is needed to continue.",
                       action: at
                         ? undefined
                         : {
-                            label: "Review proposal",
-                            name: `Review ${w.request}`,
+                            label:
+                              w.state === "AWAITING_APPROVAL"
+                                ? "Review proposal"
+                                : "Open thread",
+                            name: `${w.state === "AWAITING_APPROVAL" ? "Review" : "Open"} ${w.request}`,
                             onPress: () => void openWork(w),
                           },
                     }))}
                   canWait={visibleWorks
-                    .filter((w: Work) =>
-                      ["HEARD", "WORKING", "NEEDS_INPUT"].includes(w.state),
-                    )
+                    .filter((w: Work) => ["HEARD", "WORKING"].includes(w.state))
                     .map((w: Work) => ({
                       id: w.id,
                       title: w.request,

@@ -21,9 +21,8 @@ Thirteen browser checks passed both against a local static build and the public 
 
 For a live backend operational test, see `../test-host/README.md`. The current account rejected Containers with “Workers Paid plan required.” Container-local disk is not suitable as canonical persistent SQLite storage. No paid plan was enabled.
 
-The OpenDuet shell update is deployed at the same public URL. Deployment
-`1227edf8-7fa2-4a9b-ac9e-c9ddf662b59d` serves source revision
-`620b79a0343dfb7ab76f826bd3fa56c43a7eb5be`. All thirteen preview checks also
-passed against the public alias after deployment. See the
+The OpenDuet shell update is deployed at the same public URL. Its deployment
+metadata records the source revision. All thirteen preview checks passed against
+the public alias after deployment. See the
 [UI audit and screenshots](../../docs/platform/ui-audit.md) for source reuse,
 Taste v2 installation and documented visual exceptions.
