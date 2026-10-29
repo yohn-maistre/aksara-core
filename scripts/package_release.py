@@ -27,13 +27,13 @@ def main():
         (bundle / 'bin').mkdir(parents=True)
         shutil.copy2(args.binary, bundle / 'bin/aksarad')
         (bundle / 'bin/aksarad').chmod(0o755)
-        for name in ['LICENSE', 'NOTICE', 'README.md', 'AGENTS.md', 'Cargo.toml', 'Cargo.lock', 'rust-toolchain.toml', 'package.json', 'package-lock.json']:
+        for name in ['LICENSE', 'NOTICE', 'README.md', 'AGENTS.md', 'Cargo.toml', 'Cargo.lock', 'rust-toolchain.toml', 'package.json', 'package-lock.json', '.dockerignore']:
             shutil.copy2(ROOT / name, bundle / name)
         for name in ['scripts/dev.py', 'scripts/start_platform.py', 'scripts/device_simulator.py', 'scripts/stress.py', 'scripts/browser_smoke.py', 'scripts/collect_npm_notices.py']:
             destination = bundle / name
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(ROOT / name, destination)
-        for name in ['python', 'packages', 'tests', 'docs', 'crates', 'services', 'apps', 'third_party', 'protocols', 'packs']:
+        for name in ['python', 'packages', 'tests', 'docs', 'crates', 'services', 'apps', 'third_party', 'protocols', 'packs', 'deploy']:
             shutil.copytree(ROOT / name, bundle / name, ignore=shutil.ignore_patterns('__pycache__', 'node_modules', '.aksara'))
         collect(bundle / 'third_party/npm')
         notices = bundle / 'third-party'
