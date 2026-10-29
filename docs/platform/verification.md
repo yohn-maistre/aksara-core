@@ -60,3 +60,11 @@ Browser conformance creates disposable private fixtures. The product test uses p
 ## Remaining qualification
 
 Production IAM/enrollment and named review rights; per-Channel Library custody; OS/credential/egress separation; Mastra durable tools/subagents/resume; trusted LAN HTTPS/pairing and offline client intent handling; signed installer/restore host epoch; actual isolated computers; real Ruara publication and receiving-side authority; real MCU/renderer/hardware parity; voice input; rich formats/memory engines; actual A12 aggregate resource/quality measurement. The full portfolio is tracked in `component-coverage.csv`.
+
+## Hosted preview and backend operations increment
+
+On 29 October 2026 the entire foundation was fast-forwarded onto `main` after successful native x86-64 and ARM64 CI. A separate Cloudflare Pages Direct Upload project now serves the browser-only sample preview at https://aksara-core-preview.pages.dev. All eleven preview browser checks passed against both a local static build and the deployed URL. They demonstrate a UI, not hosted Rust authority; no model/backend/user-data API is attached to that site.
+
+The protected Linux test-host image runs the real stack as a non-root user with an exact-origin password gateway, loopback-only internal services and a mounted state volume. Initial image testing exposed unreadable root-owned source files; runtime copies now have the correct non-root ownership. Restart testing also exposed a stale browser session path; HTTP 401 now clears the authenticated view so the user can choose a development persona again without manually reloading. The operational fixture checks password protection, origin rejection, actual backend identity, open-browser recovery, session invalidation, source-byte persistence and separate personal custody after a real container restart. It is added to x86-64 CI.
+
+Cloudflare Containers returned “Workers Paid plan required,” and its container-local disk is documented as temporary. Billing was not changed and a hosted live backend was not provisioned. The optional image and operational fixtures prepare that next step without treating the UI sample or temporary disk as a production authority host.

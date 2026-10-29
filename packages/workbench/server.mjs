@@ -145,6 +145,7 @@ export async function createWorkbench({
       lane: s.lane,
       lanes,
       development: true,
+      test_host: process.env.AKSARA_TEST_HOST === "1",
     };
   }
   const server = http.createServer(async (req, res) => {

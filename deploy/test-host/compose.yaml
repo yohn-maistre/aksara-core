@@ -1,0 +1,24 @@
+services:
+  aksara:
+    build:
+      context: ../..
+      dockerfile: deploy/test-host/Dockerfile
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      AKSARA_PUBLIC_ORIGIN: "${AKSARA_PUBLIC_ORIGIN:-http://127.0.0.1:8080}"
+      AKSARA_TEST_PASSWORD_FILE: /run/secrets/aksara-test-password
+    volumes:
+      - aksara-state:/data
+    secrets:
+      - aksara-test-password
+    restart: unless-stopped
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 768m
+    cpus: 1.0
+secrets:
+  aksara-test-password:
+    file: "${AKSARA_TEST_PASSWORD_FILE:?Set an absolute path to a private password file}"
+volumes:
+  aksara-state:

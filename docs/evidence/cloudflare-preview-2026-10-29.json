@@ -1,0 +1,16 @@
+{
+  "date": "2026-10-29 Asia/Bangkok",
+  "project": "aksara-core-preview",
+  "url": "https://aksara-core-preview.pages.dev",
+  "deployment_id": "43472651-94b3-46b7-bbb3-0c1b2b26aafc",
+  "deployment_type": "Cloudflare Pages Direct Upload",
+  "source_commit": "842b318",
+  "live_browser_checks_passed": 11,
+  "backend_connected": false,
+  "model_calls": false,
+  "user_data_uploaded": false,
+  "scope": "Browser-only sample workspace; reset on reload; no live authority",
+  "git_integration": "Rejected by Cloudflare Pages Git installation, code 8000011",
+  "container_entitlement": "Cloudflare Containers rejected: Workers Paid plan required",
+  "billing_changes": false
+}

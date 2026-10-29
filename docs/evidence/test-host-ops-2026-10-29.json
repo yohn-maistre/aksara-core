@@ -1,0 +1,22 @@
+{
+  "container_checks_passed": 7,
+  "checks": [
+    "Public test gateway requires credentials before revealing personas or API data",
+    "Real Rust-backed session identifies itself as a development test host",
+    "Gateway rejects cross-origin writes instead of trusting forwarded headers",
+    "Open browser recovers from a restarted host without retaining a stale authenticated view",
+    "Restart invalidates in-memory browser sessions",
+    "Canonical source bytes survive a real container restart on the mounted volume",
+    "Personal custody remains separate after restart"
+  ],
+  "date": "2026-10-29 Asia/Bangkok",
+  "execution": "Real Linux Docker container in managed cloud workspace; non-root; synthetic data only",
+  "memory_limit_mib": 768,
+  "cpu_limit": 1,
+  "idle_memory_observation": "86.91 MiB (Docker stats sample; models, voice and browser excluded)",
+  "state_volume": "Named Docker volume retained across restart",
+  "cloudflare_backend_deployed": false,
+  "cloudflare_blocker": "Workers Paid plan required; persistent SQLite storage still needs a suitable host",
+  "gateway_sha256": "fc496d110f477e35cb54685062da985a00484123c07912b076bc4c155047af23",
+  "kernel_binary_sha256": "ea94fbd151f6a83bc98eea883882eb4d40b2a140c7a01a2ad4111cb1bc8c6cdd"
+}

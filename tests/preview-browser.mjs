@@ -56,7 +56,16 @@ const base =
   process.env.AKSARA_PREVIEW_URL || `http://127.0.0.1:${server.address().port}`;
 let browser;
 try {
-  browser = await chromium.launch();
+  browser = await chromium.launch(
+    process.env.AKSARA_PREVIEW_URL && process.env.HTTPS_PROXY
+      ? {
+          proxy: {
+            server: process.env.HTTPS_PROXY,
+            bypass: "127.0.0.1,localhost",
+          },
+        }
+      : {},
+  );
   const one = await browser.newContext({
     viewport: { width: 1440, height: 1000 },
   });

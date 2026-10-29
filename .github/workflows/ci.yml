@@ -63,6 +63,19 @@ jobs:
           cargo build --locked --release --target ${{ matrix.target }} -j 2
       - name: Real-process stress on native architecture
         run: python3 scripts/stress.py --binary target/${{ matrix.target }}/release/aksarad --documents 200
+      - name: Protected backend operational checks
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: |
+          mkdir -p dist/test-host .aksara/test-host
+          cp target/${{ matrix.target }}/release/aksarad dist/test-host/aksarad
+          python3 -c "import secrets; from pathlib import Path; Path('.aksara/test-host/password').write_text(secrets.token_urlsafe(40))"
+          sudo chown 1000:"$(id -g)" .aksara/test-host/password
+          chmod 640 .aksara/test-host/password
+          trap 'docker rm -f aksara-ops-test >/dev/null 2>&1 || true; docker volume rm aksara-ops-test-state >/dev/null 2>&1 || true' EXIT
+          docker build -f deploy/test-host/Dockerfile -t aksara-test-host:local .
+          docker volume create aksara-ops-test-state
+          docker run -d --name aksara-ops-test --memory 768m --cpus 1 --security-opt no-new-privileges --cap-drop ALL -p 127.0.0.1:18080:8080 -v aksara-ops-test-state:/data --mount type=bind,src="$PWD/.aksara/test-host/password",dst=/run/secrets/aksara-test-password,readonly -e AKSARA_PUBLIC_ORIGIN=http://127.0.0.1:18080 aksara-test-host:local
+          node tests/test-host-ops.mjs
       - name: Package with dependency notices
         run: |
           python3 scripts/package_release.py --binary target/${{ matrix.target }}/release/aksarad --target ${{ matrix.target }}

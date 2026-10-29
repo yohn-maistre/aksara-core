@@ -60,6 +60,7 @@ type Session = {
   lane: string;
   lanes: { name: string; lane: { id: string; audience: string[] } }[];
   development: boolean;
+  test_host?: boolean;
 };
 type Work = {
   id: string;
@@ -220,6 +221,11 @@ function App() {
           setHistory(null);
           setHits([]);
           setApproved({});
+          if (r.status === 401) {
+            scope.current = "";
+            setSession(null);
+            setPage("Today");
+          }
         }
         throw new Error(data.error || "Request failed");
       }
@@ -621,6 +627,13 @@ function App() {
       )}
       <div className="main-shell">
         <PreviewNotice />
+        {!PREVIEW && session.test_host && (
+          <div className="preview-notice" role="status">
+            Protected development test host · Use synthetic data only. This is
+            the real Rust backend, with development personas and a persistent
+            volume; production enrollment is not enabled.
+          </div>
+        )}
         <header className="topbar">
           <button
             className="mobile-menu"
