@@ -70,7 +70,7 @@ jobs:
           cp target/${{ matrix.target }}/release/aksarad dist/test-host/aksarad
           python3 -c "import secrets; from pathlib import Path; Path('.aksara/test-host/password').write_text(secrets.token_urlsafe(40))"
           sudo chown 1000:"$(id -g)" .aksara/test-host/password
-          chmod 640 .aksara/test-host/password
+          sudo chmod 640 .aksara/test-host/password
           trap 'docker rm -f aksara-ops-test >/dev/null 2>&1 || true; docker volume rm aksara-ops-test-state >/dev/null 2>&1 || true' EXIT
           docker build -f deploy/test-host/Dockerfile -t aksara-test-host:local .
           docker volume create aksara-ops-test-state
