@@ -1,10 +1,5 @@
-export const FREE_MODELS = Object.freeze([
-  "big-pickle",
-  "ling-3.0-flash-fin-free",
-  "longcat-2.5-preview-free",
-  "mimo-v2.6-flash-free",
-  "nemotron-3.5-lightning-free",
-]);
+import { FREE_MODELS, CODEX_MODELS } from "./catalogue.mjs";
+export { FREE_MODELS } from "./catalogue.mjs";
 export function localEndpoint() {
   const port = Number(process.env.AKSARA_LOCAL_MODEL_PORT || 11434);
   if (!Number.isInteger(port) || port < 1024 || port > 65535)
@@ -14,6 +9,8 @@ export function localEndpoint() {
 export function modelConfig(provider, model) {
   if (typeof model !== "string" || !/^[a-zA-Z0-9_.:/-]{1,100}$/.test(model))
     throw new Error("Invalid model ID");
+  if (provider === "codex-chatgpt" && CODEX_MODELS.includes(model))
+    return { name: "codex-chatgpt", transport: "mastra-codex-oauth" };
   if (provider === "local")
     return {
       name: "aksara-local",
@@ -41,6 +38,7 @@ export async function generateReply({
   messages,
   signal,
   fetchImpl,
+  modelPort,
 }) {
   const config = modelConfig(provider, model);
   const [{ Agent }, { noopLogger }, { createOpenAICompatible }] =
@@ -49,17 +47,19 @@ export async function generateReply({
       import("@mastra/core/logger"),
       import("@ai-sdk/openai-compatible"),
     ]);
-  const factory = createOpenAICompatible({
-    ...config,
-    fetch:
-      fetchImpl ??
-      ((url, options) => fetch(url, { ...options, redirect: "error" })),
-  });
+  const factory = modelPort
+    ? null
+    : createOpenAICompatible({
+        ...config,
+        fetch:
+          fetchImpl ??
+          ((url, options) => fetch(url, { ...options, redirect: "error" })),
+      });
   const agent = new Agent({
     id: "aksara-conversation",
     name: "Aksara",
     instructions: INSTRUCTIONS,
-    model: factory.chatModel(model),
+    model: modelPort || factory.chatModel(model),
   });
   agent.__setLogger(noopLogger);
   const output = await agent.generate(messages, {

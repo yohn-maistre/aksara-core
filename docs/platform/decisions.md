@@ -2,16 +2,16 @@
 
 Accepted direction implemented from the v2.5.5 review, 29 October 2026.
 
-Presentation update: the user selected an Octopus-derived fluid desktop workspace,
-shadcn inset/collapsed sidebar and Cult/Gooey interaction direction. The
-[implementation plan](fluid-workspace-plan.md) and developer tooling are prepared;
-the shipped OpenDuet UI is the current checkpoint until that port is implemented.
+Presentation update: the fluid Octopus/shadcn/Cult workspace is implemented, with
+an embedded Today composer and a scoped read-only resource-surface port. See the
+[implementation checkpoint](fluid-workspace-implementation.md) and
+[Mastra integration review](mastra-integration-review.md).
 
 | Decision                                                     | Implementation / qualification                                                                                            |
 | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
 | Rust stays authoritative; evolve the existing alpha          | Schema 3 and new APIs; original effect, lineage and Pi regressions retained                                               |
 | One current product monorepo                                 | Core, first-party PWA, broker and adapters change together; independent social/hardware release boundaries retained       |
-| React/PWA first; fluid workspace direction                       | Next: Octopus/shadcn/Cult source port; shipped OpenDuet checkpoint retained until implementation                                                     |
+| React/PWA first; fluid workspace direction                       | Implemented fluid workspace; core OpenDuet primitives retained where useful; no donor backend authority                                                     |
 | Mastra qualification, Pi preservation                        | Actual bounded Mastra model turn works; Pi durable retrieval remains tested; Mastra durable tool/recovery gate still open |
 | Actual-read dependencies, eligibility before context         | Frozen input digest, conservative read union, source withdrawal tests across reply/follow-up                              |
 | Canonical work/messages outlive vendor cache                 | Rust persistence; at-most-one automatic provider invocation per claimed run; no automatic crash replay                    |

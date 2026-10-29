@@ -211,7 +211,10 @@ impl Kernel {
         bounded(&req.text, MAX_TEXT_BYTES)?;
         bounded(&req.idempotency_key, 128)?;
         bounded(&req.model, 128)?;
-        if !matches!(req.provider.as_str(), "local" | "opencode-free") {
+        if !matches!(
+            req.provider.as_str(),
+            "local" | "opencode-free" | "codex-chatgpt"
+        ) {
             return Err(Error::Invalid("unknown provider".into()));
         }
         if req.provider != "local" && !req.cloud_consent {

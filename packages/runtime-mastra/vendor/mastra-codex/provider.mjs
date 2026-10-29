@@ -1,0 +1,417 @@
+// Adapted from Mastra Code SDK, c6a8570543f716d8a0edd70001abd0b89d365a74, Apache-2.0.
+// See third_party/mastra-code/LICENSE and UPSTREAM.md.
+import { createOpenAI } from '@ai-sdk/openai';
+import { wrapLanguageModel } from 'ai';
+class ProviderAuthRequiredError extends Error {
+    static notSignedIn() { return new this('Codex sign-in required'); }
+    static signInExpired() { return new this('Codex sign-in expired'); }
+}
+async function rejectUnauthorizedResponse(response) { if (response.status === 401)
+    throw new ProviderAuthRequiredError('Codex sign-in rejected'); return response; }
+const CODEX_API_ENDPOINT = 'https://chatgpt.com/backend-api/codex/responses';
+const CODEX_ORIGINATOR = 'mastracode';
+const CODEX_USER_AGENT = 'mastracode';
+const CODEX_PROVIDER_NAME = 'OpenAI Codex';
+// Default instructions for Codex API (required)
+const CODEX_INSTRUCTIONS = 'You are Aksara, a thoughtful collaborator. Reply to the supplied eligible context. No tools, computer authority or hidden memory access are granted. Your response is a draft.';
+export function createCodexMiddleware(reasoningEffort) {
+    return {
+        specificationVersion: 'v3',
+        transformParams: async ({ params }) => {
+            // Remove topP if temperature is set (OpenAI doesn't like both)
+            if (params.temperature !== undefined && params.temperature !== null) {
+                delete params.topP;
+            }
+            // Codex API requires specific settings via providerOptions
+            // Use type assertion to satisfy JSONValue constraints
+            params.providerOptions = {
+                ...params.providerOptions,
+                openai: {
+                    ...(params.providerOptions?.openai ?? {}),
+                    instructions: CODEX_INSTRUCTIONS,
+                    // Codex API requires store to be false
+                    store: false,
+                    // Enable reasoning for Codex models — without this, the model
+                    // skips the reasoning/action phase and goes straight to final_answer,
+                    // resulting in narration instead of tool calls.
+                    ...(reasoningEffort ? { reasoningEffort } : {}),
+                },
+            };
+            return params;
+        },
+    };
+}
+/**
+ * The thread a model request belongs to, from the `x-thread-id` header that
+ * model resolution adds for requests made inside a thread.
+ */
+export function getRequestThreadId(headers) {
+    if (!headers)
+        return undefined;
+    for (const name in headers) {
+        if (name.toLowerCase() === 'x-thread-id')
+            return headers[name] || undefined;
+    }
+    return undefined;
+}
+/**
+ * Create middleware that sends `prompt_cache_key` on OpenAI Responses requests.
+ *
+ * OpenAI routes a cached prompt by a hash of its start plus this key. Every
+ * Mastra Code prompt starts with the same system prompt, so without a key all
+ * threads compete for the same cache slot and consecutive steps of one run often
+ * land on a machine that doesn't hold their prefix. Keying by thread keeps each
+ * thread's requests together. A key the caller already set wins.
+ */
+export function createPromptCacheKeyMiddleware(promptCacheKey) {
+    if (!promptCacheKey)
+        return undefined;
+    return {
+        specificationVersion: 'v3',
+        transformParams: async ({ params }) => {
+            params.providerOptions = {
+                ...params.providerOptions,
+                openai: {
+                    promptCacheKey,
+                    ...(params.providerOptions?.openai ?? {}),
+                },
+            };
+            return params;
+        },
+    };
+}
+/**
+ * Create middleware that forwards a resolved reasoning effort to an
+ * OpenAI-compatible provider as `providerOptions[providerKey].reasoningEffort`.
+ *
+ * Returns `undefined` when `reasoningEffort` is unset so callers wrap nothing
+ * (e.g. thinking level `off`), leaving the wire request without a
+ * `reasoning_effort` field. Unlike {@link createCodexMiddleware}, it does not
+ * inject Codex-only options (instructions/store); it only sets reasoning
+ * effort, keyed by the caller-supplied provider id.
+ */
+export function createReasoningEffortMiddleware(providerKey, reasoningEffort) {
+    if (!reasoningEffort)
+        return undefined;
+    return {
+        specificationVersion: 'v3',
+        transformParams: async ({ params }) => {
+            params.providerOptions = {
+                ...params.providerOptions,
+                [providerKey]: {
+                    ...(params.providerOptions?.[providerKey] ?? {}),
+                    reasoningEffort,
+                },
+            };
+            return params;
+        },
+    };
+}
+/**
+ * Get a live OAuth bearer token for the Codex OAuth credential.
+ *
+ * Refreshes the token if it's expired, and returns the credential's
+ * accountId alongside the access token. Throws if the user isn't logged in
+ * or if the refresh fails.
+ *
+ * This is the only piece of Codex auth that is genuinely shared between
+ * the main agent's fetch (`buildOpenAICodexOAuthFetch`) and the Stagehand
+ * fetch (`buildCodexStagehandFetch`).
+ */
+async function getCodexBearer(authStorage) {
+    if (!authStorage)
+        throw new Error("A scoped credential port is required");
+    const storage = authStorage;
+    storage.reload();
+    let cred = storage.get('openai-codex');
+    if (!cred || cred.type !== 'oauth') {
+        throw ProviderAuthRequiredError.notSignedIn(CODEX_PROVIDER_NAME);
+    }
+    if (storage.getOAuthCredential) {
+        cred = await storage.getOAuthCredential('openai-codex');
+        if (!cred)
+            throw ProviderAuthRequiredError.signInExpired(CODEX_PROVIDER_NAME);
+    }
+    else if (Date.now() >= cred.expires) {
+        const refreshedToken = await storage.getApiKey('openai-codex');
+        if (!refreshedToken)
+            throw ProviderAuthRequiredError.signInExpired(CODEX_PROVIDER_NAME);
+        storage.reload();
+        const reloaded = storage.get('openai-codex');
+        if (!reloaded || reloaded.type !== 'oauth') {
+            throw ProviderAuthRequiredError.notSignedIn(CODEX_PROVIDER_NAME);
+        }
+        cred = { ...reloaded, access: refreshedToken };
+    }
+    return { accessToken: cred.access, accountId: cred.accountId };
+}
+/**
+ * Build a fetch function that handles OpenAI Codex OAuth.
+ * Preserves non-authorization headers from init.
+ * When rewriteUrl is true (default), rewrites /v1/responses and /chat/completions
+ * to the Codex API endpoint. Set rewriteUrl: false for gateway usage where the
+ * SDK already targets the correct URL.
+ */
+export function buildOpenAICodexOAuthFetch(opts = {}) {
+    return (async (url, init) => {
+        const { accessToken, accountId } = await getCodexBearer(opts.authStorage);
+        const { headers: initHeaders, ...requestInit } = init ?? {};
+        const request = new Request(url, requestInit);
+        // Preserve Request headers and let explicit init headers override them.
+        const headers = new Headers(url instanceof Request ? url.headers : undefined);
+        if (initHeaders)
+            new Headers(initHeaders).forEach((value, key) => headers.set(key, value));
+        headers.delete('authorization');
+        headers.delete('x-api-key');
+        headers.set('Authorization', `Bearer ${accessToken}`);
+        if (!headers.has('originator')) {
+            headers.set('originator', CODEX_ORIGINATOR);
+        }
+        if (!headers.has('User-Agent')) {
+            headers.set('User-Agent', CODEX_USER_AGENT);
+        }
+        if (accountId) {
+            headers.set('ChatGPT-Account-ID', accountId);
+        }
+        // Codex CLI sends its session on every request; send the thread the same way.
+        const threadId = headers.get('x-thread-id');
+        if (threadId) {
+            if (!headers.has('session-id'))
+                headers.set('session-id', threadId);
+            if (!headers.has('thread-id'))
+                headers.set('thread-id', threadId);
+        }
+        // URL rewriting — only when rewriteUrl !== false
+        const parsed = new URL(request.url);
+        const shouldRewrite = opts.rewriteUrl !== false &&
+            (parsed.pathname.includes('/v1/responses') || parsed.pathname.includes('/chat/completions'));
+        if (!shouldRewrite && parsed.href !== CODEX_API_ENDPOINT)
+            throw new Error('Unsupported Codex destination');
+        const finalUrl = new URL(CODEX_API_ENDPOINT);
+        const body = request.method === 'GET' || request.method === 'HEAD' ? undefined : request.body;
+        const finalRequest = new Request(finalUrl, {
+            method: request.method,
+            headers,
+            body,
+            signal: request.signal,
+            redirect: 'error',
+            integrity: request.integrity,
+            ...(body ? { duplex: 'half' } : {}),
+        });
+        try {
+            return await rejectUnauthorizedResponse(await (opts.fetchImpl ?? fetch)(finalRequest), {
+                providerName: CODEX_PROVIDER_NAME,
+                requestUrl: finalUrl.toString(),
+            });
+        }
+        catch (error) {
+            if (error && typeof error === 'object') {
+                Object.assign(error, {
+                    requestUrl: finalUrl.toString(),
+                });
+            }
+            throw error;
+        }
+    });
+}
+/**
+ * Build a fetch function for Stagehand-on-Codex.
+ *
+ * The Codex backend has two requirements that AI SDK's non-streaming
+ * `generateText` path doesn't naturally satisfy:
+ *
+ *   1. `stream: true` must be set on every request body.
+ *   2. The response is delivered as Server-Sent Events; AI SDK's
+ *      non-streaming code path expects a single JSON body.
+ *
+ * This fetch forces streaming on the outgoing request, collects the SSE
+ * events, and synthesizes the non-streaming JSON shape that
+ * `@ai-sdk/openai`'s Responses API parser expects.
+ *
+ * Headers, OAuth refresh, and URL targeting are handled by the caller via
+ * `baseURL` / `headers` on the AI SDK provider; this fetch only injects the
+ * live OAuth bearer per call.
+ */
+export function buildCodexStagehandFetch(authStorage, fetchImpl) {
+    return (async (url, init) => {
+        // Refresh + inject the OAuth bearer per call.
+        const { accessToken } = await getCodexBearer(authStorage);
+        const { headers: initHeaders, ...requestInit } = init ?? {};
+        const request = new Request(url, requestInit);
+        const headers = new Headers(url instanceof Request ? url.headers : undefined);
+        if (initHeaders)
+            new Headers(initHeaders).forEach((value, key) => headers.set(key, value));
+        headers.delete('authorization');
+        headers.delete('x-api-key');
+        headers.set('Authorization', `Bearer ${accessToken}`);
+        headers.set('Accept', 'text/event-stream');
+        // Stagehand sends JSON; force stream: true while preserving Request bodies.
+        let body = await request.clone().text();
+        try {
+            const parsed = JSON.parse(body);
+            parsed.stream = true;
+            body = JSON.stringify(parsed);
+            if (!headers.has('content-type'))
+                headers.set('content-type', 'application/json');
+        }
+        catch {
+            // Not JSON; leave as-is.
+        }
+        const upstream = await buildOpenAICodexOAuthFetch({ authStorage, fetchImpl })(new Request(request, {
+            headers,
+            ...(request.method === 'GET' || request.method === 'HEAD' ? {} : { body }),
+        }));
+        if (!upstream.ok)
+            return upstream;
+        // Aggregate SSE -> synthesized non-streaming Response
+        const aggregated = await aggregateCodexStream(upstream);
+        return new Response(aggregated, {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+        });
+    });
+}
+/**
+ * Read an SSE Response and reduce it to a single JSON string matching the
+ * non-streaming OpenAI Responses-API shape.
+ *
+ * Event vocabulary we care about (per OpenAI Responses API streaming):
+ *   - response.created         → carries `response` object (id, model, usage stub)
+ *   - response.output_item.added/done → output items (message, reasoning, etc.)
+ *   - response.output_text.delta → text chunks
+ *   - response.completed       → final `response` snapshot incl. usage
+ *   - response.error / error   → bubble up as a thrown body
+ *
+ * Reasoning events (`response.reasoning_summary.*`) are intentionally ignored
+ * for the non-streaming text response.
+ */
+async function aggregateCodexStream(response) {
+    if (!response.body) {
+        throw new Error('Codex streaming response had no body');
+    }
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
+    let finalResponse = null;
+    let createdResponse = null;
+    // Track output_items by index so we can rebuild the final array
+    const items = new Map();
+    // Accumulate output_text deltas keyed by item_index + content_index
+    const textBuffers = new Map();
+    const handleEvent = (event) => {
+        if (!event.data || event.data === '[DONE]')
+            return;
+        let payload;
+        try {
+            payload = JSON.parse(event.data);
+        }
+        catch {
+            return;
+        }
+        const type = payload.type ?? event.event ?? '';
+        switch (type) {
+            case 'response.created': {
+                createdResponse = payload.response ?? createdResponse;
+                break;
+            }
+            case 'response.output_item.added': {
+                if (typeof payload.output_index === 'number' && payload.item) {
+                    items.set(payload.output_index, payload.item);
+                }
+                break;
+            }
+            case 'response.output_item.done': {
+                if (typeof payload.output_index === 'number' && payload.item) {
+                    items.set(payload.output_index, payload.item);
+                }
+                break;
+            }
+            case 'response.output_text.delta': {
+                const key = `${payload.output_index}:${payload.content_index ?? 0}`;
+                textBuffers.set(key, (textBuffers.get(key) ?? '') + (payload.delta ?? ''));
+                break;
+            }
+            case 'response.completed': {
+                finalResponse = payload.response ?? finalResponse;
+                break;
+            }
+            case 'response.error':
+            case 'error': {
+                throw new Error(`Codex stream error: ${JSON.stringify(payload.error ?? payload)}`);
+            }
+            default:
+                // Ignore reasoning / unknown events
+                break;
+        }
+    };
+    // SSE parser: events separated by blank line; lines like "event: x" / "data: y"
+    // Normalize CRLF→LF so \r\n\r\n event boundaries parse correctly (SSE spec allows CRLF).
+    let receivedBytes = 0;
+    const processChunk = (chunk) => {
+        receivedBytes += new TextEncoder().encode(chunk).length;
+        if (receivedBytes > 1048576)
+            throw new Error("Codex response exceeded the bound");
+        buffer += chunk.replace(/\r\n/g, '\n');
+        let sepIdx;
+        while ((sepIdx = buffer.indexOf('\n\n')) !== -1) {
+            const raw = buffer.slice(0, sepIdx);
+            buffer = buffer.slice(sepIdx + 2);
+            const event = {};
+            const dataLines = [];
+            for (const line of raw.split('\n')) {
+                if (line.startsWith('event:')) {
+                    event.event = line.slice(6).trim();
+                }
+                else if (line.startsWith('data:')) {
+                    dataLines.push(line.slice(5).trimStart());
+                }
+            }
+            if (dataLines.length > 0) {
+                event.data = dataLines.join('\n');
+            }
+            handleEvent(event);
+        }
+    };
+    try {
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done)
+                break;
+            processChunk(decoder.decode(value, { stream: true }));
+        }
+        processChunk(decoder.decode());
+    }
+    finally {
+        reader.releaseLock();
+    }
+    // Stitch accumulated text deltas back into their items
+    if (!finalResponse || finalResponse.status !== 'completed')
+        throw new Error('Incomplete Codex response');
+    const base = finalResponse;
+    const finalItems = Array.from(items.entries())
+        .sort(([a], [b]) => a - b)
+        .map(([index, item]) => {
+        // Patch message-type items' content text using buffered deltas
+        if (item?.type === 'message' && Array.isArray(item.content)) {
+            item.content = item.content.map((c, ci) => {
+                const key = `${index}:${ci}`;
+                if (textBuffers.has(key)) {
+                    return { ...c, text: textBuffers.get(key) };
+                }
+                return c;
+            });
+        }
+        return item;
+    });
+    base.output = finalItems.length > 0 ? finalItems : (base.output ?? []);
+    return JSON.stringify(base);
+}
+/**
+ * Creates an OpenAI model using ChatGPT OAuth authentication
+ * Uses OAuth tokens from AuthStorage (auto-refreshes when needed)
+ *
+ * IMPORTANT: This uses the Codex API endpoint, not the standard OpenAI API.
+ * URLs are rewritten from /v1/responses or /chat/completions to the Codex endpoint.
+ */
+export function openaiCodexProvider(modelId, { authStorage, fetchImpl } = {}) { if (!authStorage)
+    throw new Error('Scoped credentials required'); const openai = createOpenAI({ apiKey: 'oauth-host-port', baseURL: 'https://api.openai.com/v1', fetch: buildCodexStagehandFetch(authStorage, fetchImpl) }); return wrapLanguageModel({ model: openai.responses(modelId), middleware: createCodexMiddleware('medium') }); }

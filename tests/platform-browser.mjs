@@ -122,7 +122,7 @@ try {
     path: path.join(previews, "today-desktop.png"),
     fullPage: true,
   });
-  mark("OpenDuet-based Today renders with real empty-state data");
+  mark("Fluid workspace Today renders with real empty-state data");
   await page.getByRole("button", { name: "Library", exact: true }).click();
   await page
     .getByLabel("Source title", { exact: true })

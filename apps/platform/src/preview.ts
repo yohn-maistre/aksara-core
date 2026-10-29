@@ -1,3 +1,4 @@
+import { ResourceSurfacePlan } from "@aksara/contracts/surfaces";
 /** Disposable presentation fixture, NOT an authority implementation.
  * No network, credentials, model inference, device IO or persistent user data.
  * This module is excluded from the normal host build.
@@ -230,6 +231,45 @@ export function createPreview() {
     const visibleWork = (w: Item) =>
       w.lane_id === lane.id &&
       lane.audience.every((a: string) => w.audience.includes(a));
+    if (method === "POST" && u.pathname === "/api/surfaces/resolve") {
+      const parsed = ResourceSurfacePlan.safeParse(input);
+      if (!parsed.success)
+        return json({ error: "Invalid sample surface" }, 400);
+      const plan = parsed.data,
+        source =
+          plan.component === "SourceList" ||
+          plan.component === "DocumentPreview";
+      const eligibleResources = source
+        ? store.artifacts.filter(eligible)
+        : store.works.filter(visibleWork);
+      const resources = plan.ids.map((id) =>
+        eligibleResources.find((r: Item) => r.id === id),
+      );
+      if (resources.some((r) => !r))
+        return json({ error: "Sample resource unavailable" }, 404);
+      return json({
+        protocol: "aksara.resolved-surface/1",
+        scope_ref: session.scope,
+        component: plan.component,
+        title: plan.title,
+        expires_at: Date.now() + 10000,
+        resources: resources.map((r: Item) =>
+          source
+            ? {
+                id: r.id,
+                title: r.title,
+                visibility: r.visibility,
+                ...(plan.component === "DocumentPreview"
+                  ? {
+                      content: r.content.slice(0, 50000),
+                      truncated: r.content.length > 50000,
+                    }
+                  : {}),
+              }
+            : { id: r.id, title: r.request, state: r.state },
+        ),
+      });
+    }
     if (method === "GET" && u.pathname === "/api/packs")
       return json([
         {
@@ -286,7 +326,11 @@ export function createPreview() {
       store.messages.push({
         seq: ++store.seq,
         role: "assistant",
-        text: 'This is a guided UI response, not model inference. In the live platform I can help explore a question using eligible sources, or help prepare a document for review. Try turning this example into a document.\n\n```openui\nroot = EvidenceCard("A place for your next step", "This registered OpenUI card is rendered by the same frontend as the live app. No tool or backend was invoked.")\n```',
+        text:
+          'This is a guided UI response, not model inference. In the live platform I can help explore a question using eligible sources, or help prepare a document for review. Try turning this example into a document.\n\n```openui\nroot = EvidenceCard("A place for your next step", "This registered OpenUI card is rendered by the same frontend as the live app. No tool or backend was invoked.")\n```' +
+          (sources.length
+            ? `\n\n\`\`\`openui\nroot = SourceList("Selected sample sources", ${JSON.stringify(sources)})\n\`\`\``
+            : ""),
         run,
       });
       return json({ preview: true }, 202);

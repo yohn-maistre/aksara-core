@@ -1,0 +1,54 @@
+Aksara Core
+Copyright 2026 Aksara contributors
+Licensed under the Apache License, Version 2.0.
+
+The Pi runtime adapter depends on @earendil-works/chord, pi-ai and pi-durable
+1.0.2, MIT, Copyright (c) 2025 Mario Zechner. Their original implementations
+are installed by npm and their license files remain in those packages.
+
+Muse Gadget SDK (Meta, Apache-2.0), Vellum Assistant (Vellum AI, MIT),
+Hermes Agent (Nous Research, MIT), Dim0 (vcmf, MIT) and canvas-harness (MIT)
+were studied as design/code references. No source from these five projects
+is currently vendored. Pinned revisions and files are recorded in docs/donors.md.
+
+Packaged binaries include additional dependency notices generated from Cargo
+metadata and upstream license files under third-party/. This NOTICE does not
+replace those upstream licenses or imply endorsement by any donor project.
+
+The platform frontend adapts OpenDuet presentation components and visual tokens,
+MIT, Copyright (c) 2026 CopilotKit, pinned at
+60fd4c71d9d82e13739dce00827278154d13c947. The original permission and warranty
+notice is reproduced in third_party/openduet/LICENSE. Aksara changes include
+removing the reply-hold/CopilotKit coupling, adapting imports and visual tokens,
+and wiring components to Aksara's own authority-backed data.
+
+Mastra Core 1.80.0 (Apache-2.0), OpenUI React Lang 1.0.2 (MIT), React,
+Base UI and other npm dependencies are installed from the committed lockfile;
+their upstream license files remain in those distributions. Pocket TTS and
+local model runtimes/weights are optional installations, not bundled assets.
+Nightly Labs OpenBot was studied as a product reference under its
+Noncommercial license; no code from it is copied into Aksara.
+
+The project-local Taste Skill v2 (2.1.5), MIT, Copyright (c) 2026 Leonxlnx,
+is installed under .agents/skills/design-taste-frontend with its original
+LICENSE. It is development tooling, not part of the running platform.
+
+The platform bundles Inter Variable through @fontsource-variable/inter 5.3.0.
+Copyright 2016 The Inter Project Authors. SIL Open Font License 1.1 is
+reproduced in apps/platform/public/licenses/inter-OFL.txt and included in
+the static site. Fonts load from the application origin.
+
+The project-local Cult UI integration guidance adapts official Cult UI agent
+rules, MIT, Copyright (c) 2023 Jordan-Gilliam. Its original license is retained
+in .agents/skills/cult-ui/LICENSE.md. Cult Expandable, ExpandableScreen, HaloProgress and WizardExpandable are
+adapted in the product. Their MIT license is retained in third_party/cult-ui/LICENSE.
+
+The fluid workspace adapts Octopus SI OS surface/resize source, MIT; its license
+is retained in third_party/octopus/LICENSE. The inset sidebar and Base UI source
+primitives derive from shadcn sidebar-08 (MIT), with its license retained in
+third_party/shadcn/LICENSE. Aksara supplies the authority-aware host bindings.
+
+The Codex subscription provider includes focused modified Mastra Code SDK source,
+Copyright (c) 2025 Kepler Software, Inc., Apache-2.0 outside EE. Its original
+license and source pin/adaptations are retained in third_party/mastra-code/LICENSE
+and packages/runtime-mastra/vendor/mastra-codex/UPSTREAM.md. No EE code is copied.

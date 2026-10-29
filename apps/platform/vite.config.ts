@@ -36,7 +36,8 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks: {
-          react: ["react", "react-dom"],
+          react: ["react", "react-dom", "react-dom/client"],
+          motion: ["motion/react"],
           openui: ["@openuidev/react-lang", "zod"],
         },
       },

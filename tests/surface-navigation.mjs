@@ -1,11 +1,11 @@
-/** Follow the actual menu for secondary screens; primary tabs stay directly available. */
+/** Desktop rail or the focus-trapped phone drawer; wait through dialog dismissal. */
 export async function navigateSurface(page, name) {
   const direct = page.getByRole("button", { name, exact: true });
-  if (await direct.isVisible()) return direct.click();
-  await page
-    .getByRole("navigation", { name: "Main", exact: true })
-    .getByRole("button", { name: "Today", exact: true })
-    .click();
+  if (
+    (await page.evaluate(() => innerWidth >= 768)) ||
+    (await direct.isVisible())
+  )
+    return direct.click();
   await page
     .getByRole("button", { name: "Open navigation", exact: true })
     .click();

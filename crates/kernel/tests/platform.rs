@@ -246,3 +246,25 @@ fn schema_two_upgrade_preserves_sources_work_credentials_and_starts_history_now(
     );
     assert_eq!(k.integrity().unwrap()["schema"], 3);
 }
+
+#[test]
+fn codex_subscription_is_hosted_and_excludes_other_provider_context() {
+    let mut f = F::new();
+    let c = f.ctx(0, 1);
+    for (provider, secret) in [
+        ("local", "LOCAL_SECRET"),
+        ("opencode-free", "OTHER_HOSTED_SECRET"),
+    ] {
+        let r = f.k.begin_model(&c, &f.req(provider, secret)).unwrap();
+        f.k.finish_model(&c, &r.id, secret, false).unwrap();
+    }
+    let mut req = f.req("codex-chatgpt", "subscription turn");
+    req.cloud_consent = false;
+    assert!(f.k.begin_model(&c, &req).is_err());
+    req.cloud_consent = true;
+    let run = f.k.begin_model(&c, &req).unwrap();
+    let input = f.k.model_input(&c, &run.id).unwrap();
+    assert!(!input.to_string().contains("LOCAL_SECRET"));
+    assert!(!input.to_string().contains("OTHER_HOSTED_SECRET"));
+    assert_eq!(input["library_injected"], false);
+}

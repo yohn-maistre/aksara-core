@@ -3,7 +3,13 @@
   "version": "0.2.0",
   "private": true,
   "type": "module",
-  "exports": "./index.mjs",
+  "exports": {
+    ".": "./index.mjs",
+    "./surfaces": {
+      "types": "./surfaces.d.mts",
+      "default": "./surfaces.mjs"
+    }
+  },
   "dependencies": {
     "zod": "4.3.6"
   },

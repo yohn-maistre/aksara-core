@@ -70,3 +70,4 @@ export const PublicationDraft = z
     correction_of: identifier.optional(),
   })
   .strict();
+export { ResourceSurfacePlan, parseSurfaceProgram } from './surfaces.mjs';

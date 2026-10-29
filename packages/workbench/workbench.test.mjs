@@ -336,3 +336,19 @@ test("local speech rechecks message eligibility and discards audio after a conte
     else process.env.AKSARA_TTS_PORT = oldPort;
   }
 });
+
+test('real hosts: generated surface resource IDs cannot bypass scope, withdrawal or CSRF',async()=>{
+ const f=await fixture();try{
+  const source=await f.request('kernel/ingest',{title:'Private surface source',content:'SURFACE_PRIVATE_SENTINEL',visibility:'private',purpose:'knowledge',provenance:'test'});
+  const plan={protocol:'aksara.resource-surface/1',component:'DocumentPreview',title:'Requested source',ids:[source.value.id]};
+  const resolved=await f.request('surfaces/resolve',plan);assert.equal(resolved.status,200);assert.equal(resolved.value.resources[0].content,'SURFACE_PRIVATE_SENTINEL');assert.equal(resolved.value.scope_ref,f.scope);
+  assert.equal((await f.request('surfaces/resolve',plan,{origin:'https://evil.test'})).status,403);
+  const scope=f.scope;const personal=await f.request('scope',{profile:'personal'});f.scope=personal.value.scope;
+  assert.equal((await f.request('surfaces/resolve',plan)).status,404);
+  assert.equal((await f.request('surfaces/resolve',plan,{'x-aksara-scope':scope})).status,409);
+  const community=await f.request('scope',{profile:'community'});f.scope=community.value.scope;
+  await f.request('kernel/withdraw',{id:source.value.id});
+  const withdrawn=await f.request('surfaces/resolve',plan);assert.equal(withdrawn.status,404);assert.ok(!JSON.stringify(withdrawn.value).includes('SURFACE_PRIVATE_SENTINEL'));
+  assert.equal((await f.request('surfaces/resolve',{...plan,component:'ExecuteTool',approve:true})).status,400);
+ }finally{await f.close()}
+});

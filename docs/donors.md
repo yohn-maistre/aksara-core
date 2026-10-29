@@ -90,3 +90,31 @@ The project-authored Cult skill copies/adapts the official agent guidance with
 its upstream MIT license. `@paper-design/shaders-react` is a possible later
 AI Blob dependency (current manifest 0.0.82, Apache-2.0); importing it later
 requires the usual package notices and rendering-cost checks.
+
+## Implemented fluid workspace and provider port — 29 October
+
+- Octopus SI OS `49ba24226981dcdaadf32ff124dd3dc3a303371f` (MIT): actual
+  `SurfacePage`, responsive container CSS, `PanelResizeHandle`, measured split
+  limits. Copied source adapted for Aksara context panes. No retained closing
+  private content or native runtime imports. `third_party/octopus/LICENSE`.
+- shadcn CLI 4.23.0, `base-nova/sidebar-08` (MIT): SidebarProvider, inset/icon
+  sidebar, Base UI sheet/tooltip and source primitives. Demo navigation/accounts
+  replaced with current Aksara data. `third_party/shadcn/LICENSE`.
+- Cult UI `d71b1428b811c2779d46ea41b7ef8c9f9c9991c2` (MIT): registry-installed
+  Expandable, ExpandableScreen, HaloProgress and WizardExpandable. Base UI owns
+  dialog semantics; motion is reduced where requested, progress is truthful,
+  materials are flat, setup persistence/consent are host-owned. License retained
+  in `third_party/cult-ui/LICENSE`.
+- Mastra Code `c6a8570543f716d8a0edd70001abd0b89d365a74` (Apache-2.0 outside EE):
+  focused device OAuth/refresh and Codex Responses/SSE provider port; source
+  hashes and adaptations in `packages/runtime-mastra/vendor/mastra-codex/UPSTREAM.md`.
+  Explicit scoped CredentialStore, no environment or global auth fallback, no
+  full coding harness. `third_party/mastra-code/LICENSE`.
+- OpenDots `8091324942b86789ed0da7facbee855145d933b0` and OpenMuse
+  `a4944f4c471d3dc93b8bfc060b5da309b5216ab2` (MIT): computer store, supervisor,
+  Docker identity/inspection/lease and takeover source studied for the next
+  computer port. OpenDuet computer/runtime surfaces and Nightly provider/onboarding
+  flow also studied; no Nightly Noncommercial source copied.
+
+The old phone-shell entries document earlier checkpoints. The fluid workspace
+replaces that shell while retaining permissible feature primitives and notices.

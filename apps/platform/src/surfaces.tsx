@@ -1,3 +1,4 @@
+import { parseSurfaceProgram } from "@aksara/contracts/surfaces";
 import {
   createLibrary,
   defineComponent,
@@ -5,6 +6,7 @@ import {
 } from "@openuidev/react-lang";
 import { z } from "zod/v4";
 import { DuetCard } from "./components/duet/kit";
+import { ResourceSurface } from "./workspace/SurfacePort";
 const EvidenceCard = defineComponent({
   name: "EvidenceCard",
   description: "A plain text finding, never executable content.",
@@ -33,31 +35,28 @@ const MetricCard = defineComponent({
     </DuetCard>
   ),
 });
+const resourceComponents = (
+  ["WorkList", "SourceList", "DocumentPreview", "ProgressStatus"] as const
+).map((name) =>
+  defineComponent({
+    name,
+    description:
+      "Read-only resources freshly resolved by the current Aksara host. IDs grant no authority.",
+    props: z.object({
+      title: z.string().max(160),
+      ids: z.array(z.string().max(100)).min(1).max(12),
+    }),
+    component: ({ props }) => (
+      <ResourceSurface component={name} title={props.title} ids={props.ids} />
+    ),
+  }),
+);
 const library = createLibrary({
-  components: [EvidenceCard, MetricCard],
+  components: [EvidenceCard, MetricCard, ...resourceComponents],
   root: "EvidenceCard",
 });
-// The initial Pack profile accepts a single text-only component. Query, Mutation,
-// URLs, actions, HTML, imports, expressions and nested programs are not admitted.
 export function safeProgram(raw: string): string | null {
-  if (raw.length > 7000) return null;
-  const m = raw
-    .trim()
-    .match(/^root\s*=\s*(EvidenceCard|MetricCard)\(([\s\S]*)\)\s*;?$/);
-  if (!m) return null;
-  try {
-    const args = JSON.parse(`[${m[2]}]`);
-    const max = m[1] === "EvidenceCard" ? [160, 4000] : [160, 80, 1000];
-    if (
-      !Array.isArray(args) ||
-      args.length !== max.length ||
-      args.some((v, i) => typeof v !== "string" || v.length > max[i])
-    )
-      return null;
-    return `root = ${m[1]}(${args.map((v: string) => JSON.stringify(v)).join(", ")})`;
-  } catch {
-    return null;
-  }
+  return parseSurfaceProgram(raw)?.program ?? null;
 }
 export function MessageBody({ text }: { text: string }) {
   return (

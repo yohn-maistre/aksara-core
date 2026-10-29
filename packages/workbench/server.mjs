@@ -1,3 +1,5 @@
+import { createCodexBridge } from "../runtime-mastra/codex.mjs";
+import { resolveResourceSurface } from "./surfaces.mjs";
 import { validatePack } from "@aksara/contracts";
 import { finalizePcmWav } from "./audio.mjs";
 import http from "node:http";
@@ -103,6 +105,9 @@ export async function createWorkbench({
     if (u.hostname !== "127.0.0.1" || u.protocol !== "http:")
       throw new Error("Kernel must be fixed loopback");
   }
+  const codex = createCodexBridge({
+    root: path.join(root, ".aksara", "providers", "codex"),
+  });
   const sessions = new Map();
   const active = new Map();
   const admitted = new Set();
@@ -200,6 +205,7 @@ export async function createWorkbench({
         ?.slice(15);
       let s = cookie ? sessions.get(cookie) : undefined;
       if (s && s.expires < Date.now()) {
+        if (s.providerCustody) codex.cancelPending(s.providerCustody);
         sessions.delete(cookie);
         s = undefined;
       }
@@ -231,6 +237,7 @@ export async function createWorkbench({
       if (!same(req.headers["x-aksara-scope"], s.scope))
         throw fail("Scope changed; refresh this view", 409);
       if (req.method === "POST" && url.pathname === "/api/logout") {
+        if (s.providerCustody) codex.cancelPending(s.providerCustody);
         sessions.delete(cookie);
         res.setHeader(
           "set-cookie",
@@ -250,7 +257,9 @@ export async function createWorkbench({
         const lanes = await kernel({ ...s, profile: p, lane: p.lane }, "lanes");
         const lane = b.lane || p.lane;
         if (!lanes.some((l) => l.id === lane)) throw fail("Access denied", 403);
+        if (s.providerCustody) codex.cancelPending(s.providerCustody);
         const oldScope = s.scope;
+        s.providerCustody = null;
         s.profile = p;
         s.lane = lane;
         s.scope = uid();
@@ -264,6 +273,27 @@ export async function createWorkbench({
         if (s.scope !== snapshot.scope)
           throw fail("Scope changed; result discarded", 409);
       };
+      const custodyFor = async () => {
+        const principal = await kernel(snapshot, "me");
+        assertScope();
+        const custody = JSON.stringify([
+          principal.institution_id,
+          principal.id,
+        ]);
+        s.providerCustody = custody;
+        return custody;
+      };
+      if (req.method === "POST" && url.pathname === "/api/surfaces/resolve") {
+        const input = await body(req);
+        const result = await resolveResourceSurface(input, {
+          read: (op, query = "") => kernel(snapshot, op, undefined, query),
+          assertCurrent: assertScope,
+          scope: snapshot.scope,
+        });
+        assertScope();
+        reply(res, result);
+        return;
+      }
       if (req.method === "GET" && url.pathname === "/api/packs") {
         reply(res, [
           validatePack(
@@ -275,6 +305,40 @@ export async function createWorkbench({
             ),
           ),
         ]);
+        return;
+      }
+      if (req.method === "GET" && url.pathname === "/api/providers/codex") {
+        const result = await codex.status(await custodyFor());
+        assertScope();
+        reply(res, result);
+        return;
+      }
+      if (
+        req.method === "POST" &&
+        url.pathname.startsWith("/api/providers/codex/")
+      ) {
+        const action = url.pathname.slice("/api/providers/codex/".length),
+          input = await body(req);
+        let result;
+        if (action === "login") result = await codex.login(await custodyFor());
+        else if (action === "poll" && typeof input.login_id === "string")
+          result = await codex.poll(await custodyFor(), input.login_id, {
+            assertCurrent: assertScope,
+          });
+        else if (action === "logout")
+          result = await codex.logout(await custodyFor());
+        else if (
+          action === "cancel" &&
+          typeof input.login_id === "string" &&
+          input.login_id.length <= 100
+        )
+          result = await codex.cancel(await custodyFor(), input.login_id);
+        else throw fail("Unknown provider action", 404);
+        if (action === "logout")
+          for (const running of active.values())
+            if (running.scope === snapshot.scope) running.abort.abort();
+        assertScope();
+        reply(res, result);
         return;
       }
       if (req.method === "GET" && url.pathname === "/api/providers") {
@@ -322,6 +386,7 @@ export async function createWorkbench({
             notice:
               "Hosted experimental models. Availability and data-use terms can change. No paid fallback.",
           },
+          codex: { connected: false, models: [], requires_setup: true },
           voice: {
             configured: process.env.AKSARA_TTS_ENABLED === "1",
             engine: "Pocket TTS",
@@ -467,13 +532,19 @@ export async function createWorkbench({
                 `?id=${encodeURIComponent(run.id)}`,
               );
               assertScope();
+              const subscription =
+                run.provider === "codex-chatgpt"
+                  ? await codex.model(await custodyFor(), run.model)
+                  : null;
               const text = await generate({
+                modelPort: subscription?.model,
                 provider: run.provider,
                 model: run.model,
                 messages: context.messages,
                 signal: abort.signal,
               });
               assertScope();
+              subscription?.assertCurrent();
               await kernel(snapshot, "model-finish", {
                 id: run.id,
                 text,
@@ -544,6 +615,7 @@ export async function createWorkbench({
     close: async () => {
       for (const a of active.values()) a.abort.abort();
       await Promise.allSettled([...active.values()].map((a) => a.task));
+      codex.close();
       await new Promise((resolve) => server.close(resolve));
     },
   };

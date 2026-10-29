@@ -1,0 +1,475 @@
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from "react";
+import { apiFetch, PREVIEW } from "../transport";
+import {
+  key,
+  type Artifact,
+  type Data,
+  type Profile,
+  type Session,
+  type Work,
+} from "./shared";
+function useWorkspaceState() {
+  const composerInput = useRef<HTMLTextAreaElement>(null);
+  const [profiles, setProfiles] = useState<Profile[]>([]),
+    [session, setSession] = useState<Session | null>(null),
+    [page, setPage] = useState("Today"),
+    [error, setError] = useState(""),
+    [busy, setBusy] = useState(false),
+    [mobile, setMobile] = useState(false);
+  const scope = useRef("");
+  const audioRef = useRef<HTMLAudioElement | null>(null),
+    audioURL = useRef("");
+  const [audioSeq, setAudioSeq] = useState<number | null>(null);
+  function stopAudio() {
+    audioRef.current?.pause();
+    if (audioURL.current) URL.revokeObjectURL(audioURL.current);
+    audioURL.current = "";
+    setAudioSeq(null);
+  }
+  const [works, setWorks] = useState<Work[]>([]),
+    [messages, setMessages] = useState<Data[]>([]),
+    [artifacts, setArtifacts] = useState<Artifact[]>([]),
+    [memories, setMemories] = useState<Data[]>([]),
+    [candidates, setCandidates] = useState<Data[]>([]),
+    [packs, setPacks] = useState<Data[]>([]),
+    [providers, setProviders] = useState<Data>({}),
+    [me, setMe] = useState<Data>({});
+  const [attached, setAttached] = useState<string[]>([]),
+    [draft, setDraft] = useState(""),
+    [provider, setProvider] = useState(PREVIEW ? "preview" : "local"),
+    [model, setModel] = useState(""),
+    [consent, setConsent] = useState(false),
+    [uploadedText, setUploadedText] = useState<string | null>(null),
+    [query, setQuery] = useState(""),
+    [hits, setHits] = useState<Data[]>([]),
+    [at, setAt] = useState(""),
+    [history, setHistory] = useState<Data | null>(null);
+  const [detail, setDetail] = useState<Data | null>(null),
+    [selected, setSelected] = useState<Work | null>(null),
+    [effects, setEffects] = useState<Data[]>([]),
+    [approved, setApproved] = useState<Data>({}),
+    [showDoc, setShowDoc] = useState(false),
+    [docTitle, setDocTitle] = useState(""),
+    [docContent, setDocContent] = useState(""),
+    [docSources, setDocSources] = useState<string[]>([]),
+    [channelName, setChannelName] = useState(""),
+    [localModel, setLocalModel] = useState("smollm2:135m"),
+    [theme, setTheme] = useState(
+      localStorage.getItem("aksara-theme") || "dark",
+    ),
+    [device, setDevice] = useState<Data | null>(null);
+  useLayoutEffect(() => {
+    const el = composerInput.current;
+    if (!el) return;
+    el.style.height = "44px";
+    el.style.height = `${Math.min(120, el.scrollHeight)}px`;
+  }, [draft, page]);
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", theme === "dark");
+    localStorage.setItem("aksara-theme", theme);
+  }, [theme]);
+  const api = useCallback(
+    async (path: string, body?: unknown): Promise<any> => {
+      const started = scope.current;
+      const r = await apiFetch(`/api/${path}`, {
+        method: body === undefined ? "GET" : "POST",
+        headers: {
+          "content-type": "application/json",
+          ...(started ? { "x-aksara-scope": started } : {}),
+        },
+        ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+      });
+      const data = await r.json();
+      if (started !== scope.current)
+        throw new Error("Context changed; old response discarded");
+      if (!r.ok) {
+        if (r.status === 403 || r.status === 401 || r.status === 409) {
+          stopAudio();
+          setWorks([]);
+          setMessages([]);
+          setArtifacts([]);
+          setMemories([]);
+          setCandidates([]);
+          setDetail(null);
+          setSelected(null);
+          setDraft("");
+          setAttached([]);
+          setUploadedText(null);
+          setDocTitle("");
+          setDocContent("");
+          setDocSources([]);
+          setShowDoc(false);
+          setConsent(false);
+          setDevice(null);
+          setEffects([]);
+          setHistory(null);
+          setHits([]);
+          setApproved({});
+          if (r.status === 401) {
+            scope.current = "";
+            setSession(null);
+            setPage("Today");
+          }
+        }
+        throw new Error(data.error || "Request failed");
+      }
+      return data;
+    },
+    [],
+  );
+  function accept(s: Session) {
+    stopAudio();
+    scope.current = s.scope;
+    setSession(s);
+    setWorks([]);
+    setMessages([]);
+    setArtifacts([]);
+    setHits([]);
+    setMemories([]);
+    setCandidates([]);
+    setSelected(null);
+    setDetail(null);
+    setEffects([]);
+    setApproved({});
+    setDraft("");
+    setAttached([]);
+    setUploadedText(null);
+    setDocContent("");
+    setDocTitle("");
+    setDocSources([]);
+    setHistory(null);
+    setAt("");
+    setShowDoc(false);
+    setError("");
+    setConsent(false);
+    setDevice(null);
+    setProviders({});
+    setProvider(PREVIEW ? "preview" : "local");
+    setModel("");
+  }
+  useEffect(() => {
+    apiFetch("/api/profiles")
+      .then((r) => r.json())
+      .then(setProfiles)
+      .catch(() => setError("Cannot reach Aksara"));
+    apiFetch("/api/session")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((s) => {
+        if (s) accept(s);
+      })
+      .catch(() => {});
+  }, []);
+  const refresh = useCallback(async () => {
+    if (!scope.current) return;
+    const current = scope.current;
+    try {
+      const [w, m, a, mem, cand, identity] = await Promise.all(
+        [
+          "threads",
+          "messages",
+          "library",
+          "memories",
+          "memory-candidates",
+          "me",
+        ].map((p) => api(`kernel/${p}`)),
+      );
+      if (current !== scope.current) return;
+      setWorks(w);
+      setMessages(m);
+      setArtifacts(a);
+      setMemories(mem);
+      setCandidates(cand);
+      setMe(identity);
+    } catch (e) {
+      if (current === scope.current) setError((e as Error).message);
+    }
+  }, [api]);
+  useEffect(() => {
+    if (!session) return;
+    void refresh();
+    api("packs")
+      .then(setPacks)
+      .catch(() => {});
+    api("providers")
+      .then((p) => {
+        setProviders(p);
+        setModel(PREVIEW ? "guided-demo" : p.local.models[0]?.id || "");
+      })
+      .catch((e) => setError(e.message));
+    const timer = setInterval(() => {
+      if (!document.hidden) void refresh();
+    }, 2500);
+    return () => clearInterval(timer);
+  }, [session?.scope, api, refresh]);
+  useEffect(() => {
+    if (!session) return;
+    if (!at) {
+      setHistory(null);
+      return;
+    }
+    const current = scope.current;
+    api(
+      `kernel/today?at=${Math.min(Date.now(), new Date(at + "T23:59:59").getTime())}`,
+    )
+      .then((h) => {
+        if (current === scope.current) setHistory(h);
+      })
+      .catch((e) => setError(e.message));
+  }, [at, session?.scope, api]);
+  // Revalidate open resources on each fresh authorized collection snapshot.
+  // Opening a resource itself already performs its own fresh host read.
+  useEffect(() => {
+    if (detail?.artifact && !artifacts.some((a) => a.id === detail.artifact.id))
+      setDetail(null);
+    if (selected && !works.some((w) => w.id === selected.id)) {
+      setSelected(null);
+      setEffects([]);
+      setApproved({});
+    }
+  }, [artifacts, works]);
+  useEffect(() => {
+    if (audioSeq !== null && !messages.some((m) => m.seq === audioSeq))
+      stopAudio();
+  }, [messages, audioSeq]);
+  async function speak(seq: number) {
+    await run(async () => {
+      stopAudio();
+      const current = scope.current;
+      const response = await apiFetch("/api/speech", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-aksara-scope": current,
+        },
+        body: JSON.stringify({ seq }),
+      });
+      if (!response.ok) {
+        const e = await response.json();
+        throw new Error(e.error || "Voice unavailable");
+      }
+      const blob = await response.blob();
+      if (scope.current !== current) return;
+      audioURL.current = URL.createObjectURL(blob);
+      audioRef.current = new Audio(audioURL.current);
+      setAudioSeq(seq);
+      audioRef.current.onended = stopAudio;
+      // Mobile browsers may require another explicit tap after async synthesis.
+      await audioRef.current.play().catch(() => {});
+    });
+  }
+  const run = async (fn: () => Promise<void>) => {
+    setError("");
+    setBusy(true);
+    try {
+      await fn();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  async function switchContext(profile: string, lane?: string) {
+    await run(async () => {
+      const s = await api("scope", { profile, lane });
+      accept(s);
+      setMobile(false);
+    });
+  }
+  async function openWork(w: Work) {
+    await run(async () => {
+      const [e, current] = await Promise.all([
+        api(`kernel/effects?work_id=${w.id}`),
+        api(`kernel/thread?id=${w.id}`),
+      ]);
+      setEffects(e);
+      setSelected(current);
+      setApproved({});
+    });
+  }
+  async function send(e: FormEvent) {
+    e.preventDefault();
+    if (!draft.trim()) return;
+    await run(async () => {
+      await api("chat", {
+        text: draft,
+        provider,
+        model,
+        cloud_consent: consent,
+        idempotency_key: key(),
+        source_ids: attached,
+      });
+      setDraft("");
+      setAttached([]);
+      setConsent(false);
+      await refresh();
+    });
+  }
+  async function proposeDoc(e: FormEvent) {
+    e.preventDefault();
+    await run(async () => {
+      const w = await api("kernel/delegate", {
+        request: `Create document: ${docTitle}`,
+        idempotency_key: key(),
+      });
+      await api("kernel/prepare", {
+        work_id: w.id,
+        revision: w.revision,
+        generation: w.generation,
+        idempotency_key: key(),
+        capability: "artifact.create",
+        args: {
+          title: docTitle,
+          content: docContent,
+          visibility:
+            session!.lanes.find((l) => l.lane.id === session!.lane)!.lane
+              .audience.length === 1
+              ? "private"
+              : "institution",
+          source_ids: docSources,
+        },
+      });
+      setShowDoc(false);
+      await refresh();
+      await openWork(w);
+    });
+  }
+  const lane = session?.lanes.find((l) => l.lane.id === session.lane),
+    privateLane = (lane?.lane.audience.length || 0) === 1;
+  const working = works.filter((w) => ["WORKING", "HEARD"].includes(w.state)),
+    needs = works.filter((w) =>
+      ["AWAITING_APPROVAL", "NEEDS_INPUT"].includes(w.state),
+    ),
+    visibleWorks = history ? history.work.map((h: Data) => h.work) : works;
+  const navigate = (p: string) => {
+    if (p === "Ask" && session) {
+      const own = session.lanes.find((l) => l.lane.audience.length === 1);
+      if (own && own.lane.id !== session.lane)
+        void switchContext(session.profile.id, own.lane.id);
+    }
+    setPage(p);
+    setMobile(false);
+  };
+
+  return {
+    composerInput,
+    profiles,
+    setProfiles,
+    session,
+    setSession,
+    page,
+    setPage,
+    error,
+    setError,
+    busy,
+    setBusy,
+    mobile,
+    setMobile,
+    scope,
+    audioRef,
+    audioURL,
+    audioSeq,
+    setAudioSeq,
+    stopAudio,
+    works,
+    setWorks,
+    messages,
+    setMessages,
+    artifacts,
+    setArtifacts,
+    memories,
+    setMemories,
+    candidates,
+    setCandidates,
+    packs,
+    setPacks,
+    providers,
+    setProviders,
+    me,
+    setMe,
+    attached,
+    setAttached,
+    draft,
+    setDraft,
+    provider,
+    setProvider,
+    model,
+    setModel,
+    consent,
+    setConsent,
+    uploadedText,
+    setUploadedText,
+    query,
+    setQuery,
+    hits,
+    setHits,
+    at,
+    setAt,
+    history,
+    setHistory,
+    detail,
+    setDetail,
+    selected,
+    setSelected,
+    effects,
+    setEffects,
+    approved,
+    setApproved,
+    showDoc,
+    setShowDoc,
+    docTitle,
+    setDocTitle,
+    docContent,
+    setDocContent,
+    docSources,
+    setDocSources,
+    channelName,
+    setChannelName,
+    localModel,
+    setLocalModel,
+    theme,
+    setTheme,
+    device,
+    setDevice,
+    api,
+    accept,
+    refresh,
+    speak,
+    run,
+    switchContext,
+    openWork,
+    send,
+    proposeDoc,
+    lane,
+    privateLane,
+    working,
+    needs,
+    visibleWorks,
+    navigate,
+  };
+}
+
+export type Workspace = ReturnType<typeof useWorkspaceState>;
+const WorkspaceContext = createContext<Workspace | null>(null);
+export function WorkspaceProvider({ children }: { children: ReactNode }) {
+  const state = useWorkspaceState();
+  return (
+    <WorkspaceContext.Provider value={state}>
+      {children}
+    </WorkspaceContext.Provider>
+  );
+}
+export function useWorkspace() {
+  const state = useContext(WorkspaceContext);
+  if (!state) throw new Error("Workspace provider required");
+  return state;
+}

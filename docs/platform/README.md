@@ -1,3 +1,5 @@
+Current UI/model checkpoint: [fluid workspace implementation](fluid-workspace-implementation.md); [Mastra integration review](mastra-integration-review.md). The earlier OpenDuet fidelity audit is historical.
+
 # Aksara platform foundation
 
 Implementation checkpoint: 29 October 2026 (Asia/Bangkok). This is a development foundation guided by the accepted v2.5.5 catalogue and Platform Harness v0.2 review. The earlier alpha remains available as the conformance lab. Original private architecture documents are not redistributed in this public repository.
@@ -141,3 +143,9 @@ Ruara/PyFedi publication remains a reviewed boundary. `publication-draft.schema.
 ## Next promotion gates
 
 See [the full component coverage map](component-coverage.csv). Immediate next work is A12 measurement; real enrollment/named review rights; qualified Mastra durable/tool recovery with source invalidation; and one isolated computer backend. Expand rich Library parsing, source-aware memory, voice capture and external channel/publication adapters only with their named proofs. Expo follows native camera/audio/background/secure-storage needs; Tauri/Electron follows a measured desktop integration need. Preserve the ecosystem without turning every design target into an enabled runtime dependency.
+
+The fluid UI has a separate [current audit](fluid-ui-audit.md), including source
+attribution, keyboard/scoping checks and sample screenshots. Reopen provider
+setup from Settings → Set up Aksara. Local, OpenCode free and Codex subscription
+turns all use the Mastra Agent; see the integration review for the supported
+provider/workspace boundaries.
