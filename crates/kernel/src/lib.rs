@@ -73,6 +73,49 @@ pub struct Kernel {
     _lock: File,
 }
 
+#[cfg(windows)]
+fn lock_database_identity(file: &File) -> std::io::Result<()> {
+    use std::os::windows::io::AsRawHandle;
+    use windows_sys::Win32::Storage::FileSystem::{
+        LockFileEx, LOCKFILE_EXCLUSIVE_LOCK, LOCKFILE_FAIL_IMMEDIATELY,
+    };
+    use windows_sys::Win32::System::IO::{OVERLAPPED, OVERLAPPED_0, OVERLAPPED_0_0};
+    // Windows byte-range locks are mandatory: locking the whole DB also blocks
+    // SQLite's own handle. Reserve one byte beyond our 256 MiB database ceiling
+    // and beyond SQLite's 0x40000000 locking region. NTFS hard links address the
+    // same lock; no pathname sidecar can bypass single-host ownership.
+    let mut range = OVERLAPPED {
+        Anonymous: OVERLAPPED_0 {
+            Anonymous: OVERLAPPED_0_0 {
+                Offset: 0x7fff_ffff,
+                OffsetHigh: 0,
+            },
+        },
+        ..OVERLAPPED::default()
+    };
+    // SAFETY: live file handle, initialized stack OVERLAPPED, synchronous
+    // fail-immediately call. Closing the retained File releases the range lock.
+    let locked = unsafe {
+        LockFileEx(
+            file.as_raw_handle(),
+            LOCKFILE_EXCLUSIVE_LOCK | LOCKFILE_FAIL_IMMEDIATELY,
+            0,
+            1,
+            0,
+            &mut range,
+        )
+    };
+    if locked == 0 {
+        return Err(std::io::Error::last_os_error());
+    }
+    Ok(())
+}
+
+#[cfg(not(windows))]
+fn lock_database_identity(file: &File) -> std::io::Result<()> {
+    fs2::FileExt::try_lock_exclusive(file)
+}
+
 impl Kernel {
     pub fn open(path: &Path) -> Result<Self> {
         if let Some(parent) = path.parent().filter(|p| !p.as_os_str().is_empty()) {
@@ -91,7 +134,7 @@ impl Kernel {
         }
         // Lock the database inode, so aliases/hard links cannot start a second host.
         let lock = lock_options.open(path)?;
-        fs2::FileExt::try_lock_exclusive(&lock)
+        lock_database_identity(&lock)
             .map_err(|_| Error::Conflict("another kernel owns this database".into()))?;
         let mut db = Connection::open(path)?;
         db.busy_timeout(std::time::Duration::from_secs(5))?;

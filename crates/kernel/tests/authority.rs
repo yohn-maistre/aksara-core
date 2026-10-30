@@ -599,3 +599,17 @@ fn database_aliases_cannot_bypass_host_lock_and_new_database_is_private() {
         0
     );
 }
+
+#[cfg(windows)]
+#[test]
+fn windows_database_lock_allows_sqlite_io_but_denies_a_second_host_through_hard_links() {
+    let f = Fixture::new();
+    let path = f.dir.path().join("state.sqlite");
+    let alias = f.dir.path().join("hard-link.sqlite");
+    std::fs::hard_link(&path, &alias).unwrap();
+    assert!(matches!(Kernel::open(&alias), Err(Error::Conflict(_))));
+    f.k.integrity().unwrap();
+    drop(f.k);
+    let reopened = Kernel::open(&path).unwrap();
+    reopened.integrity().unwrap();
+}
