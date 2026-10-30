@@ -32,6 +32,14 @@ The current CSS entry is `src/duet.css`; update that path when the theme is port
 
 ## Current project direction
 
+30 October update: the user explicitly requested exploration of atmospheric
+weather backgrounds, restrained glass/blur, localized glow and connected Gooey
+shapes. For that exploration, these choices supersede the earlier flat-only
+aesthetic guidance below. See `docs/platform/atmospheric-workspace-study.md`.
+The running product remains the previous checkpoint until a visual target is
+selected. Readability, privacy clearing, honest state and host authority still
+apply to every material treatment.
+
 Read `docs/platform/fluid-workspace-plan.md`. The user asked to flesh out the
 direction before rebuilding the interface. Setting up this skill/registry is
 authorized; it does not mean every candidate component should be installed.
