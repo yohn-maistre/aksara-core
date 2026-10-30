@@ -30,6 +30,9 @@ refinements supersede their opaque rail.
   height=36 inside a 390×420 viewport.
 - Home and full thread use the same draft and canonical messages, with one
   visible composer. Source withdrawal and scope checks clear restricted content.
+- An ARM CI failure exposed a stale layout-completion callback. Completion now
+  checks the current route before changing visibility; a repeated private/Home/
+  Settings sequence under 4× CPU throttling verifies the newer page stays visible.
 - Home contraction precedes surface reveal. Reduced motion skips choreography;
   interrupted layout has a bounded fallback.
 
@@ -52,7 +55,7 @@ independent panel heights, sparse real calendar hue, and the user-requested
 procedural smoke gradient. No accessibility finding is waived. This is not a
 full WCAG conformance audit.
 
-24 preview checks, 20 real-host product checks and eight existing privacy/approval
+25 preview checks, 20 real-host product checks and eight existing privacy/approval
 browser smoke checks pass. Material supplies paired color roles; static
 inspection does not establish every moving composite/native-device condition.
 Real Surface/A12 GPU, keyboard, battery and frame-time measurement remains.

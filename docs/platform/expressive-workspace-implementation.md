@@ -45,7 +45,9 @@ Rust authority, model adapters and reviewed-effect protocols remain intact.
 - Main surfaces and panels share smoked tonal materials, with solid/reduced
   transparency fallbacks. Home contraction precedes the next surface reveal.
   Layout completion is primary; a bounded cancellation fallback avoids a stuck
-  invisible destination. Scope changes invalidate the reveal and unmount old
+  invisible destination. Completion is fenced to its current route; an ARM CI
+  failure exposed the stale-callback race, now covered under 4× CPU throttling.
+  Scope changes invalidate the reveal and unmount old
   restricted content immediately.
 - Material Color Utilities generates paired roles for Lilac, Clay, Sage and
   Neutral palettes. Light/dark remains manually controllable. Procedural smoke
@@ -76,7 +78,7 @@ Existing Cult/shadcn/Octopus notices remain distributed.
 ## Verification
 
 - Production host and preview builds pass.
-- 24 preview browser checks pass, including direct phone navigation, multiline
+- 25 preview browser checks pass, including direct phone navigation, multiline
   composer/draft continuity, clock simulation, disposable private data, model
   disconnection and the Pages API guard.
 - 20 real-host browser checks pass, including the actual Mastra adapter,

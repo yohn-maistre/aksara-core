@@ -54,9 +54,11 @@ function App() {
   } = useWorkspace();
   const reduced = useReducedMotion();
   const routeKey = `${session?.scope}:${page}`;
+  const activeRoute = useRef(routeKey);
   const [settled, setSettled] = useState("");
   const previous = useRef(page);
   useLayoutEffect(() => {
+    activeRoute.current = routeKey;
     const mustContract =
       previous.current === "Today" &&
       page !== "Today" &&
@@ -69,7 +71,9 @@ function App() {
       return;
     }
     // Completion callback is primary; bounded fallback handles layout cancellation.
-    const timer = setTimeout(() => setSettled(routeKey), 600);
+    const timer = setTimeout(() => {
+      if (activeRoute.current === routeKey) setSettled(routeKey);
+    }, 600);
     return () => clearTimeout(timer);
   }, [routeKey, reduced]);
   const ready = settled === routeKey || !!reduced;
@@ -197,7 +201,10 @@ function App() {
           <TodayView
             key="continuing-home"
             compact={page !== "Today"}
-            onSettled={() => setSettled(routeKey)}
+            onSettled={() => {
+              // Motion can finish an older layout after another destination opens.
+              if (activeRoute.current === routeKey) setSettled(routeKey);
+            }}
             composer={
               page === "Today" ? <Composer presentation="line" /> : undefined
             }

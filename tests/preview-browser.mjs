@@ -435,6 +435,28 @@ try {
   mark(
     "Blob conversation expands, its multiline composer stays in view, and Escape preserves the draft",
   );
+  const slow = await one.newCDPSession(page);
+  await slow.send("Emulation.setCPUThrottlingRate", { rate: 4 });
+  for (let i = 0; i < 3; i++) {
+    await navigateSurface(page, "Home");
+    await page
+      .getByRole("button", { name: "Ask PRIVATE", exact: true })
+      .click();
+    await page
+      .getByRole("heading", { name: "Private thread", exact: true })
+      .waitFor();
+    await page.keyboard.press("Escape");
+    await page.getByRole("heading", { name: /Room for/ }).waitFor();
+    await navigateSurface(page, "Settings");
+    await page
+      .getByRole("heading", { name: "Appearance", exact: true })
+      .waitFor();
+  }
+  await slow.send("Emulation.setCPUThrottlingRate", { rate: 1 });
+  await slow.detach();
+  mark(
+    "Interrupted blob/Home animations cannot hide a newer destination under CPU throttling",
+  );
   await navigateSurface(page, "Settings");
   const oldAccent = await page.evaluate(() =>
     getComputedStyle(document.documentElement).getPropertyValue("--green"),
