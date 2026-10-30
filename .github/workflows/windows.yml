@@ -22,15 +22,17 @@ jobs:
       - name: Build and qualify authority
         run: |
           cargo test --locked --workspace
-          cargo build --locked --release --workspace
+          cargo build --locked --workspace
       - name: Build PWA and qualify native launcher
         shell: pwsh
         run: |
           npm ci
           npm run build
-          $env:AKSARA_TEST_BINARY = (Resolve-Path target/release/aksarad.exe).Path
+          $env:AKSARA_TEST_BINARY = (Resolve-Path target/debug/aksarad.exe).Path
           node tests/launcher-ops.mjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Release authority binary
+        run: cargo build --locked --release --workspace
       - name: Assemble portable ZIP
         shell: pwsh
         run: |

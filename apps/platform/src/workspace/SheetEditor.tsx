@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { createUniver, LocaleType, type ICellData } from "@univerjs/presets";
+import {
+  createUniver,
+  LocaleType,
+  LifecycleStages,
+  type ICellData,
+} from "@univerjs/presets";
 import { UniverSheetsCorePreset } from "@univerjs/preset-sheets-core";
 import sheetsEn from "@univerjs/preset-sheets-core/locales/en-US";
 import "@univerjs/preset-sheets-core/lib/index.css";
@@ -21,10 +26,12 @@ export function SheetEditor({
     serialize = useRef<(() => string) | null>(null);
   const { resolvedTheme } = useWorkspace();
   const [error, setError] = useState(""),
-    [ready, setReady] = useState(false);
+    [ready, setReady] = useState(false),
+    [editingCell, setEditingCell] = useState(false);
   useEffect(() => {
     if (!host.current) return;
     let dispose: (() => void) | undefined;
+    setReady(false);
     try {
       if (content.length > 50000)
         throw new Error(
@@ -50,7 +57,14 @@ export function SheetEditor({
       rows.forEach((row, r) => {
         cells[r] = {};
         row.forEach((v, c) => {
-          cells[r][c] = { v, t: 1 };
+          // Plain safe numeric values should participate in SUM. Preserve IDs
+          // with leading zeroes, high-precision values and formula-like strings.
+          const numeric =
+            /^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?$/.test(v) &&
+            v.replace(/[^0-9]/g, "").length <= 15 &&
+            Number.isFinite(Number(v)) &&
+            Math.abs(Number(v)) <= Number.MAX_SAFE_INTEGER;
+          cells[r][c] = numeric ? { v: Number(v), t: 2 } : { v, t: 1 };
         });
       });
       const { univer, univerAPI } = createUniver({
@@ -120,7 +134,27 @@ export function SheetEditor({
           );
         return csv;
       };
-      setReady(true);
+      const lifecycle = univerAPI.addEvent(
+        univerAPI.Event.LifeCycleChanged,
+        ({ stage }) => {
+          if (stage >= LifecycleStages.Steady) setReady(true);
+        },
+      );
+      const editStart = univerAPI.addEvent(
+        univerAPI.Event.SheetEditStarted,
+        () => setEditingCell(true),
+      );
+      const editEnd = univerAPI.addEvent(univerAPI.Event.SheetEditEnded, () =>
+        setEditingCell(false),
+      );
+      if (univerAPI.getCurrentLifecycleStage() >= LifecycleStages.Steady)
+        setReady(true);
+      dispose = () => {
+        lifecycle.dispose();
+        editStart.dispose();
+        editEnd.dispose();
+        univer.dispose();
+      };
     } catch (e) {
       dispose?.();
       dispose = undefined;
@@ -132,16 +166,22 @@ export function SheetEditor({
     };
   }, [content, title]);
   return (
-    <div className="sheet-editor">
+    <div
+      className="sheet-editor"
+      data-ready={ready}
+      data-cell-editing={editingCell}
+      aria-busy={!ready}
+    >
       <div
         className="univer-editor-host"
         ref={host}
         aria-label="CSV spreadsheet worktree"
+        inert={!ready}
       />
       {error && <p role="alert">{error}</p>}
       <button
         className="secondary"
-        disabled={!ready}
+        disabled={!ready || editingCell}
         onClick={() => {
           try {
             const next = serialize.current?.();
@@ -153,6 +193,12 @@ export function SheetEditor({
       >
         Review spreadsheet revision
       </button>
+      {!ready && !error && <p role="status">Preparing spreadsheet controls…</p>}
+      {editingCell && (
+        <p className="composer-note">
+          Press Enter or Tab to finish the cell before review.
+        </p>
+      )}
       <p className="composer-note">
         CSV draft · original preserved. Imported formula-like text stays text;
         formulas you enter are included in the reviewed CSV. Formatting is not

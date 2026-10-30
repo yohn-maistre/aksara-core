@@ -312,13 +312,11 @@ try {
   const csvOriginal = Buffer.from(
     'Item,Amount\r\n"Paper, office",42\r\nWater,10\r\n',
   );
-  await page
-    .getByLabel("Upload Library file")
-    .setInputFiles({
-      name: "budget.csv",
-      mimeType: "text/csv",
-      buffer: csvOriginal,
-    });
+  await page.getByLabel("Upload Library file").setInputFiles({
+    name: "budget.csv",
+    mimeType: "text/csv",
+    buffer: csvOriginal,
+  });
   await page
     .locator(".file-explorer")
     .getByRole("button", { name: /^budget.csv Private/ })
@@ -338,11 +336,16 @@ try {
     .locator("canvas:visible")
     .first();
   await canvas.waitFor({ timeout: 30000 });
+  await page
+    .locator('.sheet-editor[data-ready="true"]')
+    .waitFor({ timeout: 30000 });
   const box = await canvas.boundingBox();
   await page.mouse.dblclick(box.x + 55, box.y + 65);
+  await page.locator('.sheet-editor[data-cell-editing="true"]').waitFor();
   await page.keyboard.press("ControlOrMeta+A");
   await page.keyboard.type("Edited paper");
   await page.keyboard.press("Enter");
+  await page.locator('.sheet-editor[data-cell-editing="false"]').waitFor();
   await page
     .getByRole("button", { name: "Review spreadsheet revision", exact: true })
     .click();

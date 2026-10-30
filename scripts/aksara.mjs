@@ -65,11 +65,14 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const problem = (message) =>
   Object.assign(new Error(message), { publicMessage: message });
 const childEnv = { ...process.env };
+let startupStage = "command";
 delete childEnv.AKSARA_FAULT;
 delete childEnv.AKSARA_PI_FAULT;
 async function secureDirectory() {
+  startupStage = "state directory";
   await mkdir(state, { recursive: true, mode: 0o700 });
   if (process.platform === "win32") {
+    startupStage = "Windows owner identity";
     const { stdout } = await exec(
       "powershell.exe",
       [
@@ -83,6 +86,7 @@ async function secureDirectory() {
     const sid = stdout.trim();
     if (!/^S-1-\d+(?:-\d+)+$/.test(sid))
       throw new Error("Cannot establish Windows owner ACL");
+    startupStage = "Windows owner ACL";
     await exec(
       "icacls.exe",
       [state, "/inheritance:r", "/grant:r", `*${sid}:(OI)(CI)F`],
@@ -115,6 +119,7 @@ async function control(action) {
   return r.json();
 }
 async function init(folder, args) {
+  startupStage = `initialize ${path.basename(folder)} custody`;
   await mkdir(folder, { recursive: true, mode: 0o700 });
   const db = path.join(folder, "state.sqlite"),
     identity = path.join(folder, "identity.json");
@@ -143,8 +148,10 @@ async function start() {
   )
     throw new Error("Choose non-overlapping valid loopback ports");
   await access(binary);
+  startupStage = "PWA bundle";
   await access(path.join(root, "apps/platform/dist/index.html"));
   await secureDirectory();
+  startupStage = "instance ownership";
   try {
     const lock = JSON.parse(await readFile(lockPath, "utf8"));
     try {
@@ -244,6 +251,7 @@ async function start() {
             l.lane.audience[0] === person.principal.id,
         ).lane.id;
       const kernel = `http://127.0.0.1:${servicePort}`;
+      startupStage = `start ${mode} authority`;
       launch(
         binary,
         [
@@ -288,6 +296,7 @@ async function start() {
       });
     }
     if (stopping) throw new Error("Startup interrupted");
+    startupStage = "workbench";
     app = await createWorkbench({
       profiles,
       port,
@@ -500,6 +509,10 @@ try {
   console.error(
     error.publicMessage ||
       "Aksara could not complete this command. Check the host, selected model, state ownership and ports. Run doctor for local diagnostics.",
+  );
+  const code = String(error.code || "unknown");
+  console.error(
+    `Stage: ${startupStage}; error code: ${/^[A-Za-z0-9_]+$/.test(code) ? code : "unavailable"}`,
   );
   process.exitCode = 1;
 }
