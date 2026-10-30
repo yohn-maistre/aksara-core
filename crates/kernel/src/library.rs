@@ -1,17 +1,39 @@
 use crate::*;
+use base64::Engine;
 
 pub(crate) fn insert_artifact(
     tx: &Transaction,
     ctx: &AccessContext,
     input: &IngestRequest,
 ) -> Result<Artifact> {
+    insert_artifact_data(
+        tx,
+        ctx,
+        input,
+        input.content.as_bytes(),
+        None,
+        Some(&input.content),
+    )
+}
+
+fn insert_artifact_data(
+    tx: &Transaction,
+    ctx: &AccessContext,
+    input: &IngestRequest,
+    raw: &[u8],
+    media_type: Option<String>,
+    parsed_text: Option<&str>,
+) -> Result<Artifact> {
     validate_ingest(ctx, input)?;
+    if raw.is_empty() || raw.len() > MAX_SOURCE_BYTES {
+        return Err(Error::Limit("file ceiling is 1 MiB".into()));
+    }
     let total: i64 = tx.query_row(
         "SELECT coalesce(sum(length(raw)),0) FROM artifacts",
         [],
         |r| r.get(0),
     )?;
-    if total as usize + input.content.len() > MAX_STORE_BYTES {
+    if total as usize + raw.len() > MAX_STORE_BYTES {
         return Err(Error::Limit(
             "source store is full (64 MiB development quota)".into(),
         ));
@@ -19,12 +41,13 @@ pub(crate) fn insert_artifact(
     let artifact = Artifact {
         id: new_id("artifact"),
         title: input.title.clone(),
-        sha256: digest(input.content.as_bytes()),
+        sha256: digest(raw),
         owner: ctx.actor.id.clone(),
         visibility: input.visibility.clone(),
         purpose: input.purpose.clone(),
         provenance: input.provenance.clone(),
-        bytes: input.content.len(),
+        bytes: raw.len(),
+        media_type,
     };
     tx.execute(
         "INSERT INTO artifacts(id,institution_id,owner,data,raw) VALUES(?1,?2,?3,?4,?5)",
@@ -33,10 +56,12 @@ pub(crate) fn insert_artifact(
             ctx.institution_id,
             ctx.actor.id,
             json(&artifact)?,
-            input.content.as_bytes()
+            raw
         ],
     )?;
-    parse_blocks(tx, &artifact, &input.content)?;
+    if let Some(text) = parsed_text {
+        parse_blocks(tx, &artifact, text)?;
+    }
     event(
         tx,
         "library.ingested",
@@ -84,6 +109,49 @@ fn parse_blocks(tx: &Transaction, artifact: &Artifact, text: &str) -> Result<()>
 }
 
 impl Kernel {
+    pub fn ingest_file(
+        &mut self,
+        ctx: &AccessContext,
+        file: &FileIngestRequest,
+    ) -> Result<Artifact> {
+        self.check_context(ctx)?;
+        if file.content_base64.len() > MAX_SOURCE_BYTES.div_ceil(3) * 4 {
+            return Err(Error::Limit("file ceiling is 1 MiB".into()));
+        }
+        let raw = base64::engine::general_purpose::STANDARD
+            .decode(&file.content_base64)
+            .map_err(|_| Error::Invalid("invalid base64 file".into()))?;
+        let text = match file.media_type.as_str() {
+            "text/plain" | "text/markdown" | "text/csv" | "application/json" => Some(
+                std::str::from_utf8(&raw)
+                    .map_err(|_| Error::Invalid("text file must be UTF-8".into()))?,
+            ),
+            "image/png" if raw.starts_with(b"\x89PNG\r\n\x1a\n") => None,
+            "image/jpeg" if raw.starts_with(&[0xff, 0xd8, 0xff]) => None,
+            "application/pdf" if raw.starts_with(b"%PDF-") => None,
+            _ => return Err(Error::Invalid("unsupported file type or signature".into())),
+        };
+        let input = IngestRequest {
+            title: file.title.clone(),
+            content: "Binary original".into(),
+            visibility: file.visibility.clone(),
+            purpose: file.purpose.clone(),
+            provenance: file.provenance.clone(),
+        };
+        let tx = self.db.transaction()?;
+        let artifact =
+            insert_artifact_data(&tx, ctx, &input, &raw, Some(file.media_type.clone()), text)?;
+        tx.commit()?;
+        Ok(artifact)
+    }
+
+    pub fn file_content(&self, ctx: &AccessContext, id: &str) -> Result<serde_json::Value> {
+        let artifact = self.artifact(ctx, id)?;
+        let bytes = self.raw_source(ctx, id)?;
+        Ok(
+            serde_json::json!({ "artifact": artifact, "content_base64": base64::engine::general_purpose::STANDARD.encode(bytes) }),
+        )
+    }
     pub(crate) fn lineage_visible(&self, ctx: &AccessContext, ids: &[String]) -> Result<bool> {
         let mut statement = self.db.prepare_cached(
             "WITH RECURSIVE dependencies(id) AS (
@@ -247,6 +315,9 @@ impl Kernel {
             let a: Artifact = serde_json::from_str(data)?;
             if digest(raw) != a.sha256 {
                 return Err(Error::Conflict("source hash mismatch".into()));
+            }
+            if !a.is_text() {
+                continue;
             }
             let text = std::str::from_utf8(raw)
                 .map_err(|_| Error::Invalid("source is not UTF-8".into()))?;

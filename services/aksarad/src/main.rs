@@ -332,7 +332,8 @@ async fn api(
             ("GET","threads")=>Ok(json!(k.works(&ctx)?)),
             ("GET","thread")=>Ok(json!(k.work(&ctx,get("id")?)?)),
             ("GET","effects")=>Ok(json!(k.effects_for(&ctx,get("work_id")?)?)),
-            ("GET","artifact")=>Ok(json!({"artifact":k.artifact(&ctx,get("id")?)?,"content":String::from_utf8(k.raw_source(&ctx,get("id")?)?).map_err(|_|Error::Invalid("invalid source encoding".into()))?})),
+            ("GET","artifact")=>{let artifact=k.artifact(&ctx,get("id")?)?;let content=if artifact.is_text(){String::from_utf8(k.raw_source(&ctx,get("id")?)?).ok()}else{None};Ok(json!({"artifact":artifact,"content":content}))},
+            ("GET","file")=>k.file_content(&ctx,get("id")?),
             ("GET","events")=>{let after=query.get("after").map(|v|v.parse::<i64>().map_err(|_|Error::Invalid("invalid event cursor".into()))).unwrap_or(Ok(0))?;Ok(json!(k.events(&ctx,after,count("limit",100)?)?))},
             ("GET","memories")=>Ok(json!(k.memories(&ctx)?)),
             ("GET","memory-candidates")=>Ok(json!(k.memory_candidates(&ctx)?)),
@@ -343,6 +344,7 @@ async fn api(
                 {"name":"device.indicate","class":"effect","idempotent":true,"approval_required":true,"backend":"simulator","network_egress":false}
             ])),
             ("POST","ingest")=>Ok(json!(k.ingest(&ctx,&serde_json::from_value(input)?)?)),
+            ("POST","ingest-file")=>Ok(json!(k.ingest_file(&ctx,&serde_json::from_value(input)?)?)),
             ("POST","delegate")=>Ok(json!(k.delegate(&ctx,&serde_json::from_value(input)?)?)),
             ("POST","prepare")=>Ok(json!(k.prepare(&ctx,&serde_json::from_value(input)?)?)),
             ("POST","approve")=>Ok(json!(k.approve(&ctx,field(&input,"id")?,field(&input,"args_hash")?)?)),

@@ -33,6 +33,7 @@ export type Artifact = {
   sha256: string;
   owner: string;
   provenance?: string;
+  media_type?: string;
 };
 export const key = () => crypto.randomUUID();
 export const stateWord = (s: string) =>
@@ -66,7 +67,15 @@ export function PreviewNotice() {
 export function Mark() {
   return (
     <span className="mark" aria-hidden>
-      <Sprout size={23} />
+      <svg width="23" height="23" viewBox="0 0 24 24" fill="none">
+        <path
+          d="M5 19 12 5l7 14"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
     </span>
   );
 }

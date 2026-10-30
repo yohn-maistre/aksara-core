@@ -51,6 +51,8 @@ function App() {
     run,
     setDetail,
     navigate,
+    closeAssistant,
+    restoreScroll,
   } = useWorkspace();
   const reduced = useReducedMotion();
   const routeKey = `${session?.scope}:${page}`;
@@ -78,6 +80,13 @@ function App() {
   }, [routeKey, reduced]);
   const ready = settled === routeKey || !!reduced;
   useEffect(() => {
+    if (!ready || restoreScroll.current === null) return;
+    const top = restoreScroll.current;
+    restoreScroll.current = null;
+    document.querySelector(".work-surface .surface-body")?.scrollTo({ top });
+    if (page === "Today") window.scrollTo({ top });
+  }, [ready, page, session?.scope]);
+  useEffect(() => {
     if (page === "Ask" && ready && !document.querySelector('[role="dialog"]'))
       document
         .querySelector<HTMLTextAreaElement>(
@@ -93,7 +102,7 @@ function App() {
         !event.defaultPrevented &&
         !document.querySelector('[role="dialog"], [role="menu"]')
       )
-        navigate("Today");
+        closeAssistant();
     };
     window.addEventListener("keydown", escape);
     return () => window.removeEventListener("keydown", escape);
@@ -168,7 +177,7 @@ function App() {
                 <button
                   className="private-thread-close icon-button"
                   aria-label="Close private conversation"
-                  onClick={() => navigate("Today")}
+                  onClick={closeAssistant}
                 >
                   <X size={22} />
                 </button>

@@ -10,6 +10,7 @@ import { PREVIEW } from "../transport";
 
 import { stateWord } from "./shared";
 import { useWorkspace } from "./state";
+import { FilePreview } from "./FilePreview";
 
 export function WorkspaceOverlays() {
   const {
@@ -203,10 +204,11 @@ export function WorkspaceOverlays() {
             {detail && (
               <>
                 <p className="fingerprint">SHA-256 {detail.artifact.sha256}</p>
-                <pre className="document-content">{detail.content}</pre>
+                <FilePreview detail={detail} key={`${session.scope}:${detail.artifact.id}`} />
                 <div className="review-actions">
                   <button
                     className="secondary"
+                    disabled={typeof detail.content !== "string"}
                     onClick={() => {
                       setDocSources([detail.artifact.id]);
                       setDocTitle(`Notes on ${detail.artifact.title}`);
@@ -219,6 +221,7 @@ export function WorkspaceOverlays() {
                   </button>
                   <button
                     className="secondary"
+                    disabled={typeof detail.content !== "string"}
                     onClick={() =>
                       void run(async () => {
                         await api("kernel/memory-candidate", {

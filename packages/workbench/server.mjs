@@ -1,4 +1,9 @@
 import { createCodexBridge } from "../runtime-mastra/codex.mjs";
+import { createProviderCredentials } from "../runtime-mastra/credentials.mjs";
+import {
+  HOSTED_PROVIDERS,
+  providerFailure,
+} from "../runtime-mastra/hosted.mjs";
 import { resolveResourceSurface } from "./surfaces.mjs";
 import { validatePack } from "@aksara/contracts";
 import { finalizePcmWav } from "./audio.mjs";
@@ -34,6 +39,7 @@ const readOps = new Set([
   "thread",
   "effects",
   "artifact",
+  "file",
   "events",
   "memories",
   "memory-candidates",
@@ -44,6 +50,7 @@ const readOps = new Set([
 ]);
 const writeOps = new Set([
   "ingest",
+  "ingest-file",
   "delegate",
   "prepare",
   "approve",
@@ -76,7 +83,7 @@ async function body(req) {
     parts = [];
   for await (const p of req) {
     size += p.length;
-    if (size > 1100000) throw fail("Request too large", 413);
+    if (size > 1500000) throw fail("Request too large", 413);
     parts.push(p);
   }
   try {
@@ -110,6 +117,9 @@ export async function createWorkbench({
   const codex = createCodexBridge({
     root: path.join(providerStateDir, "codex"),
   });
+  const credentials = createProviderCredentials(
+    path.join(providerStateDir, "api-keys"),
+  );
   const sessions = new Map();
   const active = new Map();
   const admitted = new Set();
@@ -316,6 +326,37 @@ export async function createWorkbench({
         reply(res, result);
         return;
       }
+      if (req.method === "POST" && url.pathname === "/api/providers/key") {
+        const input = await body(req),
+          custody = await custodyFor();
+        if (!Object.hasOwn(HOSTED_PROVIDERS, input.provider))
+          throw fail("Unknown key provider");
+        if (input.remove !== true && input.terms_acknowledged !== true)
+          throw fail("Review this provider's billing and data terms first");
+        const current = async () => {
+          assertScope();
+          await custodyFor();
+          assertScope();
+        };
+        const result =
+          input.remove === true
+            ? await credentials.delete(custody, input.provider, current)
+            : await credentials.set(
+                custody,
+                input.provider,
+                input.key,
+                current,
+              );
+        for (const running of active.values())
+          if (
+            running.custody === custody &&
+            running.provider === input.provider
+          )
+            running.abort.abort();
+        assertScope();
+        reply(res, result);
+        return;
+      }
       if (
         req.method === "POST" &&
         url.pathname.startsWith("/api/providers/codex/")
@@ -349,6 +390,7 @@ export async function createWorkbench({
         return;
       }
       if (req.method === "GET" && url.pathname === "/api/providers") {
+        const custody = await custodyFor();
         let local = [];
         let available = false;
         let canPull = false;
@@ -383,17 +425,34 @@ export async function createWorkbench({
             }
           } catch {}
         }
+        const hosted = Object.fromEntries(
+          await Promise.all(
+            Object.entries(HOSTED_PROVIDERS).map(async ([id, entry]) => [
+              id,
+              {
+                name: entry.name,
+                models: entry.models.map((id) => ({ id })),
+                url: entry.url,
+                notice: entry.notice,
+                ...(await credentials.status(custody, id)),
+              },
+            ]),
+          ),
+        );
+        const codexStatus = await codex.status(custody);
+        assertScope();
         reply(res, {
+          hosted,
           local: { available, can_pull: canPull, models: local },
           opencode: {
             experimental: true,
             models: FREE_MODELS,
             verified_here: false,
-            probe_status: "rate_limited_429",
+            probe_status: "not_tested_this_session",
             notice:
               "Hosted experimental models. Availability and data-use terms can change. No paid fallback.",
           },
-          codex: { connected: false, models: [], requires_setup: true },
+          codex: codexStatus,
           voice: {
             configured: process.env.AKSARA_TTS_ENABLED === "1",
             engine: "Pocket TTS",
@@ -480,6 +539,11 @@ export async function createWorkbench({
       if (req.method === "POST" && url.pathname === "/api/chat") {
         const b = await body(req);
         modelConfig(b.provider, b.model);
+        const custody = await custodyFor();
+        const credential = Object.hasOwn(HOSTED_PROVIDERS, b.provider)
+          ? await credentials.lease(custody, b.provider)
+          : null;
+        assertScope();
         const fingerprint = JSON.stringify([
           snapshot.profile.id,
           snapshot.lane,
@@ -529,6 +593,8 @@ export async function createWorkbench({
             abort,
             scope: snapshot.scope,
             workId: run.work_id,
+            custody,
+            provider: b.provider,
           });
           const task = (async () => {
             try {
@@ -549,20 +615,22 @@ export async function createWorkbench({
                 model: run.model,
                 messages: context.messages,
                 signal: abort.signal,
+                apiKey: credential?.apiKey,
               });
               assertScope();
               subscription?.assertCurrent();
+              credential?.assertCurrent();
               await kernel(snapshot, "model-finish", {
                 id: run.id,
                 text,
                 failed: false,
               });
-            } catch {
+            } catch (error) {
               // Generic failure detail avoids returning provider echoes of private prompts.
               try {
                 await kernel(snapshot, "model-finish", {
                   id: run.id,
-                  text: "Provider unavailable or turn interrupted. No action was performed.",
+                  text: providerFailure(error, abort.signal),
                   failed: true,
                 });
               } catch {

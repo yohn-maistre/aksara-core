@@ -1,4 +1,5 @@
 import { FREE_MODELS, CODEX_MODELS } from "./catalogue.mjs";
+import { hostedConfig } from "./hosted.mjs";
 export { FREE_MODELS } from "./catalogue.mjs";
 export function localEndpoint() {
   const port = Number(process.env.AKSARA_LOCAL_MODEL_PORT || 11434);
@@ -11,6 +12,8 @@ export function modelConfig(provider, model) {
     throw new Error("Invalid model ID");
   if (provider === "codex-chatgpt" && CODEX_MODELS.includes(model))
     return { name: "codex-chatgpt", transport: "mastra-codex-oauth" };
+  const hosted = hostedConfig(provider, model);
+  if (hosted) return hosted;
   if (provider === "local")
     return {
       name: "aksara-local",
@@ -44,8 +47,11 @@ export async function generateReply({
   signal,
   fetchImpl,
   modelPort,
+  apiKey,
 }) {
   const config = modelConfig(provider, model);
+  if (hostedConfig(provider, model) && !apiKey)
+    throw new Error("Connect this provider in setup first");
   const [{ Agent }, { noopLogger }, { createOpenAICompatible }] =
     await Promise.all([
       import("@mastra/core/agent"),
@@ -56,6 +62,7 @@ export async function generateReply({
     ? null
     : createOpenAICompatible({
         ...config,
+        ...(apiKey ? { apiKey } : {}),
         fetch:
           fetchImpl ??
           ((url, options) => fetch(url, { ...options, redirect: "error" })),
@@ -72,6 +79,19 @@ export async function generateReply({
     maxSteps: 1,
     maxRetries: 0,
     modelSettings: { maxOutputTokens: 2048 },
+    ...(provider === "openrouter-free"
+      ? {
+          providerOptions: {
+            "openrouter-free": {
+              provider: {
+                max_price: { prompt: 0, completion: 0 },
+                allow_fallbacks: false,
+              },
+              plugins: [],
+            },
+          },
+        }
+      : {}),
   });
   if (typeof output.text !== "string" || !output.text.trim())
     throw new Error("Provider returned no text");

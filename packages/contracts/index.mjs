@@ -80,3 +80,4 @@ export const PublicationDraft = z
   })
   .strict();
 export { ResourceSurfacePlan, parseSurfaceProgram } from "./surfaces.mjs";
+export { ChannelMessage, ChannelBinding } from "./channels.mjs";

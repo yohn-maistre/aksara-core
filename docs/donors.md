@@ -187,3 +187,37 @@ documentation were reviewed. Cua remains an unpinned candidate: qualify actual
 Windows implementation and package-specific licensing before reuse. Driver/SDK
 licensing does not imply the same license for Spaces or optional extensions.
 See [readiness review and primary references](platform/surface-local-readiness.md).
+
+## Hermes/provider and Office increment — 31 October 2026
+
+Hermes Agent `5057eaa3a4d0cbef0e30078418a5115faa62889e`, MIT, Nous Research:
+`LICENSE`, provider rows in `hermes_cli/auth.py`, device-code request/poll/exchange
+in `hermes_cli/auth_codex.py`, OpenRouter PKCE/key exchange in
+`hermes_cli/auth_openrouter.py`, `gateway/session.py` SessionSource,
+`gateway/platforms/base.py` adapter/SendResult/thread-routing sections,
+`tools/registry.py` discovery, `tools/web_tools.py` provider selection, and
+`plugin-catalog/composio-connections.yaml` were studied. Reuse is the separation
+of provider connection from model choice, explicit routing coordinates and
+typed failures. Aksara retains its existing Mastra Codex transport and writes
+its own scoped credentials/channel port. No upstream runtime, source blocks,
+ambient environment-key discovery, CLI credential import, donor session store,
+automatic fallback or account pool is copied.
+
+The pinned Hermes catalogue's Composio entry is an optional community connection
+manager, not a self-hosted Composio backend. Official Composio SDK/backend and
+Activepieces root/EE license boundaries were checked; neither platform is added.
+
+`@univerjs/presets` and `@univerjs/preset-sheets-core` 1.3.1, Apache-2.0:
+actual npm manifests/LICENSE, preset implementation/exports, Facade declarations
+for createWorkbook/save/dispose and locale/config types were studied before
+import. Matching OSS packages are pinned in the lockfile. A lazy editor owns one
+bounded CSV worktree; Aksara creates and reviews derived artifacts. No Pro
+dependency, conversion service, native binding, application credential or CLI
+daemon is installed. The built sheet chunk is approximately 6.66 MB uncompressed
+(1.76 MB gzip); it is loaded only when a user opens spreadsheet editing.
+
+Papa Parse 5.7.0, MIT: published LICENSE, UMD/public entry points, unparse options
+and quoting/formula handling were studied. It handles CSV parsing/serialization
+inside that editor. Imported formula-like strings remain text cells; explicit
+editor formulas enter the reviewed CSV. Static-site licenses are shipped under
+`apps/platform/public/licenses/`; release inventories retain package notices.

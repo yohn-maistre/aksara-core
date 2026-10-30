@@ -171,7 +171,9 @@ try {
     .waitFor();
   mark("Reviewed knowledge appears in Library with its eligible source");
   await page.getByRole("button", { name: "Ask PRIVATE" }).click();
-  await page.locator(".composer-options > summary").click();
+  await page
+    .getByRole("button", { name: "Model & sources", exact: true })
+    .click();
   await page.getByLabel("Model", { exact: true }).selectOption("fixture-local");
   await page.getByText("Reference Library sources locally").click();
   await page.getByLabel("Private original", { exact: true }).check();
@@ -307,6 +309,88 @@ try {
     0,
   );
   mark("Source withdrawal also removes the dependent pinned Home panel");
+  const csvOriginal = Buffer.from(
+    'Item,Amount\r\n"Paper, office",42\r\nWater,10\r\n',
+  );
+  await page
+    .getByLabel("Upload Library file")
+    .setInputFiles({
+      name: "budget.csv",
+      mimeType: "text/csv",
+      buffer: csvOriginal,
+    });
+  await page
+    .locator(".file-explorer")
+    .getByRole("button", { name: /^budget.csv Private/ })
+    .click();
+  const downloading = page.waitForEvent("download");
+  await page
+    .getByRole("button", { name: "Download original", exact: true })
+    .click();
+  const download = await downloading;
+  assert.deepEqual(await readFile(await download.path()), csvOriginal);
+  mark("File upload and authorized download preserve exact CSV original bytes");
+  await page
+    .getByRole("button", { name: "Edit spreadsheet", exact: true })
+    .click();
+  const canvas = page
+    .getByLabel("CSV spreadsheet worktree")
+    .locator("canvas:visible")
+    .first();
+  await canvas.waitFor({ timeout: 30000 });
+  const box = await canvas.boundingBox();
+  await page.mouse.dblclick(box.x + 55, box.y + 65);
+  await page.keyboard.press("ControlOrMeta+A");
+  await page.keyboard.type("Edited paper");
+  await page.keyboard.press("Enter");
+  await page
+    .getByRole("button", { name: "Review spreadsheet revision", exact: true })
+    .click();
+  assert.match(
+    await page.getByLabel("Document content", { exact: true }).inputValue(),
+    /Edited paper/,
+  );
+  await page
+    .getByRole("button", { name: "Prepare for review", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Approve exact proposal", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Execute approved effect", exact: true })
+    .click();
+  await page.getByText(/Receipt: VERIFIED/).waitFor();
+  await page.getByRole("button", { name: "Close work", exact: true }).click();
+  mark(
+    "Actual Univer cell editing produces a source-linked reviewed document and receipt",
+  );
+  await page
+    .locator(".file-explorer")
+    .getByRole("button", { name: /^budget.csv Private/ })
+    .click();
+  await page
+    .getByRole("button", { name: "Edit spreadsheet", exact: true })
+    .click();
+  await page
+    .getByLabel("CSV spreadsheet worktree")
+    .locator("canvas:visible")
+    .first()
+    .waitFor();
+  await page
+    .getByRole("button", { name: "Withdraw source", exact: true })
+    .click();
+  await page
+    .getByLabel("CSV spreadsheet worktree")
+    .waitFor({ state: "hidden" });
+  await page.waitForFunction(
+    () =>
+      !document
+        .querySelector(".file-rows")
+        ?.textContent.includes("Revision of budget.csv"),
+  );
+  mark(
+    "Withdrawing the original disposes the open Office worktree and hides its derived revision",
+  );
   await page.getByRole("button", { name: "Home", exact: true }).click();
   await page.getByLabel("Historical date").fill("2001-01-01");
   await page
@@ -350,6 +434,9 @@ try {
     "Device effect is reviewed and receipted through the independent simulator",
   );
   let releaseScope, scopeEntered;
+  const sharedOrigin = await page.evaluate(() =>
+    fetch("/api/session").then((r) => r.json()),
+  );
   const scopeGate = new Promise((resolve) => {
     releaseScope = resolve;
   });
@@ -386,7 +473,27 @@ try {
   mark(
     "Blob entry awaits private host admission and blocks submission during the scope switch",
   );
-  await page.locator(".composer-options > summary").click();
+  await page
+    .getByRole("button", { name: "Close private conversation", exact: true })
+    .click();
+  await page
+    .getByRole("heading", { name: "Capabilities", exact: true })
+    .waitFor();
+  assert.equal(
+    (await page.evaluate(() => fetch("/api/session").then((r) => r.json())))
+      .lane,
+    sharedOrigin.lane,
+  );
+  mark(
+    "Closing private chat re-admits its originating shared context and returns to Tools",
+  );
+  await page.getByRole("button", { name: "Ask PRIVATE", exact: true }).click();
+  await page
+    .getByRole("heading", { name: "Private thread", exact: true })
+    .waitFor();
+  await page
+    .getByRole("button", { name: "Model & sources", exact: true })
+    .click();
   await page.getByLabel("Model provider").selectOption("opencode-free");
   await page.getByLabel("Message Aksara").fill("Synthetic cloud prompt");
   assert.ok(

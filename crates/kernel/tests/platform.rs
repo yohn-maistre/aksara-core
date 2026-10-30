@@ -268,3 +268,36 @@ fn codex_subscription_is_hosted_and_excludes_other_provider_context() {
     assert!(!input.to_string().contains("OTHER_HOSTED_SECRET"));
     assert_eq!(input["library_injected"], false);
 }
+
+#[test]
+fn additional_hosted_providers_require_consent_and_never_mix_custody() {
+    for provider in ["gemini", "groq", "openrouter-free"] {
+        let mut f = F::new();
+        let c = f.ctx(0, 1);
+        let local = f.k.begin_model(&c, &f.req("local", "LOCAL_ONLY")).unwrap();
+        f.k.finish_model(&c, &local.id, "PRIVATE_REPLY", false)
+            .unwrap();
+        let other =
+            f.k.begin_model(&c, &f.req("opencode-free", "OTHER_PROVIDER"))
+                .unwrap();
+        f.k.finish_model(&c, &other.id, "OTHER_REPLY", false)
+            .unwrap();
+        let mut q = f.req(provider, "current");
+        q.cloud_consent = false;
+        assert!(f.k.begin_model(&c, &q).is_err());
+        q.cloud_consent = true;
+        q.source_ids = vec!["unselected-source".into()];
+        assert!(f.k.begin_model(&c, &q).is_err());
+        q.source_ids.clear();
+        let run = f.k.begin_model(&c, &q).unwrap();
+        let input = f.k.model_input(&c, &run.id).unwrap().to_string();
+        for secret in [
+            "LOCAL_ONLY",
+            "PRIVATE_REPLY",
+            "OTHER_PROVIDER",
+            "OTHER_REPLY",
+        ] {
+            assert!(!input.contains(secret));
+        }
+    }
+}

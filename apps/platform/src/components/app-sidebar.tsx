@@ -6,14 +6,15 @@ import {
   House,
   Layers,
   PanelLeftClose,
+  PanelLeftOpen,
   Settings2,
-  Sprout,
   X,
 } from "lucide-react";
 import { useState } from "react";
 import { Dock, DockItem } from "./ui/dock";
 import { useWorkspace } from "../workspace/state";
 import { ContextMenu } from "../workspace/ContextMenu";
+import { AksaraLauncher } from "../workspace/AksaraLauncher";
 import {
   Sidebar,
   SidebarContent,
@@ -52,26 +53,26 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton
               className="brand-button"
-              tooltip={
-                state === "collapsed" ? "Expand sidebar" : "Collapse sidebar"
-              }
-              aria-label={
-                isMobile
-                  ? "Close navigation"
-                  : state === "collapsed"
-                    ? "Expand sidebar"
-                    : "Collapse sidebar"
-              }
-              onClick={() =>
-                isMobile ? setOpenMobile(false) : toggleSidebar()
-              }
+              tooltip="Aksara Home"
+              aria-label="Aksara Home"
+              onClick={() => go("Today")}
             >
-              <Sprout />
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="M5 19 12 5l7 14"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
               <span>Aksara</span>
-              {state === "expanded" && (isMobile ? <X /> : <PanelLeftClose />)}
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
+        <div className="sidebar-assistant">
+          <AksaraLauncher />
+        </div>
       </SidebarHeader>
       <SidebarContent>
         <nav aria-label="Main">
@@ -153,6 +154,28 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter>
         <div className="rail-presence" aria-hidden />
+        <SidebarMenuButton
+          tooltip={
+            state === "collapsed" ? "Expand sidebar" : "Collapse sidebar"
+          }
+          aria-label={
+            isMobile
+              ? "Close navigation"
+              : state === "collapsed"
+                ? "Expand sidebar"
+                : "Collapse sidebar"
+          }
+          onClick={() => (isMobile ? setOpenMobile(false) : toggleSidebar())}
+        >
+          {isMobile ? (
+            <X />
+          ) : state === "collapsed" ? (
+            <PanelLeftOpen />
+          ) : (
+            <PanelLeftClose />
+          )}
+          <span>{isMobile ? "Close navigation" : "Collapse sidebar"}</span>
+        </SidebarMenuButton>
         <ContextMenu />
         <SidebarMenu>
           <SidebarMenuItem>

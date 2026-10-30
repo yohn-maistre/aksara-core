@@ -23,6 +23,11 @@ impl Kernel {
             return Err(Error::Denied);
         }
         let source = self.artifact(ctx, &c.source_artifact_id)?;
+        if !source.is_text() {
+            return Err(Error::Invalid(
+                "binary source needs a qualified text projection".into(),
+            ));
+        }
         if source.visibility == Visibility::Private && c.visibility != Visibility::Private {
             return Err(Error::Denied);
         }

@@ -1,0 +1,55 @@
+name: Native Windows development package
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: windows-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  portable:
+    runs-on: windows-2022
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24.19.0'
+      - name: Rust toolchain
+        run: rustup toolchain install 1.99.0 --profile minimal
+      - name: Build and qualify authority
+        run: |
+          cargo test --locked --workspace
+          cargo build --locked --release --workspace
+      - name: Build PWA and qualify native launcher
+        shell: pwsh
+        run: |
+          npm ci
+          npm run build
+          $env:AKSARA_TEST_BINARY = (Resolve-Path target/release/aksarad.exe).Path
+          node tests/launcher-ops.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Assemble portable ZIP
+        shell: pwsh
+        run: |
+          $nodeExe = (Get-Command node).Source
+          python scripts/package_windows.py --binary target/release/aksarad.exe --node "$nodeExe"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify extracted bundle without source dependencies
+        shell: pwsh
+        run: |
+          Expand-Archive dist/aksara-windows-x64.zip -DestinationPath "$env:RUNNER_TEMP/Aksara Bundle ü" -Force
+          $bundle = "$env:RUNNER_TEMP/Aksara Bundle ü/aksara-windows-x64"
+          $env:AKSARA_LAUNCHER_SCRIPT = "$bundle/scripts/aksara.mjs"
+          $env:AKSARA_TEST_BINARY = "$bundle/bin/aksarad.exe"
+          & "$bundle/bin/node.exe" tests/launcher-ops.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: aksara-windows-x64
+          path: |
+            dist/aksara-windows-x64.zip
+            dist/SHA256SUMS-windows.txt
+          retention-days: 30

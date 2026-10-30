@@ -40,3 +40,10 @@ conversation expansion, controlled Dynamic Island progress, a denser composer,
 procedural local-time atmosphere and Material color roles are implemented.
 See [current checkpoint](expressive-workspace-implementation.md). Existing
 runtime promotion gates remain unchanged.
+
+31 October increment: persistent navigation blob and origin-return, Auto day/night
+roles, bounded composer popover, native-process CLI and Windows CI bundle,
+explicit Gemini/Groq/OpenRouter keys through Mastra, byte-preserving Library file
+APIs and lazy OSS Univer CSV worktrees. Channel ingress is a strict unconnected
+port; generic tool/computer execution and production enrollment remain gated.
+See [implementation and run instructions](windows-local.md).

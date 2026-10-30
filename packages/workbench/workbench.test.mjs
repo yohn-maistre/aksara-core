@@ -52,7 +52,12 @@ async function fixture(generate) {
     });
   }
   const port = await freePort();
-  const app = await createWorkbench({ profiles, port, generate });
+  const app = await createWorkbench({
+    profiles,
+    port,
+    generate,
+    providerStateDir: path.join(dir, "providers"),
+  });
   await new Promise((r) => app.server.listen(port, "127.0.0.1", r));
   const base = `http://127.0.0.1:${port}`;
   let cookie = "",
@@ -161,6 +166,67 @@ test("real hosts: session boundary, CSRF, separate personal custody, and stale-c
     assert.match(logged.headers.get("set-cookie"), /HttpOnly; SameSite=Strict/);
     assert.equal((await f.request("session")).status, 401);
   } finally {
+    await f.close();
+  }
+});
+test("real hosts: saved provider keys never return to the browser and disconnect fences an in-flight reply", async () => {
+  let release, started;
+  const gate = new Promise((r) => (release = r)),
+    entered = new Promise((r) => (started = r));
+  const f = await fixture(async (input) => {
+    assert.equal(input.apiKey, "SYNTHETIC_PROVIDER_KEY");
+    started();
+    await gate;
+    return "LATE_KEY_REPLY";
+  });
+  try {
+    const save = await f.request("providers/key", {
+      provider: "gemini",
+      key: "SYNTHETIC_PROVIDER_KEY",
+      terms_acknowledged: true,
+    });
+    assert.equal(save.status, 200);
+    const settings = await f.request("providers");
+    assert.equal(settings.value.hosted.gemini.connected, true);
+    assert.ok(
+      !JSON.stringify(settings.value).includes("SYNTHETIC_PROVIDER_KEY"),
+    );
+    const q = {
+      provider: "gemini",
+      model: "gemini-2.5-flash",
+      text: "Synthetic turn",
+      cloud_consent: false,
+      source_ids: [],
+      idempotency_key: "provider-key",
+    };
+    assert.equal((await f.request("chat", q)).status, 403);
+    q.cloud_consent = true;
+    assert.equal((await f.request("chat", q)).status, 202);
+    await entered;
+    await f.request("providers/key", { provider: "gemini", remove: true });
+    release();
+    for (let i = 0; i < 100; i++) {
+      if (
+        (await f.request("kernel/threads")).value.every(
+          (w) => w.state !== "WORKING",
+        )
+      )
+        break;
+      await new Promise((r) => setTimeout(r, 20));
+    }
+    assert.ok(
+      !JSON.stringify((await f.request("kernel/messages")).value).includes(
+        "LATE_KEY_REPLY",
+      ),
+    );
+    const switched = await f.request("scope", { profile: "personal" });
+    f.scope = switched.value.scope;
+    assert.equal(
+      (await f.request("providers")).value.hosted.gemini.connected,
+      false,
+    );
+  } finally {
+    release();
     await f.close();
   }
 });
@@ -337,18 +403,65 @@ test("local speech rechecks message eligibility and discards audio after a conte
   }
 });
 
-test('real hosts: generated surface resource IDs cannot bypass scope, withdrawal or CSRF',async()=>{
- const f=await fixture();try{
-  const source=await f.request('kernel/ingest',{title:'Private surface source',content:'SURFACE_PRIVATE_SENTINEL',visibility:'private',purpose:'knowledge',provenance:'test'});
-  const plan={protocol:'aksara.resource-surface/1',component:'DocumentPreview',title:'Requested source',ids:[source.value.id]};
-  const resolved=await f.request('surfaces/resolve',plan);assert.equal(resolved.status,200);assert.equal(resolved.value.resources[0].content,'SURFACE_PRIVATE_SENTINEL');assert.equal(resolved.value.scope_ref,f.scope);
-  assert.equal((await f.request('surfaces/resolve',plan,{origin:'https://evil.test'})).status,403);
-  const scope=f.scope;const personal=await f.request('scope',{profile:'personal'});f.scope=personal.value.scope;
-  assert.equal((await f.request('surfaces/resolve',plan)).status,404);
-  assert.equal((await f.request('surfaces/resolve',plan,{'x-aksara-scope':scope})).status,409);
-  const community=await f.request('scope',{profile:'community'});f.scope=community.value.scope;
-  await f.request('kernel/withdraw',{id:source.value.id});
-  const withdrawn=await f.request('surfaces/resolve',plan);assert.equal(withdrawn.status,404);assert.ok(!JSON.stringify(withdrawn.value).includes('SURFACE_PRIVATE_SENTINEL'));
-  assert.equal((await f.request('surfaces/resolve',{...plan,component:'ExecuteTool',approve:true})).status,400);
- }finally{await f.close()}
+test("real hosts: generated surface resource IDs cannot bypass scope, withdrawal or CSRF", async () => {
+  const f = await fixture();
+  try {
+    const source = await f.request("kernel/ingest", {
+      title: "Private surface source",
+      content: "SURFACE_PRIVATE_SENTINEL",
+      visibility: "private",
+      purpose: "knowledge",
+      provenance: "test",
+    });
+    const plan = {
+      protocol: "aksara.resource-surface/1",
+      component: "DocumentPreview",
+      title: "Requested source",
+      ids: [source.value.id],
+    };
+    const resolved = await f.request("surfaces/resolve", plan);
+    assert.equal(resolved.status, 200);
+    assert.equal(
+      resolved.value.resources[0].content,
+      "SURFACE_PRIVATE_SENTINEL",
+    );
+    assert.equal(resolved.value.scope_ref, f.scope);
+    assert.equal(
+      (
+        await f.request("surfaces/resolve", plan, {
+          origin: "https://evil.test",
+        })
+      ).status,
+      403,
+    );
+    const scope = f.scope;
+    const personal = await f.request("scope", { profile: "personal" });
+    f.scope = personal.value.scope;
+    assert.equal((await f.request("surfaces/resolve", plan)).status, 404);
+    assert.equal(
+      (await f.request("surfaces/resolve", plan, { "x-aksara-scope": scope }))
+        .status,
+      409,
+    );
+    const community = await f.request("scope", { profile: "community" });
+    f.scope = community.value.scope;
+    await f.request("kernel/withdraw", { id: source.value.id });
+    const withdrawn = await f.request("surfaces/resolve", plan);
+    assert.equal(withdrawn.status, 404);
+    assert.ok(
+      !JSON.stringify(withdrawn.value).includes("SURFACE_PRIVATE_SENTINEL"),
+    );
+    assert.equal(
+      (
+        await f.request("surfaces/resolve", {
+          ...plan,
+          component: "ExecuteTool",
+          approve: true,
+        })
+      ).status,
+      400,
+    );
+  } finally {
+    await f.close();
+  }
 });

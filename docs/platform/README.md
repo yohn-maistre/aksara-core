@@ -1,9 +1,12 @@
-Current UI checkpoint: [expressive dock workspace](expressive-workspace-implementation.md); models: [Mastra integration review](mastra-integration-review.md). Earlier UI checkpoints remain historical evidence.
+Current implementation: [native local package, persistent assistant, providers and files](windows-local.md).
+Earlier [expressive dock workspace](expressive-workspace-implementation.md) and
+[Mastra integration review](mastra-integration-review.md) remain historical evidence.
 
 [Surface Pro 3 / Docker-free readiness review](surface-local-readiness.md) records
 the next persistent-assistant refinements, native Windows package proposal,
 Univer/file boundaries and fresh Linux checks. Windows packaging and those UI
-refinements are proposals, not shipped features.
+refinements began as proposals; [the new implementation checkpoint](windows-local.md)
+records what is now implemented and the remaining Windows/device gates.
 
 [Expressive workspace direction](expressive-workspace-direction.md) records the
 research preceding the current dock, adaptive atmosphere and composer pass.

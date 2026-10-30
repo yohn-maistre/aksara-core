@@ -174,6 +174,12 @@ export function SettingsView() {
             <AppearanceControls />
             <div className="context-options">
               <button
+                onClick={() => setTheme("auto")}
+                className={theme === "auto" ? "selected-context" : ""}
+              >
+                Auto · local time
+              </button>
+              <button
                 onClick={() => setTheme("light")}
                 className={theme === "light" ? "selected-context" : ""}
               >
@@ -190,12 +196,11 @@ export function SettingsView() {
             </div>
           </DuetCard>
           <DuetCard className="settings-card">
-            <h2>Hosted free models</h2>
+            <h2>Model connections</h2>
             <p>
-              OpenCode supports public keyless access to free models. The live
-              completion probe returned HTTP 429 (free usage limit reached)
-              during qualification here. Availability and data-use terms may
-              change.
+              Connect your ChatGPT subscription, Google AI Studio, Groq or
+              OpenRouter in setup. OpenCode keyless access is experimental. Free
+              tiers depend on account access and current limits.
             </p>
             <p>
               No paid provider fallback. Each hosted prompt requires explicit

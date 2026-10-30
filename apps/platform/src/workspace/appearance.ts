@@ -69,17 +69,28 @@ export function useAppearance(theme: string) {
       window.removeEventListener("focus", update);
     };
   }, []);
+  const hour = previewHour ?? now.getHours() + now.getMinutes() / 60;
+  const resolvedTheme =
+    theme === "auto" ? (hour >= 7 && hour < 18 ? "light" : "dark") : theme;
   const colors = useMemo(
     () =>
       themeFromSourceColor(argbFromHex(PALETTES[palette])).schemes[
-        theme === "dark" ? "dark" : "light"
+        resolvedTheme === "dark" ? "dark" : "light"
       ].toJSON(),
-    [palette, theme],
+    [palette, resolvedTheme],
   );
-  const hour = previewHour ?? now.getHours() + now.getMinutes() / 60;
   const phase = atmosphereForHour(hour);
   useLayoutEffect(() => {
     const root = document.documentElement;
+    root.classList.toggle("dark", resolvedTheme === "dark");
+    root.style.colorScheme = resolvedTheme;
+    root.dataset.appearance = resolvedTheme;
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute(
+        "content",
+        resolvedTheme === "dark" ? "#23222b" : "#e7e5eb",
+      );
     const c = (role: keyof typeof colors) => hexFromArgb(colors[role]);
     const roles = {
       "--canvas": "background",
@@ -101,7 +112,14 @@ export function useAppearance(theme: string) {
     root.style.setProperty("--atmo-light", `${phase.lightness}%`);
     root.dataset.atmosphere = atmosphere;
     root.dataset.effects = reducedEffects ? "reduced" : "full";
-  }, [colors, phase.hue, phase.lightness, atmosphere, reducedEffects]);
+  }, [
+    colors,
+    phase.hue,
+    phase.lightness,
+    atmosphere,
+    reducedEffects,
+    resolvedTheme,
+  ]);
   useEffect(() => {
     try {
       localStorage.setItem("aksara-palette", palette);
@@ -115,6 +133,7 @@ export function useAppearance(theme: string) {
     }
   }, [palette, atmosphere, reducedEffects]);
   return {
+    resolvedTheme,
     palette,
     setPalette,
     atmosphere,

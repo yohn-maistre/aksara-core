@@ -213,7 +213,7 @@ impl Kernel {
         bounded(&req.model, 128)?;
         if !matches!(
             req.provider.as_str(),
-            "local" | "opencode-free" | "codex-chatgpt"
+            "local" | "opencode-free" | "codex-chatgpt" | "gemini" | "groq" | "openrouter-free"
         ) {
             return Err(Error::Invalid("unknown provider".into()));
         }
@@ -248,6 +248,11 @@ impl Kernel {
         let mut source_text = String::new();
         for id in &req.source_ids {
             let a = self.artifact(ctx, id)?;
+            if !a.is_text() {
+                return Err(Error::Invalid(
+                    "binary source needs a qualified text projection".into(),
+                ));
+            }
             let text = String::from_utf8(self.raw_source(ctx, id)?)
                 .map_err(|_| Error::Invalid("invalid source text".into()))?;
             source_text.push_str(&format!(

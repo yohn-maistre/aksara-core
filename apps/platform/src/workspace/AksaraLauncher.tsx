@@ -7,7 +7,6 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { Sprout } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { useWorkspace } from "./state";
 const Blob = lazy(() =>
@@ -16,11 +15,7 @@ const Blob = lazy(() =>
   })),
 );
 function StillBlob() {
-  return (
-    <span className="blob-still" aria-hidden>
-      <Sprout size={25} />
-    </span>
-  );
+  return <span className="blob-still" aria-hidden />;
 }
 class ShaderBoundary extends Component<
   { children: ReactNode },
@@ -81,14 +76,16 @@ export function AksaraLauncher() {
       : palette === "sage"
         ? ["#658a7b", "#b8d2bb", "#a78bc7", "#dbc7af"]
         : ["#9875c0", "#c4a4e8", "#c58d77", "#6a7baf"];
-  if (page === "Ask") return null;
   return (
     <motion.button
       ref={anchor}
-      layoutId={`aksara-personal:${session?.scope}`}
+      layoutId={
+        page === "Ask" ? undefined : `aksara-personal:${session?.scope}`
+      }
       className="aksara-launcher"
       aria-label="Ask PRIVATE"
       title="Open private conversation"
+      aria-expanded={page === "Ask"}
       disabled={busy}
       onClick={() => navigate("Ask")}
     >

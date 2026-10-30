@@ -16,6 +16,7 @@ name = "aksara-kernel"
 version = "0.1.0"
 dependencies = [
  "aksara-core-types",
+ "base64 0.22.1",
  "fs2",
  "hex",
  "hmac",

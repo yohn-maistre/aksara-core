@@ -22,6 +22,13 @@ import {
 function useWorkspaceState() {
   const composerInput = useRef<HTMLTextAreaElement>(null);
   const transferComposerFocus = useRef(false);
+  const assistantOrigin = useRef<{
+    page: string;
+    profile: string;
+    lane: string;
+    scroll: number;
+  } | null>(null);
+  const restoreScroll = useRef<number | null>(null);
   const [profiles, setProfiles] = useState<Profile[]>([]),
     [session, setSession] = useState<Session | null>(null),
     [page, setPage] = useState("Today"),
@@ -71,7 +78,7 @@ function useWorkspaceState() {
     [channelName, setChannelName] = useState(""),
     [localModel, setLocalModel] = useState("smollm2:135m"),
     [theme, setTheme] = useState(
-      localStorage.getItem("aksara-theme") || "dark",
+      localStorage.getItem("aksara-theme") || "auto",
     ),
     [ambientMotion, setAmbientMotion] = useState(
       localStorage.getItem("aksara-ambient-motion") !== "off",
@@ -89,10 +96,6 @@ function useWorkspaceState() {
     el.style.height = `${Math.max(24, Math.min(192, el.scrollHeight))}px`;
   }, [draft, page]);
   useLayoutEffect(() => {
-    document.documentElement.classList.toggle("dark", theme === "dark");
-    document
-      .querySelector('meta[name="theme-color"]')
-      ?.setAttribute("content", theme === "dark" ? "#23222b" : "#e7e5eb");
     localStorage.setItem("aksara-theme", theme);
   }, [theme]);
   useEffect(() => {
@@ -150,7 +153,8 @@ function useWorkspaceState() {
     },
     [],
   );
-  function accept(s: Session) {
+  function accept(s: Session, preserveAssistant = false) {
+    if (!preserveAssistant) assistantOrigin.current = null;
     transferComposerFocus.current = false;
     stopAudio();
     scope.current = s.scope;
@@ -413,9 +417,50 @@ function useWorkspaceState() {
       ["AWAITING_APPROVAL", "NEEDS_INPUT"].includes(w.state),
     ),
     visibleWorks = history ? history.work.map((h: Data) => h.work) : works;
+  const closeAssistant = () => {
+    const origin = assistantOrigin.current;
+    assistantOrigin.current = null;
+    if (!origin || !session) {
+      setPage("Today");
+      return;
+    }
+    const finish = () => {
+      restoreScroll.current = origin.scroll;
+      transferComposerFocus.current = origin.page === "Today";
+      setPage(origin.page);
+    };
+    if (origin.profile !== session.profile.id || origin.lane !== session.lane) {
+      void run(async () => {
+        try {
+          const next = await api("scope", {
+            profile: origin.profile,
+            lane: origin.lane,
+          });
+          accept(next);
+          finish();
+        } catch (e) {
+          setPage("Today");
+          throw e;
+        }
+      });
+    } else finish();
+  };
   const navigate = (p: string) => {
+    if (p === "Ask" && page === "Ask") {
+      closeAssistant();
+      return;
+    }
+    if (p !== "Ask") assistantOrigin.current = null;
     if (page === "Ask" && p === "Today") transferComposerFocus.current = true;
     if (p === "Ask" && session) {
+      assistantOrigin.current = {
+        page,
+        profile: session.profile.id,
+        lane: session.lane,
+        scroll:
+          document.querySelector(".work-surface .surface-body")?.scrollTop ||
+          window.scrollY,
+      };
       const own = session.lanes.find((l) => l.lane.audience.length === 1);
       if (!own) {
         setError("No private conversation is available in this space.");
@@ -428,7 +473,7 @@ function useWorkspaceState() {
             profile: session.profile.id,
             lane: own.lane.id,
           });
-          accept(next);
+          accept(next, true);
           setPage("Ask");
         });
         return;
@@ -543,6 +588,8 @@ function useWorkspaceState() {
     needs,
     visibleWorks,
     navigate,
+    closeAssistant,
+    restoreScroll,
   };
 }
 

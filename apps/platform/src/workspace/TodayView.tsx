@@ -1,4 +1,3 @@
-import { AksaraLauncher } from "./AksaraLauncher";
 import { WorkIsland } from "./WorkIsland";
 import {
   ArrowUpRight,
@@ -155,7 +154,6 @@ export function TodayView({
       aria-label="Home"
     >
       <div className="home-intro">
-        <AksaraLauncher />
         <span className="home-label">Home</span>
         <p className="home-date">{shortDate(new Date())}</p>
         <Heading>

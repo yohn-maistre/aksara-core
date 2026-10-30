@@ -53,6 +53,17 @@ pub struct IngestRequest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct FileIngestRequest {
+    pub title: String,
+    pub content_base64: String,
+    pub media_type: String,
+    pub visibility: Visibility,
+    pub purpose: String,
+    pub provenance: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Artifact {
     pub id: String,
     pub title: String,
@@ -62,6 +73,18 @@ pub struct Artifact {
     pub purpose: String,
     pub provenance: String,
     pub bytes: usize,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub media_type: Option<String>,
+}
+impl Artifact {
+    pub fn is_text(&self) -> bool {
+        self.media_type.as_deref().is_none_or(|kind| {
+            matches!(
+                kind,
+                "text/plain" | "text/markdown" | "text/csv" | "application/json"
+            )
+        })
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

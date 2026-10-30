@@ -12,6 +12,8 @@ import WizardExpandable from "../components/ui/wizard-expandable";
 import { PREVIEW } from "../transport";
 import { key, type Data } from "./shared";
 import { useWorkspace } from "./state";
+import { KEY_PROVIDERS, modelsFor, providerName } from "./provider-options";
+import { ProviderKeyConnection } from "./ProviderKeyConnection";
 export function SetupView() {
   const {
     session,
@@ -37,6 +39,40 @@ export function SetupView() {
   const choice = PREVIEW ? previewChoice : provider;
   const pending = useRef<Data | null>(null);
   pending.current = login;
+  useEffect(() => {
+    if (!login || PREVIEW) return;
+    let stopped = false;
+    const timer = setInterval(
+      async () => {
+        try {
+          const result = await api("providers/codex/poll", {
+            login_id: login.login_id,
+          });
+          if (stopped || result.status !== "complete") return;
+          const connection = await api("providers/codex");
+          if (stopped) return;
+          setProviders((p: Data) => ({ ...p, codex: connection }));
+          setModel(connection.models?.[0]?.id || "");
+          setLogin(null);
+          setStatus(
+            "ChatGPT sign-in saved. Send a test message to verify model access.",
+          );
+        } catch {
+          if (!stopped) {
+            setLogin(null);
+            setStatus(
+              "Sign-in could not complete. Try again, or choose another connection.",
+            );
+          }
+        }
+      },
+      Math.max(5000, login.next_poll_ms || 5000),
+    );
+    return () => {
+      stopped = true;
+      clearInterval(timer);
+    };
+  }, [login, api, session?.scope]);
   useEffect(
     () => () => {
       const current = pending.current;
@@ -48,13 +84,7 @@ export function SetupView() {
     [session?.scope, api],
   );
   if (!session) return null;
-  const selectedModel = PREVIEW
-    ? [{ id: "guided-demo", name: "Guided UI demo · no model calls" }]
-    : provider === "local"
-      ? providers.local?.models
-      : provider === "codex-chatgpt"
-        ? providers.codex?.models
-        : (providers.opencode?.models || []).map((id: string) => ({ id }));
+  const selectedModel = modelsFor(providers, PREVIEW ? "preview" : provider);
   const test = works.find((w) => w.id === testId);
   const inspectCodex = async () => {
     if (login) await api("providers/codex/poll", { login_id: login.login_id });
@@ -78,13 +108,7 @@ export function SetupView() {
     setProvider(value);
     setConsent(false);
     setStatus("");
-    setModel(
-      value === "local"
-        ? providers.local?.models?.[0]?.id || ""
-        : value === "codex-chatgpt"
-          ? providers.codex?.models?.[0]?.id || ""
-          : providers.opencode?.models?.[0] || "big-pickle",
-    );
+    setModel(modelsFor(providers, value)[0]?.id || "");
   };
   return (
     <div className="setup-page">
@@ -189,6 +213,12 @@ export function SetupView() {
                       "ChatGPT subscription",
                       "Connect your subscription through Mastra.",
                     ],
+                    ...KEY_PROVIDERS.map((id) => [
+                      id,
+                      KeyRound,
+                      providerName(id),
+                      "Bring your own key · account free tier or billing applies.",
+                    ]),
                   ].map(([value, Icon, label, detail]) => {
                     const Glyph = Icon as typeof Cpu;
                     return (
@@ -208,6 +238,9 @@ export function SetupView() {
                     );
                   })}
                 </div>
+                {KEY_PROVIDERS.includes(choice) && (
+                  <ProviderKeyConnection id={choice} />
+                )}
                 {choice === "codex-chatgpt" && (
                   <section className="connection-controls">
                     <h3>Connect this space to Codex via Mastra</h3>
@@ -276,6 +309,11 @@ export function SetupView() {
                         >
                           Open OpenAI sign-in <ArrowUpRight size={15} />
                         </a>
+                        <p>
+                          If OpenAI asks, enable device-code sign-in in your
+                          ChatGPT security settings. A subscription is not an
+                          unrestricted API key.
+                        </p>
                         <button
                           className="text-button"
                           onClick={() =>
@@ -331,11 +369,8 @@ export function SetupView() {
                     />
                     Allow this setup test prompt and earlier consented turns for
                     this provider in this conversation to go to{" "}
-                    {choice === "codex-chatgpt"
-                      ? "Codex / ChatGPT"
-                      : "OpenCode"}
-                    . Subscription limits or hosted data terms apply. Library
-                    and local-only turns are excluded.
+                    {providerName(choice)}. Subscription limits or hosted data
+                    terms apply. Library and local-only turns are excluded.
                   </label>
                 )}
                 <button
@@ -344,6 +379,8 @@ export function SetupView() {
                     busy ||
                     PREVIEW ||
                     !model ||
+                    (KEY_PROVIDERS.includes(choice) &&
+                      !providers.hosted?.[choice]?.connected) ||
                     (choice !== "local" && !consent)
                   }
                   onClick={() =>
@@ -375,11 +412,15 @@ export function SetupView() {
                         : `Test status: ${test.state.toLowerCase()}`}
                   </p>
                 )}
-                {status && (
-                  <p className="connection-status" role="status">
-                    {status}
-                  </p>
-                )}
+                {status &&
+                  (!test ||
+                    !["COMPLETED", "FAILED", "CANCELLED"].includes(
+                      test.state,
+                    )) && (
+                    <p className="connection-status" role="status">
+                      {status}
+                    </p>
+                  )}
               </div>
             ),
           },

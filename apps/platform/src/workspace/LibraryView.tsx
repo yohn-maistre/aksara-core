@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Empty } from "./shared";
+import { LibraryUpload } from "./LibraryUpload";
 import { useWorkspace } from "./state";
 export function LibraryView() {
   const {
@@ -64,6 +65,7 @@ export function LibraryView() {
       <div className="page-heading library-heading">
         <h1>Library</h1>
         <div className="library-actions">
+          <LibraryUpload />
           <button
             className="text-button"
             onClick={() => {

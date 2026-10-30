@@ -12,6 +12,7 @@
     "node": ">=24.19.0"
   },
   "scripts": {
+    "aksara": "node --use-env-proxy scripts/aksara.mjs",
     "test": "node --test packages/runtime-pi/*.test.mjs",
     "worker": "node packages/runtime-pi/worker.mjs",
     "build": "npm run build -w @aksara/platform",

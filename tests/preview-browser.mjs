@@ -139,7 +139,9 @@ try {
   mark(
     "Wide Today embeds the composer and keeps its draft when opening the thread",
   );
-  await page.locator(".composer-options > summary").click();
+  await page
+    .getByRole("button", { name: "Model & sources", exact: true })
+    .click();
   await page.getByText(/^Reference Library sources locally/).click();
   await page.locator(".source-picker input[type=checkbox]").first().check();
   await page
@@ -404,13 +406,13 @@ try {
       .getByRole("navigation", { name: "Main navigation", exact: true })
       .getByRole("button", { name: "Ask PRIVATE", exact: true })
       .count(),
-    0,
+    1,
   );
   await navigateSurface(page, "Library");
   await page.getByRole("heading", { name: "Library", exact: true }).waitFor();
   assert.equal(await page.getByRole("dialog").count(), 0);
   mark(
-    "Phone dock navigates directly without a drawer and keeps private chat separate",
+    "Phone dock navigates directly and retains the persistent assistant entry",
   );
   await navigateSurface(page, "Home");
   await page.getByRole("button", { name: "Ask PRIVATE", exact: true }).click();
@@ -469,11 +471,46 @@ try {
     oldAccent,
   );
   await page.getByText("Simulate time of day", { exact: true }).click();
+  await page
+    .getByRole("button", { name: "Auto · local time", exact: true })
+    .click();
   const hour = page.getByLabel("Atmosphere preview hour");
   await hour.focus();
   await hour.press("Home");
+  assert.equal(
+    await page.evaluate(() =>
+      document.documentElement.classList.contains("dark"),
+    ),
+    true,
+  );
   const darkPhase = await page.evaluate(() =>
     getComputedStyle(document.documentElement).getPropertyValue("--atmo-light"),
+  );
+  for (let i = 0; i < 12; i++) await hour.press("ArrowRight");
+  assert.equal(
+    await page.evaluate(() =>
+      document.documentElement.classList.contains("dark"),
+    ),
+    false,
+  );
+  await page.getByRole("button", { name: "Dark", exact: true }).click();
+  assert.equal(
+    await page.evaluate(() =>
+      document.documentElement.classList.contains("dark"),
+    ),
+    true,
+  );
+  await page
+    .getByRole("button", { name: "Auto · local time", exact: true })
+    .click();
+  assert.equal(
+    await page.evaluate(() =>
+      document.documentElement.classList.contains("dark"),
+    ),
+    false,
+  );
+  mark(
+    "Clock simulation changes Auto day/night appearance while explicit overrides remain effective",
   );
   await hour.press("End");
   await hour.press("ArrowLeft");
