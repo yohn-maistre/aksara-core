@@ -40,7 +40,7 @@ the static site. Fonts load from the application origin.
 
 The project-local Cult UI integration guidance adapts official Cult UI agent
 rules, MIT, Copyright (c) 2023 Jordan-Gilliam. Its original license is retained
-in .agents/skills/cult-ui/LICENSE.md. Cult Expandable, ExpandableScreen, HaloProgress and WizardExpandable are
+in .agents/skills/cult-ui/LICENSE.md. Cult Expandable, ExpandableScreen, HaloProgress, WizardExpandable and SpeechBubble are
 adapted in the product. Their MIT license is retained in third_party/cult-ui/LICENSE.
 
 The fluid workspace adapts Octopus SI OS surface/resize source, MIT; its license

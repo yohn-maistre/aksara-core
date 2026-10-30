@@ -27,10 +27,7 @@ export function ChannelsView() {
         <div className="page-heading">
           <div>
             <h1>Channels</h1>
-            <p>
-              Channels keep a conversation, its work, and its artifacts in the
-              same context.
-            </p>
+            <p>A place to think and work together.</p>
           </div>
         </div>
         <div className="channel-grid">
@@ -95,11 +92,6 @@ export function ChannelsView() {
             </button>
           </form>
         </DuetCard>
-        <div className="notice">
-          <Cpu size={19} />
-          Channel computers have not been provisioned. Conversation access does
-          not grant a shell.
-        </div>
       </>
     </>
   );

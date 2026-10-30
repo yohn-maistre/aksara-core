@@ -161,6 +161,42 @@ export function createPreview() {
         provider: "preview",
       },
     });
+    // Fictional, tab-local material to inspect the selected chat/knowledge UI.
+    const privateRun = {
+      owner: "Operator",
+      lane_id: "private-Operator",
+      audience: ["Operator"],
+      source_ids: [source.id],
+      provider: "preview",
+    };
+    community.messages.push(
+      {
+        seq: ++community.seq,
+        role: "assistant",
+        text: "Let’s turn your notes into a practical plan.",
+        run: privateRun,
+      },
+      {
+        seq: ++community.seq,
+        role: "user",
+        text: "Help me choose a useful first workflow for our community pilot.",
+        run: privateRun,
+      },
+      {
+        seq: ++community.seq,
+        role: "assistant",
+        text: "Start with one source, one question and a small piece of work you can review together.",
+        run: privateRun,
+      },
+    );
+    community.memories.push({
+      id: "preview-memory-welcome",
+      owner: "Operator",
+      visibility: "private",
+      state: "APPROVED",
+      source_artifact_id: source.id,
+      text: "Aksara brings people, knowledge and work into one living workspace.",
+    });
     select(profiles[0]);
   })();
   function eligible(a: Item) {
@@ -359,6 +395,7 @@ export function createPreview() {
           return json(
             store.artifacts
               .filter(eligible)
+              .reverse()
               .map(({ content, ...a }: Item) => a),
           );
         case "messages":
@@ -559,6 +596,7 @@ export function createPreview() {
             ...e.args,
             id: id(),
             owner: session.profile.actor,
+            provenance: `effect:${e.prepared.id}`,
             active: true,
             sha256: await sha(e.args.content),
             bytes: new TextEncoder().encode(e.args.content).length,

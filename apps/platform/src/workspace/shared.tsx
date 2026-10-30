@@ -32,6 +32,7 @@ export type Artifact = {
   visibility: string;
   sha256: string;
   owner: string;
+  provenance?: string;
 };
 export const key = () => crypto.randomUUID();
 export const stateWord = (s: string) =>
@@ -55,8 +56,9 @@ export function PreviewNotice() {
     <div className="preview-notice" role="status">
       <Sparkles size={16} />
       <span>
-        <strong>Interactive UI preview</strong> · Tab-only sample data; resets
-        on reload. Models, devices and Rust are disconnected.
+        <strong>Interactive UI preview</strong> · Sample data. No models or
+        backend.
+        <span className="preview-more"> Changes reset on reload.</span>
       </span>
     </div>
   ) : null;

@@ -2,7 +2,7 @@
 
 **Open the hosted interface:** [aksara-core-preview.pages.dev](https://aksara-core-preview.pages.dev). This is a clearly labeled, tab-local UI preview with sample data; no local server is needed. The live Rust app remains available below. [Deployment notes](deploy/pages/README.md) · [Protected backend test-host profile](deploy/test-host/README.md).
 
-Aksara now has an **OpenDuet-based React PWA** backed by the Rust kernel: Today, private Ask, Channels, Library, reviewed documents/memory, local model conversations and optional Pocket TTS read-aloud. Personal mode uses separate databases. Start with the [platform guide](docs/platform/README.md), [current decisions](docs/platform/decisions.md), [component coverage](docs/platform/component-coverage.csv) and [new verification evidence](docs/platform/verification.md).
+Aksara now has an **atmospheric React PWA** backed by the Rust kernel: Home, private threads, Channels, Library, reviewed documents/memory, local model conversations and optional Pocket TTS read-aloud. Personal mode uses separate databases. Start with the [platform guide](docs/platform/README.md), [current decisions](docs/platform/decisions.md), [component coverage](docs/platform/component-coverage.csv) and [new verification evidence](docs/platform/verification.md).
 
 ```sh
 cargo build --locked --workspace

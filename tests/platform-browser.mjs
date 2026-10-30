@@ -114,7 +114,7 @@ try {
   await page
     .getByRole("button", { name: "Operator Community workspace" })
     .click();
-  await page.getByRole("heading", { name: "Hello, Operator." }).waitFor();
+  await page.getByRole("heading", { name: /Room for/ }).waitFor();
   const previews = process.env.AKSARA_PREVIEW_DIR || path.join(dir, "previews");
   await mkdir(previews, { recursive: true });
   await page.screenshot({
@@ -125,6 +125,9 @@ try {
   mark("Fluid workspace Today renders with real empty-state data");
   await page.getByRole("button", { name: "Library", exact: true }).click();
   await page
+    .getByRole("button", { name: "Import source", exact: true })
+    .click();
+  await page
     .getByLabel("Source title", { exact: true })
     .fill("Private original");
   await page
@@ -132,6 +135,7 @@ try {
     .fill("PRIVATE_PRODUCT_SENTINEL water continuity");
   await page.getByRole("button", { name: "Add source", exact: true }).click();
   await page
+    .locator(".file-explorer")
     .getByRole("button", { name: /Private original Private/ })
     .waitFor();
   mark("Original source enters the governed Library");
@@ -149,7 +153,10 @@ try {
   await page.getByText(/Receipt: VERIFIED/).waitFor();
   await page.getByRole("button", { name: "Close work", exact: true }).click();
   mark("Exact document proposal → explicit approval → execution → receipt");
-  await page.getByRole("button", { name: /Private original Private/ }).click();
+  await page
+    .locator(".file-explorer")
+    .getByRole("button", { name: /Private original Private/ })
+    .click();
   await page
     .getByRole("button", { name: "Propose evidence for memory" })
     .click();
@@ -157,16 +164,47 @@ try {
   await page.getByRole("button", { name: "Approve candidate" }).click();
   await page.getByRole("button", { name: "Revoke", exact: true }).waitFor();
   mark("Evidence memory stays separate until explicit review");
+  await page.getByRole("button", { name: "Library", exact: true }).click();
+  await page
+    .getByRole("region", { name: "Reviewed knowledge", exact: true })
+    .getByText("PRIVATE_PRODUCT_SENTINEL", { exact: false })
+    .waitFor();
+  mark("Reviewed knowledge appears in Library with its eligible source");
   await page.getByRole("button", { name: "Ask PRIVATE" }).click();
-  await page.getByText(/^Model & sources/).click();
+  await page.locator(".composer-options > summary").click();
   await page.getByLabel("Model", { exact: true }).selectOption("fixture-local");
   await page.getByText("Reference Library sources locally").click();
   await page.getByLabel("Private original", { exact: true }).check();
   await page
     .getByLabel("Message Aksara")
     .fill("Summarize the selected synthetic evidence.");
+  let releaseChat;
+  const chatGate = new Promise((resolve) => {
+    releaseChat = resolve;
+  });
+  let chatSeen;
+  const chatStarted = new Promise((resolve) => {
+    chatSeen = resolve;
+  });
+  await page.route("**/api/chat", async (route) => {
+    chatSeen();
+    await chatGate;
+    await route.continue();
+  });
   await page.getByRole("button", { name: "Send message" }).click();
+  await chatStarted;
+  await page
+    .getByLabel("Message Aksara", { exact: true })
+    .fill("A follow-up drafted while Aksara works");
+  releaseChat();
   await page.getByRole("heading", { name: "Fixture finding" }).waitFor();
+  assert.equal(
+    await page.getByLabel("Message Aksara", { exact: true }).inputValue(),
+    "A follow-up drafted while Aksara works",
+  );
+  await page.getByLabel("Message Aksara", { exact: true }).fill("");
+  await page.unroute("**/api/chat");
+  mark("An arriving model reply preserves a follow-up drafted during the turn");
   mark(
     "Actual Mastra adapter produces a canonical reply and a registered OpenUI card",
   );
@@ -179,7 +217,10 @@ try {
       );
     };
   });
-  await page.getByRole("button", { name: "Read aloud locally" }).click();
+  await page
+    .getByRole("button", { name: "Message actions", exact: true })
+    .click();
+  await page.getByRole("menuitem", { name: "Read aloud locally" }).click();
   await page
     .getByRole("complementary", { name: "Local read-aloud controls" })
     .waitFor();
@@ -198,24 +239,75 @@ try {
     "Read-aloud retains explicit Play/Stop controls after mobile autoplay rejection",
   );
 
-  await page.getByRole("button",{name:/Turn into a document/}).click();
-  await page.getByRole("button",{name:"Prepare for review",exact:true}).click();
-  await page.getByRole("button",{name:"Approve exact proposal",exact:true}).waitFor();
-  await page.evaluate(async()=>{
-    const session=await (await fetch('/api/session')).json();
-    const library=await (await fetch('/api/kernel/library',{headers:{'x-aksara-scope':session.scope}})).json();
-    const original=library.find(a=>a.title==='Private original');
-    const response=await fetch('/api/kernel/withdraw',{method:'POST',headers:{'content-type':'application/json','x-aksara-scope':session.scope},body:JSON.stringify({id:original.id})});
-    if(!response.ok)throw Error('Source withdrawal failed');
+  await page
+    .getByRole("button", { name: "Message actions", exact: true })
+    .click();
+  await page
+    .getByRole("menuitem", { name: "Pin to Home", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Home", exact: true }).click();
+  await page
+    .getByRole("region", { name: "Pinned reply", exact: true })
+    .getByRole("heading", { name: "Fixture finding", exact: true })
+    .waitFor();
+  await page.getByRole("button", { name: "Ask PRIVATE", exact: true }).click();
+  mark("An accepted generated reply can become a scoped Home panel");
+  await page
+    .getByRole("button", { name: "Message actions", exact: true })
+    .click();
+  await page.getByRole("menuitem", { name: /Turn into a document/ }).click();
+  await page
+    .getByRole("button", { name: "Prepare for review", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Approve exact proposal", exact: true })
+    .waitFor();
+  await page.evaluate(async () => {
+    const session = await (await fetch("/api/session")).json();
+    const library = await (
+      await fetch("/api/kernel/library", {
+        headers: { "x-aksara-scope": session.scope },
+      })
+    ).json();
+    const original = library.find((a) => a.title === "Private original");
+    const response = await fetch("/api/kernel/withdraw", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-aksara-scope": session.scope,
+      },
+      body: JSON.stringify({ id: original.id }),
+    });
+    if (!response.ok) throw Error("Source withdrawal failed");
   });
-  await page.getByRole("button",{name:"Close work",exact:true}).waitFor({state:'hidden'});
+  await page
+    .getByRole("button", { name: "Close work", exact: true })
+    .waitFor({ state: "hidden" });
   await page.getByRole("heading", { name: "Where shall we begin?" }).waitFor();
   assert.equal(
     await page.getByRole("heading", { name: "Fixture finding" }).count(),
     0,
   );
-  mark("Source withdrawal clears dependent model replies and an open derived-effect review");
-  await page.getByRole("button", { name: "Today", exact: true }).click();
+  mark(
+    "Source withdrawal clears dependent model replies and an open derived-effect review",
+  );
+  await page.getByRole("button", { name: "Library", exact: true }).click();
+  assert.equal(
+    await page
+      .getByRole("region", { name: "Reviewed knowledge", exact: true })
+      .getByText("PRIVATE_PRODUCT_SENTINEL", { exact: false })
+      .count(),
+    0,
+  );
+  mark("Withdrawing a source removes dependent Library knowledge");
+  assert.equal(
+    await page
+      .getByRole("region", { name: "Pinned reply", exact: true })
+      .count(),
+    0,
+  );
+  mark("Source withdrawal also removes the dependent pinned Home panel");
+  await page.getByRole("button", { name: "Home", exact: true }).click();
   await page.getByLabel("Historical date").fill("2001-01-01");
   await page
     .getByRole("heading", { name: "No recorded work for this date" })
@@ -258,24 +350,31 @@ try {
     "Device effect is reviewed and receipted through the independent simulator",
   );
   await page.getByRole("button", { name: "Ask PRIVATE" }).click();
-  await page.getByText(/^Model & sources/).click();
+  await page.locator(".composer-options > summary").click();
   await page.getByLabel("Model provider").selectOption("opencode-free");
   await page.getByLabel("Message Aksara").fill("Synthetic cloud prompt");
   assert.ok(
     await page.getByRole("button", { name: "Send message" }).isDisabled(),
   );
-  let unconsentedCalls=0;
-  const watchUnconsented=request=>{if(new URL(request.url()).pathname==="/api/chat")unconsentedCalls++};
-  page.on("request",watchUnconsented);
+  let unconsentedCalls = 0;
+  const watchUnconsented = (request) => {
+    if (new URL(request.url()).pathname === "/api/chat") unconsentedCalls++;
+  };
+  page.on("request", watchUnconsented);
   await page.getByLabel("Message Aksara").press("Enter");
   await page.waitForTimeout(120);
-  assert.equal(unconsentedCalls,0);
-  assert.equal(await page.getByLabel("Message Aksara").inputValue(),"Synthetic cloud prompt");
-  page.off("request",watchUnconsented);
-  mark("Hosted model use requires explicit per-turn consent, including keyboard submission");
+  assert.equal(unconsentedCalls, 0);
+  assert.equal(
+    await page.getByLabel("Message Aksara").inputValue(),
+    "Synthetic cloud prompt",
+  );
+  page.off("request", watchUnconsented);
+  mark(
+    "Hosted model use requires explicit per-turn consent, including keyboard submission",
+  );
   await page.setViewportSize({ width: 360, height: 800 });
   await page.getByRole("button", { name: "Open navigation" }).click();
-  await page.getByRole("button", { name: "Today", exact: true }).click();
+  await page.getByRole("button", { name: "Home", exact: true }).click();
   await page.waitForFunction(() => !document.querySelector(".menu-sheet"));
   await page.screenshot({
     animations: "disabled",

@@ -1,18 +1,20 @@
-// Adapted from shadcn sidebar-08 (base-nova, MIT). All navigation is host-owned.
+// shadcn sidebar-08 (MIT), adapted for a regular full-height Aksara navigation spine.
 import {
   BookOpen,
+  ChevronDown,
   Hash,
   House,
   Layers,
-  LockKeyhole,
-  Moon,
+  MessageSquare,
   PanelLeftClose,
   PanelLeftOpen,
   Settings2,
   Sprout,
-  Sun,
+  X,
 } from "lucide-react";
+import { useState } from "react";
 import { useWorkspace } from "../workspace/state";
+import { ContextMenu } from "../workspace/ContextMenu";
 import {
   Sidebar,
   SidebarContent,
@@ -24,112 +26,34 @@ import {
   useSidebar,
 } from "./ui/sidebar";
 export function AppSidebar() {
-  const { session, page, navigate, needs, switchContext, theme, setTheme } =
+  const { session, page, navigate, api, accept, run, busy, working } =
     useWorkspace();
   const { setOpenMobile, isMobile, state, toggleSidebar } = useSidebar();
+  const [channelsOpen, setChannelsOpen] = useState(true);
   if (!session) return null;
   const go = (p: string) => {
     navigate(p);
     setOpenMobile(false);
   };
   const links = [
-    ["Today", House],
-    ["Ask", LockKeyhole],
-    ["Library", BookOpen],
-    ["Channels", Hash],
-    ["Tools", Layers],
+    ["Today", "Home", House],
+    ["Ask", "Private thread", MessageSquare],
+    ["Library", "Library", BookOpen],
+    ["Channels", "Channels", Hash],
+    ["Tools", "Capabilities", Layers],
   ] as const;
   return (
-    <Sidebar variant="inset" collapsible="icon" className="aksara-sidebar">
+    <Sidebar
+      variant="inset"
+      collapsible="icon"
+      className="aksara-sidebar"
+      data-working={working.length > 0}
+    >
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               className="brand-button"
-              tooltip="Aksara home"
-              aria-label="Aksara home"
-              onClick={() => go("Today")}
-            >
-              <Sprout />
-              <span>
-                Aksara<span className="brand-sub">Your living workspace</span>
-              </span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarHeader>
-      <SidebarContent>
-        <nav aria-label="Main">
-          <SidebarMenu>
-            {links.map(([id, Icon]) => (
-              <SidebarMenuItem key={id}>
-                <SidebarMenuButton
-                  tooltip={id === "Ask" ? "Private conversation" : id}
-                  aria-label={id === "Ask" ? "Ask PRIVATE" : id}
-                  aria-current={page === id ? "page" : undefined}
-                  isActive={page === id}
-                  onClick={() => go(id)}
-                >
-                  <Icon />
-                  <span>{id === "Ask" ? "Private thread" : id}</span>
-                  {id === "Today" && needs.length > 0 && (
-                    <span
-                      className="rail-count"
-                      aria-label={`${needs.length} need you`}
-                    >
-                      {needs.length}
-                    </span>
-                  )}
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </nav>
-        <div className="rail-channel-list">
-          <p>Shared channels</p>
-          {session.lanes
-            .filter((l) => l.lane.audience.length > 1)
-            .map((l) => (
-              <button
-                key={l.lane.id}
-                onClick={() => {
-                  void switchContext(session.profile.id, l.lane.id);
-                  go("Conversation");
-                }}
-              >
-                <Hash size={15} />
-                {l.name}
-              </button>
-            ))}
-        </div>
-      </SidebarContent>
-      <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              tooltip="Toggle theme"
-              aria-label="Toggle theme"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            >
-              {theme === "dark" ? <Sun /> : <Moon />}
-              <span>
-                {theme === "dark" ? "Light appearance" : "Dark appearance"}
-              </span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              tooltip="Settings"
-              aria-label="Settings"
-              isActive={page === "Settings"}
-              onClick={() => go("Settings")}
-            >
-              <Settings2 />
-              <span>Settings</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton
               tooltip={
                 state === "collapsed" ? "Expand sidebar" : "Collapse sidebar"
               }
@@ -144,8 +68,106 @@ export function AppSidebar() {
                 isMobile ? setOpenMobile(false) : toggleSidebar()
               }
             >
-              {state === "collapsed" ? <PanelLeftOpen /> : <PanelLeftClose />}
-              <span>{isMobile ? "Close navigation" : "Collapse sidebar"}</span>
+              <Sprout />
+              <span>Aksara</span>
+              {state === "expanded" && (isMobile ? <X /> : <PanelLeftClose />)}
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
+      <SidebarContent>
+        <nav aria-label="Main">
+          <SidebarMenu>
+            {links.map(([id, label, Icon]) => (
+              <SidebarMenuItem key={id}>
+                <SidebarMenuButton
+                  tooltip={label}
+                  aria-label={
+                    id === "Ask"
+                      ? "Ask PRIVATE"
+                      : id === "Today"
+                        ? "Home"
+                        : id === "Tools"
+                          ? "Tools"
+                          : label
+                  }
+                  aria-current={page === id ? "page" : undefined}
+                  isActive={
+                    page === id ||
+                    (id === "Channels" && page === "Conversation")
+                  }
+                  onClick={() => go(id)}
+                >
+                  <Icon />
+                  <span>{label}</span>
+                </SidebarMenuButton>
+                {id === "Channels" &&
+                  (state === "expanded" || isMobile) &&
+                  session.lanes.some((l) => l.lane.audience.length > 1) && (
+                    <div className="channel-branch">
+                      <button
+                        className="branch-toggle"
+                        aria-label="Show shared channels"
+                        aria-expanded={channelsOpen}
+                        onClick={() => setChannelsOpen(!channelsOpen)}
+                      >
+                        <span>Shared</span>
+                        <ChevronDown
+                          size={13}
+                          style={{
+                            transform: channelsOpen ? "none" : "rotate(-90deg)",
+                          }}
+                        />
+                      </button>
+                      {channelsOpen &&
+                        session.lanes
+                          .filter((l) => l.lane.audience.length > 1)
+                          .map((l) => (
+                            <button
+                              key={l.lane.id}
+                              className="branch-channel"
+                              disabled={busy}
+                              aria-current={
+                                session.lane === l.lane.id &&
+                                page === "Conversation"
+                                  ? "page"
+                                  : undefined
+                              }
+                              aria-label={`Open channel ${l.name}`}
+                              onClick={() =>
+                                void run(async () => {
+                                  const s = await api("scope", {
+                                    profile: session.profile.id,
+                                    lane: l.lane.id,
+                                  });
+                                  accept(s);
+                                  go("Conversation");
+                                })
+                              }
+                            >
+                              {l.name}
+                            </button>
+                          ))}
+                    </div>
+                  )}
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </nav>
+      </SidebarContent>
+      <SidebarFooter>
+        <div className="rail-presence" aria-hidden />
+        <ContextMenu />
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              tooltip="Settings"
+              aria-label="Settings"
+              isActive={page === "Settings"}
+              onClick={() => go("Settings")}
+            >
+              <Settings2 />
+              <span>Settings</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

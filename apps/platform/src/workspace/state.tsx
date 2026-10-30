@@ -20,12 +20,14 @@ import {
 } from "./shared";
 function useWorkspaceState() {
   const composerInput = useRef<HTMLTextAreaElement>(null);
+  const transferComposerFocus = useRef(false);
   const [profiles, setProfiles] = useState<Profile[]>([]),
     [session, setSession] = useState<Session | null>(null),
     [page, setPage] = useState("Today"),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
-    [mobile, setMobile] = useState(false);
+    [mobile, setMobile] = useState(false),
+    [navExpanded, setNavExpanded] = useState(false);
   const scope = useRef("");
   const audioRef = useRef<HTMLAudioElement | null>(null),
     audioURL = useRef("");
@@ -38,6 +40,8 @@ function useWorkspaceState() {
   }
   const [works, setWorks] = useState<Work[]>([]),
     [messages, setMessages] = useState<Data[]>([]),
+    [timeline, setTimeline] = useState<Data[]>([]),
+    [pinnedReplies, setPinnedReplies] = useState<number[]>([]),
     [artifacts, setArtifacts] = useState<Artifact[]>([]),
     [memories, setMemories] = useState<Data[]>([]),
     [candidates, setCandidates] = useState<Data[]>([]),
@@ -67,17 +71,30 @@ function useWorkspaceState() {
     [theme, setTheme] = useState(
       localStorage.getItem("aksara-theme") || "dark",
     ),
+    [ambientMotion, setAmbientMotion] = useState(
+      localStorage.getItem("aksara-ambient-motion") !== "off",
+    ),
     [device, setDevice] = useState<Data | null>(null);
   useLayoutEffect(() => {
     const el = composerInput.current;
     if (!el) return;
+    if (transferComposerFocus.current) {
+      el.focus({ preventScroll: true });
+      transferComposerFocus.current = false;
+    }
     el.style.height = "44px";
     el.style.height = `${Math.min(120, el.scrollHeight)}px`;
   }, [draft, page]);
-  useEffect(() => {
+  useLayoutEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute("content", theme === "dark" ? "#23222b" : "#e7e5eb");
     localStorage.setItem("aksara-theme", theme);
   }, [theme]);
+  useEffect(() => {
+    localStorage.setItem("aksara-ambient-motion", ambientMotion ? "on" : "off");
+  }, [ambientMotion]);
   const api = useCallback(
     async (path: string, body?: unknown): Promise<any> => {
       const started = scope.current;
@@ -97,6 +114,8 @@ function useWorkspaceState() {
           stopAudio();
           setWorks([]);
           setMessages([]);
+          setTimeline([]);
+          setPinnedReplies([]);
           setArtifacts([]);
           setMemories([]);
           setCandidates([]);
@@ -128,11 +147,14 @@ function useWorkspaceState() {
     [],
   );
   function accept(s: Session) {
+    transferComposerFocus.current = false;
     stopAudio();
     scope.current = s.scope;
     setSession(s);
     setWorks([]);
     setMessages([]);
+    setTimeline([]);
+    setPinnedReplies([]);
     setArtifacts([]);
     setHits([]);
     setMemories([]);
@@ -173,7 +195,7 @@ function useWorkspaceState() {
     if (!scope.current) return;
     const current = scope.current;
     try {
-      const [w, m, a, mem, cand, identity] = await Promise.all(
+      const [w, m, a, mem, cand, identity, recorded] = await Promise.all(
         [
           "threads",
           "messages",
@@ -181,6 +203,7 @@ function useWorkspaceState() {
           "memories",
           "memory-candidates",
           "me",
+          "today",
         ].map((p) => api(`kernel/${p}`)),
       );
       if (current !== scope.current) return;
@@ -190,6 +213,7 @@ function useWorkspaceState() {
       setMemories(mem);
       setCandidates(cand);
       setMe(identity);
+      setTimeline(recorded.work || []);
     } catch (e) {
       if (current === scope.current) setError((e as Error).message);
     }
@@ -249,6 +273,14 @@ function useWorkspaceState() {
       setApproved({});
     }
   }, [artifacts, works]);
+  useEffect(() => {
+    setPinnedReplies((ids) => {
+      const kept = ids.filter((seq) =>
+        messages.some((m) => m.seq === seq && m.role === "assistant"),
+      );
+      return kept.length === ids.length ? ids : kept;
+    });
+  }, [messages]);
   useEffect(() => {
     if (audioSeq !== null && !messages.some((m) => m.seq === audioSeq))
       stopAudio();
@@ -318,6 +350,11 @@ function useWorkspaceState() {
       (provider !== "local" && !PREVIEW && !consent)
     )
       return;
+    if (page !== "Ask" && page !== "Conversation") {
+      transferComposerFocus.current =
+        document.activeElement === composerInput.current;
+      setPage(privateLane ? "Ask" : "Conversation");
+    }
     await run(async () => {
       await api("chat", {
         text: draft,
@@ -327,8 +364,8 @@ function useWorkspaceState() {
         idempotency_key: key(),
         source_ids: attached,
       });
-      setDraft("");
-      setAttached([]);
+      setDraft((current) => (current === draft ? "" : current));
+      setAttached((current) => (current === attached ? [] : current));
       setConsent(false);
       await refresh();
     });
@@ -393,6 +430,8 @@ function useWorkspaceState() {
     setBusy,
     mobile,
     setMobile,
+    navExpanded,
+    setNavExpanded,
     scope,
     audioRef,
     audioURL,
@@ -403,6 +442,9 @@ function useWorkspaceState() {
     setWorks,
     messages,
     setMessages,
+    timeline,
+    pinnedReplies,
+    setPinnedReplies,
     artifacts,
     setArtifacts,
     memories,
@@ -457,6 +499,8 @@ function useWorkspaceState() {
     setLocalModel,
     theme,
     setTheme,
+    ambientMotion,
+    setAmbientMotion,
     device,
     setDevice,
     api,

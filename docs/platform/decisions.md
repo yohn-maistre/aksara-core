@@ -28,3 +28,9 @@ read-only and currently serves protocol 2026-07-28. The computer observation por
 requires an explicit host authority callback and validates actual isolation;
 interactive command/persistent-workspace promotion remains blocked on durable
 Rust intent and provenance/reconciliation gates. See `packages/gateway/README.md`.
+
+30 October presentation checkpoint: the selected atmospheric Home/Library/thread
+system is implemented. Home contracts within the current authorized context;
+spine expansion is a presentation preference; scoped pinned replies are removed
+when their canonical message becomes unavailable. See
+[implementation and limits](atmospheric-workspace-implementation.md).

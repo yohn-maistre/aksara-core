@@ -126,3 +126,14 @@ The read-only MCP port is tested against real Rust hosts. The computer port is
 qualified with an immutable, non-root, network-disabled test image; interactive
 command dispatch/persistence is not enabled. No donor thread/account grants
 replace current Aksara authorization.
+
+## Atmospheric workspace implementation — 30 October
+
+Cult UI `d71b1428b811c2779d46ea41b7ef8c9f9c9991c2` (MIT): the actual
+`speech-bubble` registry source is installed. Its display h1 wrapper is adapted
+to prose, native actions stay Base UI, and the decorative cursor/tail are omitted
+from normal conversations. Existing Cult/shadcn/Octopus notices remain shipped.
+The smoked raster is generated for Aksara; no reference-product wallpaper,
+avatars or screenshots are copied into product assets. Gooey/Voice/other Cult
+components remain the studied candidates recorded in the atmospheric study; no
+new shader or Gooey runtime dependency is installed.

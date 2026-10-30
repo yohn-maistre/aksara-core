@@ -1,4 +1,4 @@
-Current UI/model checkpoint: [fluid workspace implementation](fluid-workspace-implementation.md); [Mastra integration review](mastra-integration-review.md). The earlier OpenDuet fidelity audit is historical.
+Current UI checkpoint: [atmospheric workspace](atmospheric-workspace-implementation.md); models: [Mastra integration review](mastra-integration-review.md). The earlier OpenDuet fidelity audit is historical.
 
 # Aksara platform foundation
 
@@ -32,11 +32,11 @@ Try this path:
 
 ## Current presentation
 
-The Octopus-derived fluid workspace is implemented with an embedded composer,
-shadcn inset sidebar and selectively adapted Cult components. Read the
-[implementation checkpoint](fluid-workspace-implementation.md) and
-[donor study](fluid-workspace-plan.md). Gooey effects remain optional pending
-phone measurements.
+The selected atmospheric workspace is implemented: Home contracts beside the
+active surface, a regular navigation spine anchors the page, and private/shared
+threads use adapted Cult bubbles. Library separates reviewed knowledge and files.
+Read the [implementation and limits](atmospheric-workspace-implementation.md) and
+[current audit](atmospheric-ui-audit.md).
 
 ## Hosted UI preview
 
@@ -44,7 +44,7 @@ phone measurements.
 
 `npm run build:preview` creates `apps/platform/dist-preview` for Cloudflare Pages. It uses the same UI with a build-time, tab-local sample transport. The regular `npm run build` still talks exclusively to the real host and excludes that sample module.
 
-The hosted preview opens on Today with labeled sample work. You can explore private/shared sample contexts, Library search, document review, memory controls and a guided OpenUI response. These are UI demonstrations, not Rust authorization/effect proofs. Every simulated result is labeled `PREVIEW_ONLY`. No model, device, private backend, account or remote user-data store is connected. Reload resets tab-local data; other visitors have separate state. Do not put important work into the preview.
+The hosted preview opens on Home with labeled sample work. You can explore private/shared sample contexts, Library search, document review, memory controls and a guided OpenUI response. These are UI demonstrations, not Rust authorization/effect proofs. Every simulated result is labeled `PREVIEW_ONLY`. No model, device, private backend, account or remote user-data store is connected. Reload resets tab-local data; other visitors have separate state. Do not put important work into the preview.
 
 Pages serves static assets. A minimal `/api/*` guard returns HTTP 501 to explicitly reject live-backend requests; the UI sample transport never makes those requests. Camera/microphone access is disabled for the preview origin. Browser checks cover disclosure, sample review, tab isolation, no network data egress, reset, history, responsive layout and the API guard. `node tests/preview-browser.mjs` tests the build locally; `AKSARA_PREVIEW_URL=https://… node tests/preview-browser.mjs` checks a deployed version.
 
@@ -108,7 +108,7 @@ Private Ask returns to the user's private community thread. Shared Channel conve
 
 Document creation follows explicit prepare → exact review → approval → execution → verified receipt. A document made from a source or model reply carries its source dependencies. The alpha Library has private/institution visibility, not per-Channel artifact ACLs: institution-visible documents can be eligible from other conversations in the same institution. Channel-only collections and named custody rights need a separate policy increment. Document content is plain text/Markdown as text; arbitrary HTML is not executed. Operator approval remains the alpha policy and does not solve the future named-rights/custodian review model. Non-Operator private work cannot be reviewed through an omniscient Operator content bypass.
 
-OpenDuet's MIT brief/card/icon/motion components and visual tokens are actually reused, with attribution. Its Intelligence backend and CopilotKit tool authority are not imported. The phone-width shell, floating tabs/header, menu, orb and typography now follow OpenDuet closely, with Aksara context and navigation. [UI audit and donor-fidelity details](ui-audit.md). Actual OpenUI Lang renders only the initial registered `EvidenceCard` and `MetricCard` text profile. Programs are reduced to a validated single component and bounded string arguments before entering the renderer; Query, Mutation, expressions, arbitrary actions/HTML and network URLs are not admitted.
+OpenDuet's MIT brief/card/icon/motion components and visual tokens are actually reused, with attribution. Its Intelligence backend and CopilotKit tool authority are not imported. The earlier phone shell is historical. The current surface follows the selected atmospheric Home/workspace direction, with a regular shadcn spine and adapted Cult components. [Current implementation](atmospheric-workspace-implementation.md). Actual OpenUI Lang renders the registered text cards and bounded resource surfaces; current details are in the implementation checkpoints. Programs are reduced to a validated single component and bounded string arguments before entering the renderer; Query, Mutation, expressions, arbitrary actions/HTML and network URLs are not admitted.
 
 The bundled Knowledge Pack has a strict manifest. `/api/packs` validates it before exposing it. Pack capabilities are declarations, never grants. Untrusted third-party Pack installation, signatures, executable plugins, a general objective graph and Wasmtime are pending.
 

@@ -36,8 +36,9 @@ The current CSS entry is `src/duet.css`; update that path when the theme is port
 weather backgrounds, restrained glass/blur, localized glow and connected Gooey
 shapes. For that exploration, these choices supersede the earlier flat-only
 aesthetic guidance below. See `docs/platform/atmospheric-workspace-study.md`.
-The running product remains the previous checkpoint until a visual target is
-selected. Readability, privacy clearing, honest state and host authority still
+The user selected the generated Home/Library/thread system and then refined
+it to a regular opaque spine and smoked background. The current implementation
+is recorded in `docs/platform/atmospheric-workspace-implementation.md`. Readability, privacy clearing, honest state and host authority still
 apply to every material treatment.
 
 Read `docs/platform/fluid-workspace-plan.md`. The user asked to flesh out the

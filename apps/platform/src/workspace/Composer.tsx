@@ -1,4 +1,5 @@
-import { ArrowUp, Sparkles } from "lucide-react";
+import { useRef } from "react";
+import { ArrowUp, Plus } from "lucide-react";
 import { PREVIEW } from "../transport";
 
 import { type Data } from "./shared";
@@ -26,20 +27,56 @@ export function Composer() {
     working,
     navigate,
   } = useWorkspace();
+  const optionsRef = useRef<HTMLDetailsElement>(null);
   if (!session) return null;
   return (
-    <>
-      {" "}
-      <div className="composer-wrap">
-        <details className="composer-options">
-          <summary>
-            Model &amp; sources ·{" "}
-            {PREVIEW
-              ? "Guided demo"
-              : provider === "local"
-                ? "Local"
-                : "Hosted"}
-            {attached.length > 0 ? ` · ${attached.length} sources` : ""}
+    <div className="composer-wrap">
+      {provider !== "local" && !PREVIEW ? (
+        <label className="consent">
+          <input
+            type="checkbox"
+            checked={consent}
+            onChange={(e) => setConsent(e.target.checked)}
+          />
+          Send this prompt and earlier consented turns for this provider to{" "}
+          {provider === "codex-chatgpt" ? "Codex / ChatGPT" : "OpenCode"}.
+          Experimental hosted data terms apply; Library and local-only turns are
+          excluded.
+        </label>
+      ) : (
+        !model && (
+          <p className="composer-note">
+            No local model found.{" "}
+            <button onClick={() => navigate("Settings")}>
+              Set up local models
+            </button>
+          </p>
+        )
+      )}
+      {!PREVIEW &&
+        provider === "codex-chatgpt" &&
+        !providers.codex?.connected && (
+          <p className="composer-note">
+            Connect your ChatGPT subscription in{" "}
+            <button onClick={() => navigate("Setup")}>model setup</button>, then
+            choose a model.
+          </p>
+        )}
+
+      <form className="composer" onSubmit={send}>
+        <details
+          ref={optionsRef}
+          className="composer-options"
+          onKeyDown={(e) => {
+            if (e.key === "Escape") {
+              optionsRef.current!.open = false;
+              optionsRef.current!.querySelector("summary")?.focus();
+            }
+          }}
+        >
+          <summary aria-label="Model & sources">
+            <Plus size={20} />
+            <span className="sr-only">Model &amp; sources</span>
           </summary>
           <div className="composer-options-body">
             {(provider === "local" || provider === "preview") &&
@@ -127,85 +164,58 @@ export function Composer() {
               </select>
             </div>
           </div>
+          <p className="composer-note">
+            {PREVIEW
+              ? "Guided sample · no model connection"
+              : "Model replies are drafts. Review before acting."}
+          </p>
         </details>
-        {provider !== "local" && !PREVIEW ? (
-          <label className="consent">
-            <input
-              type="checkbox"
-              checked={consent}
-              onChange={(e) => setConsent(e.target.checked)}
-            />
-            Send this prompt and earlier consented turns for this provider to{" "}
-            {provider === "codex-chatgpt" ? "Codex / ChatGPT" : "OpenCode"}.
-            Experimental hosted data terms apply; Library and local-only turns
-            are excluded.
-          </label>
-        ) : (
-          !model && (
-            <p className="composer-note">
-              No local model found.{" "}
-              <button onClick={() => navigate("Settings")}>
-                Set up local models
-              </button>
-            </p>
-          )
-        )}
-        {!PREVIEW &&
-          provider === "codex-chatgpt" &&
-          !providers.codex?.connected && (
-            <p className="composer-note">
-              Connect your ChatGPT subscription in{" "}
-              <button onClick={() => navigate("Setup")}>model setup</button>,
-              then choose a model.
-            </p>
-          )}
-        <form className="composer" onSubmit={send}>
-          <textarea
-            rows={1}
-            ref={composerInput}
-            aria-label="Message Aksara"
-            placeholder="What’s on your mind?"
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            maxLength={16000}
-            onKeyDown={(e) => {
-              if (
-                e.key === "Enter" &&
-                !e.shiftKey &&
-                !e.nativeEvent.isComposing
-              ) {
-                e.preventDefault();
-                e.currentTarget.form?.requestSubmit();
-              }
-            }}
-          />
-          <div className="composer-tools">
-            <span>
-              <Sparkles size={15} />
-              Aksara
-            </span>
-            <button
-              type="submit"
-              className="send"
-              disabled={
-                busy ||
-                !draft.trim() ||
-                !model ||
-                working.length > 0 ||
-                (provider !== "local" && !PREVIEW && !consent)
-              }
-              aria-label="Send message"
-            >
-              <ArrowUp size={19} />
-            </button>
-          </div>
-        </form>
-        <p className="composer-note reply-disclosure">
-          {PREVIEW
-            ? "Guided demo · no model or backend connected"
-            : "Model replies are drafts. Review before acting."}
-        </p>
-      </div>
-    </>
+        <textarea
+          rows={1}
+          ref={composerInput}
+          aria-label="Message Aksara"
+          placeholder="Message Aksara…"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          maxLength={16000}
+          onKeyDown={(e) => {
+            if (
+              e.key === "Enter" &&
+              !e.shiftKey &&
+              !e.nativeEvent.isComposing
+            ) {
+              e.preventDefault();
+              e.currentTarget.form?.requestSubmit();
+            }
+          }}
+        />
+        <button
+          type="button"
+          className="composer-mode"
+          aria-label="Choose model and sources"
+          onClick={() => {
+            if (optionsRef.current)
+              optionsRef.current.open = !optionsRef.current.open;
+          }}
+        >
+          {PREVIEW ? "Preview" : provider === "local" ? "Local" : "Hosted"}
+          {attached.length ? ` · ${attached.length}` : ""}
+        </button>
+        <button
+          type="submit"
+          className="send"
+          disabled={
+            busy ||
+            !draft.trim() ||
+            !model ||
+            working.length > 0 ||
+            (provider !== "local" && !PREVIEW && !consent)
+          }
+          aria-label="Send message"
+        >
+          <ArrowUp size={20} />
+        </button>
+      </form>
+    </div>
   );
 }

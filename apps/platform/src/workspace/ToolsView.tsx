@@ -1,4 +1,4 @@
-import { Layers } from "lucide-react";
+import { ArrowUpRight, Layers } from "lucide-react";
 import { DuetCard, OutcomePill } from "../components/duet/kit";
 import { PREVIEW } from "../transport";
 
@@ -22,6 +22,8 @@ export function ToolsView() {
     run,
     openWork,
     working,
+    navigate,
+    privateLane,
   } = useWorkspace();
   if (!session) return null;
   return (
@@ -29,11 +31,8 @@ export function ToolsView() {
       <>
         <div className="page-heading">
           <div>
-            <h1>Tools</h1>
-            <p>
-              Tools act through reviewed proposals. Adding a screen never grants
-              authority.
-            </p>
+            <h1>Capabilities</h1>
+            <p>Choose what Aksara can help you work with.</p>
           </div>
         </div>
         <div className="tool-grid">
@@ -44,11 +43,40 @@ export function ToolsView() {
               <OutcomePill tone="green" icon={null}>
                 Bundled Pack · {p.version}
               </OutcomePill>
-              <p>
-                {p.screens.length} registered screen profile ·{" "}
-                {p.capabilities.join(", ")}. Manifest declarations grant no
-                authority.
-              </p>
+              <div className="pack-screens">
+                {p.screens.map((screen: Record<string, any>) => (
+                  <button
+                    key={screen.id}
+                    onClick={() =>
+                      navigate(
+                        screen.slot === "library"
+                          ? "Library"
+                          : screen.slot === "today"
+                            ? "Today"
+                            : privateLane
+                              ? "Ask"
+                              : "Conversation",
+                      )
+                    }
+                  >
+                    <span>
+                      {screen.slot === "library"
+                        ? "Sources & documents"
+                        : screen.slot === "today"
+                          ? "Work on Home"
+                          : "Conversation findings"}
+                    </span>
+                    <ArrowUpRight size={14} />
+                  </button>
+                ))}
+              </div>
+              <details className="pack-details">
+                <summary>Pack details</summary>
+                <p>
+                  {p.capabilities.join(", ")} · Declarations grant no execution
+                  rights.
+                </p>
+              </details>
             </DuetCard>
           ))}
           {[
