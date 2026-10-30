@@ -1,3 +1,4 @@
+import { AppearanceControls } from "./AppearanceControls";
 import {
   ArrowUpRight,
   AudioLines,
@@ -170,6 +171,7 @@ export function SettingsView() {
           <DuetCard className="settings-card">
             <h2>Appearance</h2>
             <p>A quieter workspace, in the light that suits you.</p>
+            <AppearanceControls />
             <div className="context-options">
               <button
                 onClick={() => setTheme("light")}

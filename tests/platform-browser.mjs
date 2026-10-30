@@ -349,7 +349,43 @@ try {
   mark(
     "Device effect is reviewed and receipted through the independent simulator",
   );
+  let releaseScope, scopeEntered;
+  const scopeGate = new Promise((resolve) => {
+    releaseScope = resolve;
+  });
+  const scopeStarted = new Promise((resolve) => {
+    scopeEntered = resolve;
+  });
+  await page.route("**/api/scope", async (route) => {
+    scopeEntered();
+    await scopeGate;
+    await route.continue();
+  });
   await page.getByRole("button", { name: "Ask PRIVATE" }).click();
+  await scopeStarted;
+  assert.equal(
+    await page
+      .getByRole("heading", { name: "Private thread", exact: true })
+      .count(),
+    0,
+  );
+  await page
+    .getByLabel("Message Aksara")
+    .fill("Do not send before private admission");
+  assert.ok(
+    await page
+      .getByRole("button", { name: "Send message", exact: true })
+      .isDisabled(),
+  );
+  releaseScope();
+  await page
+    .getByRole("heading", { name: "Private thread", exact: true })
+    .waitFor();
+  await page.unroute("**/api/scope");
+  assert.equal(await page.getByLabel("Message Aksara").inputValue(), "");
+  mark(
+    "Blob entry awaits private host admission and blocks submission during the scope switch",
+  );
   await page.locator(".composer-options > summary").click();
   await page.getByLabel("Model provider").selectOption("opencode-free");
   await page.getByLabel("Message Aksara").fill("Synthetic cloud prompt");

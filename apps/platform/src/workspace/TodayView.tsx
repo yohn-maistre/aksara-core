@@ -1,3 +1,5 @@
+import { AksaraLauncher } from "./AksaraLauncher";
+import { WorkIsland } from "./WorkIsland";
 import {
   ArrowUpRight,
   BookOpen,
@@ -94,9 +96,11 @@ function WorkSection({
 export function TodayView({
   compact = false,
   composer,
+  onSettled,
 }: {
   compact?: boolean;
   composer?: ReactNode;
+  onSettled?: () => void;
 }) {
   const {
     session,
@@ -116,6 +120,8 @@ export function TodayView({
     messages,
     pinnedReplies,
     setPinnedReplies,
+    homeReplyAfter,
+    setHomeReplyAfter,
   } = useWorkspace();
   const [panels, setPanels] = useState(["activity", "work", "library"]);
   const [wide, setWide] = useState(
@@ -131,17 +137,25 @@ export function TodayView({
   const eligibleMemories = memories.filter((m) =>
     artifacts.some((a) => a.id === m.source_artifact_id),
   );
+  const homeReply =
+    homeReplyAfter === null
+      ? undefined
+      : [...messages]
+          .reverse()
+          .find((m) => m.role === "assistant" && m.seq > homeReplyAfter);
   const Heading = compact ? "h2" : "h1";
   const openThread = () => navigate(privateLane ? "Ask" : "Conversation");
   return (
     <motion.section
       layout="position"
-      transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+      onLayoutAnimationComplete={onSettled}
+      transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
       className="home-surface"
       data-compact={compact}
       aria-label="Home"
     >
       <div className="home-intro">
+        <AksaraLauncher />
         <span className="home-label">Home</span>
         <p className="home-date">{shortDate(new Date())}</p>
         <Heading>
@@ -173,6 +187,25 @@ export function TodayView({
       {!compact && !at && composer && (
         <div className="home-composer">{composer}</div>
       )}
+      {!compact && !at && homeReply && (
+        <section className="home-reply-bubble" aria-label="Latest Home reply">
+          <p>
+            {homeReply.text.split("```", 1)[0].trim().slice(0, 240) ||
+              "Your reply is ready to review."}
+          </p>
+          <button className="text-button" onClick={openThread}>
+            Open conversation <ArrowUpRight size={14} />
+          </button>
+          <button
+            className="icon-button"
+            aria-label="Dismiss Home reply"
+            onClick={() => setHomeReplyAfter(null)}
+          >
+            <X size={14} />
+          </button>
+        </section>
+      )}
+      {!compact && !at && <WorkIsland />}
       <div className="home-panels">
         {!at &&
           (!compact || wide) &&

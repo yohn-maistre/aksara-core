@@ -1,11 +1,17 @@
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import { ArrowUp, Plus } from "lucide-react";
 import { PREVIEW } from "../transport";
 
 import { type Data } from "./shared";
 import { useWorkspace } from "./state";
 
-export function Composer() {
+// Composer geometry/auto-grow adapted from the user-supplied 21st Ask Bar.
+// Canonical messages, provider consent and Library attachments remain host-owned.
+export function Composer({
+  presentation = "bar",
+}: {
+  presentation?: "line" | "bar";
+}) {
   const {
     composerInput,
     session,
@@ -28,9 +34,20 @@ export function Composer() {
     navigate,
   } = useWorkspace();
   const optionsRef = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    const outside = (e: PointerEvent) => {
+      if (
+        optionsRef.current?.open &&
+        !optionsRef.current.parentElement?.contains(e.target as Node)
+      )
+        optionsRef.current.open = false;
+    };
+    document.addEventListener("pointerdown", outside);
+    return () => document.removeEventListener("pointerdown", outside);
+  }, []);
   if (!session) return null;
   return (
-    <div className="composer-wrap">
+    <div className="composer-wrap" data-presentation={presentation}>
       {provider !== "local" && !PREVIEW ? (
         <label className="consent">
           <input
@@ -63,12 +80,21 @@ export function Composer() {
           </p>
         )}
 
-      <form className="composer" onSubmit={send}>
+      <form
+        className="composer ask-bar"
+        data-expanded={draft.includes("\n") || attached.length > 0}
+        onSubmit={(e) => {
+          optionsRef.current?.removeAttribute("open");
+          void send(e);
+        }}
+      >
         <details
           ref={optionsRef}
           className="composer-options"
           onKeyDown={(e) => {
             if (e.key === "Escape") {
+              e.preventDefault();
+              e.stopPropagation();
               optionsRef.current!.open = false;
               optionsRef.current!.querySelector("summary")?.focus();
             }

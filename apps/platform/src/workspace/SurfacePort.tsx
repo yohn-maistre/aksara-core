@@ -3,6 +3,7 @@ import type {
   ResourcePlan,
 } from "@aksara/contracts/surfaces";
 import { ArrowUpRight, Circle, FileText } from "lucide-react";
+import { DynamicIsland } from "../components/ui/dynamic-island";
 import {
   createContext,
   useContext,
@@ -97,7 +98,7 @@ export function ResourceSurface({
     result.expires_at > Date.now()
       ? result
       : null;
-  return (
+  const body = (
     <section className="surface-card resource-surface">
       <h3>{title}</h3>
       {!current ? (
@@ -144,5 +145,10 @@ export function ResourceSurface({
         </ul>
       )}
     </section>
+  );
+  return component === "ProgressStatus" ? (
+    <DynamicIsland expanded>{body}</DynamicIsland>
+  ) : (
+    body
   );
 }

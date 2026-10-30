@@ -137,3 +137,35 @@ The smoked raster is generated for Aksara; no reference-product wallpaper,
 avatars or screenshots are copied into product assets. Gooey/Voice/other Cult
 components remain the studied candidates recorded in the atmospheric study; no
 new shader or Gooey runtime dependency is installed.
+
+
+## Expressive dock / blob pass — 30 October 2026
+
+Cult UI remains pinned at `d71b1428b811c2779d46ea41b7ef8c9f9c9991c2`, MIT.
+Actual `registry/default/ui/{dock,dynamic-island,ai-blob-warp,floating-panel}.tsx`
+files were read and matched against the official registry responses byte-for-byte
+apart from outer whitespace. Dock's proximity transforms/spring are adapted for
+vertical navigation and a phone row; image-card demos, indefinite click bounce,
+global pointer subscriptions and draggable dividers are omitted. Dynamic Island's
+controlled layout spring is adapted to content sizing, excluding its demo queue,
+fixed size presets and shared SVG IDs. AiBlobWarp retains the actual Paper Warp
+component behind Aksara's lazy, visibility, effects and error boundaries.
+Floating Panel's scoped shared-layout pattern informed expansion; its full demo
+and submit behavior are not copied. No donor state grants authority.
+
+`@paper-design/shaders-react` and `@paper-design/shaders` 0.0.82, Apache-2.0,
+Copyright 2026 Paper: actual Warp parameter types, shader mount and package
+LICENSE/NOTICE were inspected. A small lazy bundle supplies the blob; a still
+fallback is available. `@material/material-color-utilities` 0.4.0, Apache-2.0,
+Copyright 2021 Google LLC: actual `utils/theme_utils`, `scheme/scheme` and
+palette role exports were inspected and used to derive light/dark semantic roles.
+Their original licenses/notices ship in the static application. No vendor
+performance measurement is claimed as an A12 result.
+
+The user-supplied 21st Ask Bar was studied as composer layout/interaction
+reference. Its referenced CSS was absent. Aksara keeps its existing controlled
+composer rather than vendoring the demo's fake streaming, local transcript,
+filename-only attachments or browser speech-recognition implementation.
+The Designali liquid-glass page was studied visually; its registry endpoint
+returned 403 and page license metadata was empty. No Designali source is copied.
+[Implementation and limits](platform/expressive-workspace-implementation.md).

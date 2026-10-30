@@ -1,95 +1,62 @@
-# Atmospheric workspace design QA
+# Expressive workspace visual QA
 
-Date: 30 October 2026 (Asia/Bangkok).
-
-Source visual truth: the user selected all three generated screens as one
-interaction system, then requested a smoked background and regular, more opaque
-full-height spine. The consolidated thread target is
-`/workspace/generated_images/exec-7aa8cf3e-7bf6-4d5e-837a-a6a71ccf4106.png`.
-The approved Home/Library targets are `exec-25506d4c-5054-4f1c-a243-adcbd1d87f2d.png`
-and `exec-d191ed68-aee9-4323-8e39-52b2c7b24e8e.png` in the same directory.
-
-Implementation: browser-rendered local production preview, captured through
-Playwright Chromium at 1487 × 1058 CSS pixels, deviceScaleFactor 1. Source desktop
-images and final implementation captures are each 1487 × 1058 pixels. No device
-chrome or density compensation is involved. Combined comparison artifacts below
-normalize both sides equally to 1000-pixel width for review. Focused prose crops
-retain native pixel size. Phone inspection uses 390 × 844; automated checks also
-use 360 × 800 and 200% root text.
-
-Evidence:
-
-- [Home combined comparison](docs/platform/ui-audit/atmospheric-compare-home.jpg).
-- [Thread combined comparison](docs/platform/ui-audit/atmospheric-compare-thread.jpg).
-- [Library combined comparison](docs/platform/ui-audit/atmospheric-compare-library.jpg).
-- [Native-scale prose comparison](docs/platform/ui-audit/atmospheric-compare-detail.jpg).
-- [Rendered phone thread](docs/platform/ui-audit/atmospheric-thread-phone.jpg).
-- Raw captures: `/workspace/aksara-ui-research/atmosphere-final/`.
-
-## Comparison history
-
-1. Initial browser pass: P2 inherited outer boxes around user messages, small
-   conversation type and incorrect alignment; P2 Home Library panel below the
-   first desktop fold; P2 Library's composer moved below its growing content.
-   Evidence was saved in `atmosphere-home-first.png` and
-   `atmosphere-library-first.png` under the research directory, with the first
-   thread capture before fixes.
-2. Corrected bubble prose/width/alignment and removed inherited article fills;
-   increased body size, made reply actions contextual, put useful Home panels
-   into the desktop opening, and separated scrollable workspace content from its
-   composer. A later capture exposed companion height extending below the
-   viewport and transient horizontal overflow during resize. Those were P2.
-3. Bounded companion height to the available dynamic viewport; kept the position
-   transition inside the workspace canvas; re-captured at the same viewport.
-   Inspected the final combined comparisons and native-scale prose crops.
-   Preview checks now also cover resize and 200% text without sideways overflow.
-   No actionable P0/P1/P2 findings remain.
-
-## Required fidelity surfaces
-
-- **Typography:** actual local Inter Variable loaded; the source's human sans
-  hierarchy is retained. Home is large; ordinary bubbles use comfortable prose
-  rather than Cult's display h1 wrapper. Secondary labels remain readable, date
-  numbers are tabular, and unbroken content wraps. Phone inputs use 16px default
-  type. A generated reference's exact word wrapping is not imposed on different
-  real content.
-- **Spacing/layout:** regular tall rail, bounded work surface, floating continuing
-  Home, conversation/activity split and one composer are present. Home contracts
-  within the same context; restricted state remounts across scope changes. Phones
-  present one active surface. The narrow activity toggle replaces squeezed
-  desktop columns. Scrollable Home/content areas remain reachable.
-- **Colors/tokens:** graphite/lilac/warm roles apply in dark and light modes.
-  Materials use enough opacity for text and exact review. A localized rail wash
-  stays subordinate. Scope and preview disclosure remain visible.
-- **Images:** the generated smoked raster is installed and optimized, without a
-  scene/horizon or borrowed wallpaper. Lucide outline icons and the original
-  product sprig remain actual vector icons. No fabricated computer screenshot is
-  substituted for the unimplemented interactive computer backend.
-- **Copy/content:** real eligible sources, reviewed excerpts, work states and
-  registered surfaces replace generated fixture examples. No fake meetings,
-  weather measurement, productivity percentage or tool trace is added. Preview
-  disclosures are intentional; original model/effect authority remains intact.
-
-## Interaction and console checks
-
-Primary flows exercised: Home/panel selection, draft-preserving navigation,
-Library import/search/collections, exact document review/approval/receipt,
-knowledge review/withdrawal, actual model fixture reply/OpenUI rendering, pinning
-and dependency invalidation, shared/personal context changes, local read-aloud,
-onboarding choices and theme/motion controls. Desktop/mobile dark/light captures
-reported zero browser page errors. Product/preview checks also assert current
-privacy and consent behavior. See the linked audit for counts and Taste waivers.
-
-Intentional differences: no connected weather/calendar service or microphone
-capture; no invented active computer; no complete company-wiki synthesis. Pins
-and layout are tab-local. These are explicit capability boundaries, not missing
-raster assets. Real Surface Pro/A12 keyboard, battery and frame-time measurements
-remain qualification work.
-
-## Follow-up polish
-
-P3: tune transition timings on actual phone hardware and refine Home copy with
-more useful real work context as the catalogue grows. These do not block the
-selected foundation.
+Date: 30 October 2026 (Asia/Bangkok)
 
 final result: passed
+
+Target: the user's selected Hark-like atmospheric ergonomics, followed by the
+explicit dock/mobile-row/blob/composer refinements. This adapts those references
+and the accepted design specification; it is not a pixel clone or a claim about
+Hark's private implementation.
+
+Fresh Chromium production-preview captures were opened and inspected at
+1440×900 and 390×844: light Sage Library, dark Home, private/shared threads,
+phone inline work and a 390×420 compact-height composer. Provided Hark
+screenshots and actual Cult registry source ground the visual/interaction review.
+Earlier generated images establish workspace structure; the latest explicit
+refinements supersede their opaque rail.
+
+## Review and repair loop
+
+- Removed the opaque rail frame and fixed collapsed icon geometry. Measured
+  horizontal/vertical icon-center error is zero pixels. Phone dock navigation
+  is direct; More retains a focus-trapped secondary sheet.
+- Repaired the mobile More resize race by opening mobile state explicitly.
+- Repaired a full-width rule extending the fixed private surface and its send
+  control beyond the viewport. It now accounts for collapsed/expanded desktop
+  navigation and phone safe-area spacing.
+- Reduced message type/weight/spacing, restored a real multiline composer and
+  kept phone Activity inline. Compact send bounds are x=312, y=346, width=40,
+  height=36 inside a 390×420 viewport.
+- Home and full thread use the same draft and canonical messages, with one
+  visible composer. Source withdrawal and scope checks clear restricted content.
+- Home contraction precedes surface reveal. Reduced motion skips choreography;
+  interrupted layout has a bounded fallback.
+
+## Evidence
+
+![Home and desktop dock](docs/platform/ui-audit/expressive-home-desktop.jpg)
+
+![Expanded private conversation](docs/platform/ui-audit/expressive-thread-desktop.jpg)
+
+![Light Sage Library](docs/platform/ui-audit/expressive-library-light.jpg)
+
+![Phone thread and bottom dock](docs/platform/ui-audit/expressive-thread-phone.jpg)
+
+![Phone inline work](docs/platform/ui-audit/expressive-thread-phone-activity.jpg)
+
+The capture run has no page errors. The actual shader appears in normal captures;
+reduced effects also exercises the fallback. Taste v2 at 1440/768/390 reports no
+findings with explicit aesthetic allowances: lilac, large Home statement,
+independent panel heights, sparse real calendar hue, and the user-requested
+procedural smoke gradient. No accessibility finding is waived. This is not a
+full WCAG conformance audit.
+
+24 preview checks, 20 real-host product checks and eight existing privacy/approval
+browser smoke checks pass. Material supplies paired color roles; static
+inspection does not establish every moving composite/native-device condition.
+Real Surface/A12 GPU, keyboard, battery and frame-time measurement remains.
+
+No P0/P1/P2 visual issue remains in captured states. P3: tune glass density,
+springs and atmosphere with real device feedback. Weather input, custom seeds
+and routed deep links remain outside this checkpoint.

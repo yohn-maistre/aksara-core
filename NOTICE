@@ -52,3 +52,14 @@ The Codex subscription provider includes focused modified Mastra Code SDK source
 Copyright (c) 2025 Kepler Software, Inc., Apache-2.0 outside EE. Its original
 license and source pin/adaptations are retained in third_party/mastra-code/LICENSE
 and packages/runtime-mastra/vendor/mastra-codex/UPSTREAM.md. No EE code is copied.
+
+The expressive workspace adapts Cult Dock, Dynamic Island and AiBlobWarp
+presentation source (MIT). Demo image cards, bounce/scheduling and uncontrolled
+submission behavior are not imported. Source details are in docs/donors.md.
+
+Paper Shaders 0.0.82 (Apache-2.0), Copyright 2026 Paper.
+Powered by Paper Shaders: https://shaders.paper.design
+The shader is lazy and optional. Original LICENSE/NOTICE are distributed under
+apps/platform/public/licenses/paper-shaders-*.txt.
+Material Color Utilities 0.4.0 (Apache-2.0), Copyright 2021 Google LLC, supplies
+semantic palette roles. Its original license is distributed under public/licenses.

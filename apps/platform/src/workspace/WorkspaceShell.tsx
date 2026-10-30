@@ -1,4 +1,4 @@
-import { Hash, LockKeyhole, PanelLeft } from "lucide-react";
+import { Hash, LockKeyhole } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { AppSidebar } from "../components/app-sidebar";
 import { SurfacePage } from "../components/octopus/SurfacePage";
@@ -10,6 +10,7 @@ import {
 import { PREVIEW } from "../transport";
 import { PreviewNotice } from "./shared";
 import { useWorkspace } from "./state";
+import { MobileDock } from "./NavigationDock";
 import { ContextMenu } from "./ContextMenu";
 function Atmosphere() {
   const { ambientMotion } = useWorkspace();
@@ -25,18 +26,14 @@ function Atmosphere() {
       aria-hidden
       data-moving={ambientMotion && visible}
     >
-      <img
-        src="/atmosphere/smoke.webp"
-        alt=""
-        decoding="async"
-        fetchPriority="low"
-      />
+      <div className="smoke-layer smoke-layer-one" />
+      <div className="smoke-layer smoke-layer-two" />
     </div>
   );
 }
 function WorkspaceHeader() {
   const { session, privateLane, lane } = useWorkspace();
-  const { toggleSidebar, isMobile } = useSidebar();
+  const { isMobile } = useSidebar();
   if (!session) return null;
   if (!isMobile)
     return (
@@ -54,13 +51,6 @@ function WorkspaceHeader() {
     );
   return (
     <header className="workspace-topbar">
-      <button
-        className="icon-button"
-        aria-label="Open navigation"
-        onClick={toggleSidebar}
-      >
-        <PanelLeft size={20} />
-      </button>
       <span className="location-name">
         {session.profile.mode === "personal"
           ? "Personal space"
@@ -105,6 +95,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
         )}
         <SurfacePage>{children}</SurfacePage>
       </SidebarInset>
+      <MobileDock />
     </SidebarProvider>
   );
 }

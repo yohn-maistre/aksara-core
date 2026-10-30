@@ -34,3 +34,9 @@ system is implemented. Home contracts within the current authorized context;
 spine expansion is a presentation preference; scoped pinned replies are removed
 when their canonical message becomes unavailable. See
 [implementation and limits](atmospheric-workspace-implementation.md).
+
+Latest 30 October refinement: expressive desktop/phone docks, scoped blob
+conversation expansion, controlled Dynamic Island progress, a denser composer,
+procedural local-time atmosphere and Material color roles are implemented.
+See [current checkpoint](expressive-workspace-implementation.md). Existing
+runtime promotion gates remain unchanged.

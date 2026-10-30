@@ -1,8 +1,7 @@
-Current UI checkpoint: [atmospheric workspace](atmospheric-workspace-implementation.md); models: [Mastra integration review](mastra-integration-review.md). The earlier OpenDuet fidelity audit is historical.
+Current UI checkpoint: [expressive dock workspace](expressive-workspace-implementation.md); models: [Mastra integration review](mastra-integration-review.md). Earlier UI checkpoints remain historical evidence.
 
-Next visual pass: [Expressive workspace direction](expressive-workspace-direction.md)
-records the researched Material 3 Expressive/Hark refinement. It is a proposal,
-not an already deployed appearance change.
+[Expressive workspace direction](expressive-workspace-direction.md) records the
+research preceding the current dock, adaptive atmosphere and composer pass.
 
 # Aksara platform foundation
 
@@ -39,8 +38,8 @@ Try this path:
 The selected atmospheric workspace is implemented: Home contracts beside the
 active surface, a regular navigation spine anchors the page, and private/shared
 threads use adapted Cult bubbles. Library separates reviewed knowledge and files.
-Read the [implementation and limits](atmospheric-workspace-implementation.md) and
-[current audit](atmospheric-ui-audit.md).
+Read the [latest implementation and limits](expressive-workspace-implementation.md)
+and [current visual QA](../../design-qa.md).
 
 ## Hosted UI preview
 

@@ -9,6 +9,7 @@ import {
   type FormEvent,
   type ReactNode,
 } from "react";
+import { useAppearance } from "./appearance";
 import { apiFetch, PREVIEW } from "../transport";
 import {
   key,
@@ -42,6 +43,7 @@ function useWorkspaceState() {
     [messages, setMessages] = useState<Data[]>([]),
     [timeline, setTimeline] = useState<Data[]>([]),
     [pinnedReplies, setPinnedReplies] = useState<number[]>([]),
+    [homeReplyAfter, setHomeReplyAfter] = useState<number | null>(null),
     [artifacts, setArtifacts] = useState<Artifact[]>([]),
     [memories, setMemories] = useState<Data[]>([]),
     [candidates, setCandidates] = useState<Data[]>([]),
@@ -75,6 +77,7 @@ function useWorkspaceState() {
       localStorage.getItem("aksara-ambient-motion") !== "off",
     ),
     [device, setDevice] = useState<Data | null>(null);
+  const appearance = useAppearance(theme);
   useLayoutEffect(() => {
     const el = composerInput.current;
     if (!el) return;
@@ -82,8 +85,8 @@ function useWorkspaceState() {
       el.focus({ preventScroll: true });
       transferComposerFocus.current = false;
     }
-    el.style.height = "44px";
-    el.style.height = `${Math.min(120, el.scrollHeight)}px`;
+    el.style.height = "auto";
+    el.style.height = `${Math.max(24, Math.min(192, el.scrollHeight))}px`;
   }, [draft, page]);
   useLayoutEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
@@ -116,6 +119,7 @@ function useWorkspaceState() {
           setMessages([]);
           setTimeline([]);
           setPinnedReplies([]);
+          setHomeReplyAfter(null);
           setArtifacts([]);
           setMemories([]);
           setCandidates([]);
@@ -155,6 +159,7 @@ function useWorkspaceState() {
     setMessages([]);
     setTimeline([]);
     setPinnedReplies([]);
+    setHomeReplyAfter(null);
     setArtifacts([]);
     setHits([]);
     setMemories([]);
@@ -350,12 +355,13 @@ function useWorkspaceState() {
       (provider !== "local" && !PREVIEW && !consent)
     )
       return;
-    if (page !== "Ask" && page !== "Conversation") {
+    if (!["Today", "Ask", "Conversation"].includes(page)) {
       transferComposerFocus.current =
         document.activeElement === composerInput.current;
       setPage(privateLane ? "Ask" : "Conversation");
     }
     await run(async () => {
+      const after = Math.max(0, ...messages.map((m) => Number(m.seq)));
       await api("chat", {
         text: draft,
         provider,
@@ -364,6 +370,7 @@ function useWorkspaceState() {
         idempotency_key: key(),
         source_ids: attached,
       });
+      if (page === "Today") setHomeReplyAfter(after);
       setDraft((current) => (current === draft ? "" : current));
       setAttached((current) => (current === attached ? [] : current));
       setConsent(false);
@@ -407,16 +414,32 @@ function useWorkspaceState() {
     ),
     visibleWorks = history ? history.work.map((h: Data) => h.work) : works;
   const navigate = (p: string) => {
+    if (page === "Ask" && p === "Today") transferComposerFocus.current = true;
     if (p === "Ask" && session) {
       const own = session.lanes.find((l) => l.lane.audience.length === 1);
-      if (own && own.lane.id !== session.lane)
-        void switchContext(session.profile.id, own.lane.id);
+      if (!own) {
+        setError("No private conversation is available in this space.");
+        return;
+      }
+      if (own && own.lane.id !== session.lane) {
+        // Do not expose/send a private-entry view until the host accepts its scope.
+        void run(async () => {
+          const next = await api("scope", {
+            profile: session.profile.id,
+            lane: own.lane.id,
+          });
+          accept(next);
+          setPage("Ask");
+        });
+        return;
+      }
     }
     setPage(p);
     setMobile(false);
   };
 
   return {
+    ...appearance,
     composerInput,
     profiles,
     setProfiles,
@@ -445,6 +468,8 @@ function useWorkspaceState() {
     timeline,
     pinnedReplies,
     setPinnedReplies,
+    homeReplyAfter,
+    setHomeReplyAfter,
     artifacts,
     setArtifacts,
     memories,

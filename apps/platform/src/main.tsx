@@ -3,13 +3,23 @@ const SetupView = lazy(() =>
 );
 import { X } from "lucide-react";
 import { MotionConfig } from "motion/react";
-import { lazy, StrictMode, Suspense, useMemo } from "react";
+import {
+  lazy,
+  StrictMode,
+  Suspense,
+  useMemo,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { createRoot } from "react-dom/client";
 import "./duet.css";
 import "./style.css";
 import "./workspace.css";
 import "./atmosphere.css";
-import { motion } from "motion/react";
+import "./expressive.css";
+import { motion, useReducedMotion } from "motion/react";
 import { Composer } from "./workspace/Composer";
 import { ConversationView } from "./workspace/ConversationView";
 import { useWorkspace, WorkspaceProvider } from "./workspace/state";
@@ -31,8 +41,59 @@ const ToolsView = lazy(() =>
   import("./workspace/ToolsView").then((m) => ({ default: m.ToolsView })),
 );
 function App() {
-  const { session, page, error, setError, api, openWork, run, setDetail } =
-    useWorkspace();
+  const {
+    session,
+    page,
+    error,
+    setError,
+    api,
+    openWork,
+    run,
+    setDetail,
+    navigate,
+  } = useWorkspace();
+  const reduced = useReducedMotion();
+  const routeKey = `${session?.scope}:${page}`;
+  const [settled, setSettled] = useState("");
+  const previous = useRef(page);
+  useLayoutEffect(() => {
+    const mustContract =
+      previous.current === "Today" &&
+      page !== "Today" &&
+      page !== "Ask" &&
+      innerWidth > 1100 &&
+      !reduced;
+    previous.current = page;
+    if (!mustContract) {
+      setSettled(routeKey);
+      return;
+    }
+    // Completion callback is primary; bounded fallback handles layout cancellation.
+    const timer = setTimeout(() => setSettled(routeKey), 600);
+    return () => clearTimeout(timer);
+  }, [routeKey, reduced]);
+  const ready = settled === routeKey || !!reduced;
+  useEffect(() => {
+    if (page === "Ask" && ready && !document.querySelector('[role="dialog"]'))
+      document
+        .querySelector<HTMLTextAreaElement>(
+          '.page-ask textarea[aria-label="Message Aksara"]',
+        )
+        ?.focus({ preventScroll: true });
+  }, [page, ready, session?.scope]);
+  useEffect(() => {
+    if (page !== "Ask") return;
+    const escape = (event: KeyboardEvent) => {
+      if (
+        event.key === "Escape" &&
+        !event.defaultPrevented &&
+        !document.querySelector('[role="dialog"], [role="menu"]')
+      )
+        navigate("Today");
+    };
+    window.addEventListener("keydown", escape);
+    return () => window.removeEventListener("keydown", escape);
+  }, [page, session?.scope]);
   const port = useMemo<SurfacePort>(
     () => ({
       scope: session?.scope || "",
@@ -61,6 +122,7 @@ function App() {
           tabIndex={-1}
           className="workspace-stage"
           data-home={page === "Today"}
+          data-private={page === "Ask"}
           key={session.scope}
         >
           {error && (
@@ -73,13 +135,40 @@ function App() {
           )}
           {page !== "Today" && (
             <motion.section
-              key="active-surface"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.22 }}
+              key={`active-surface:${session.scope}:${page}`}
+              layoutId={
+                page === "Ask" ? `aksara-personal:${session.scope}` : undefined
+              }
+              initial={{
+                opacity: reduced ? 1 : 0,
+                x: reduced ? 0 : -8,
+                clipPath:
+                  page === "Ask" || reduced
+                    ? "inset(0% 0% 0% 0% round 38px)"
+                    : "inset(0% 100% 0% 0% round 28px)",
+              }}
+              animate={{
+                opacity: ready ? 1 : 0,
+                x: ready ? 0 : -8,
+                clipPath: ready
+                  ? `inset(0% 0% 0% 0% round ${page === "Ask" ? 38 : 28}px)`
+                  : "inset(0% 100% 0% 0% round 28px)",
+              }}
+              transition={{ duration: reduced ? 0 : 0.17 }}
+              inert={!ready}
+              aria-hidden={!ready}
               className={`work-surface content page-${page.toLowerCase()}`}
               aria-label="Active workspace"
             >
+              {page === "Ask" && (
+                <button
+                  className="private-thread-close icon-button"
+                  aria-label="Close private conversation"
+                  onClick={() => navigate("Today")}
+                >
+                  <X size={22} />
+                </button>
+              )}
               <div className="surface-body">
                 <Suspense
                   fallback={
@@ -108,7 +197,10 @@ function App() {
           <TodayView
             key="continuing-home"
             compact={page !== "Today"}
-            composer={page === "Today" ? <Composer /> : undefined}
+            onSettled={() => setSettled(routeKey)}
+            composer={
+              page === "Today" ? <Composer presentation="line" /> : undefined
+            }
           />
         </main>
       </WorkspaceShell>

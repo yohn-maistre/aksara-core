@@ -32,6 +32,14 @@ The current CSS entry is `src/duet.css`; update that path when the theme is port
 
 ## Current project direction
 
+Latest explicit user refinement (30 October): use a Cult-derived desktop dock
+with an invisible collapsed container, a floating bottom phone dock, and a
+separate AiBlobWarp launcher for the private conversation. Shared smoked glass,
+local-time atmosphere and compact chat supersede earlier opaque-rail/flat-only
+instructions below. Read `docs/platform/expressive-workspace-implementation.md`.
+Keep trusted host review and current-scope invalidation unchanged.
+
+
 30 October update: the user explicitly requested exploration of atmospheric
 weather backgrounds, restrained glass/blur, localized glow and connected Gooey
 shapes. For that exploration, these choices supersede the earlier flat-only

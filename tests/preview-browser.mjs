@@ -116,7 +116,7 @@ try {
     .click();
   assert.equal(
     await page
-      .locator(".ambient-field img")
+      .locator(".ambient-field .smoke-layer-one")
       .evaluate((el) => getComputedStyle(el).animationPlayState),
     "paused",
   );
@@ -146,6 +146,10 @@ try {
     .getByLabel("Message Aksara")
     .fill("Show my selected sample source");
   await page.getByRole("button", { name: "Send message", exact: true }).click();
+  await page
+    .getByRole("region", { name: "Latest Home reply" })
+    .getByRole("button", { name: "Open conversation", exact: true })
+    .click();
   const resource = page.locator(".resource-surface");
   await resource
     .getByRole("heading", { name: "Selected sample sources" })
@@ -155,6 +159,7 @@ try {
   await page
     .getByRole("button", { name: "Close document", exact: true })
     .click();
+  await page.getByRole("dialog").waitFor({ state: "hidden" });
   mark(
     "A literal OpenUI resource card resolves current data and opens the trusted document view",
   );
@@ -317,6 +322,10 @@ try {
     .fill("The setup preview kept the guided transport");
   await page.getByRole("button", { name: "Send message", exact: true }).click();
   await page
+    .getByRole("region", { name: "Latest Home reply" })
+    .getByRole("button", { name: "Open conversation", exact: true })
+    .click();
+  await page
     .locator(".conversation-scroll")
     .getByText(/guided UI response/)
     .last()
@@ -385,6 +394,95 @@ try {
       animations: "disabled",
     });
   mark("Hosted preview is usable at a 360 px viewport");
+  assert.ok(
+    await page
+      .getByRole("navigation", { name: "Main navigation", exact: true })
+      .isVisible(),
+  );
+  assert.equal(
+    await page
+      .getByRole("navigation", { name: "Main navigation", exact: true })
+      .getByRole("button", { name: "Ask PRIVATE", exact: true })
+      .count(),
+    0,
+  );
+  await navigateSurface(page, "Library");
+  await page.getByRole("heading", { name: "Library", exact: true }).waitFor();
+  assert.equal(await page.getByRole("dialog").count(), 0);
+  mark(
+    "Phone dock navigates directly without a drawer and keeps private chat separate",
+  );
+  await navigateSurface(page, "Home");
+  await page.getByRole("button", { name: "Ask PRIVATE", exact: true }).click();
+  await page
+    .getByRole("heading", { name: "Private thread", exact: true })
+    .waitFor();
+  const area = page.getByLabel("Message Aksara", { exact: true });
+  await area.fill("A line");
+  const short = (await area.boundingBox()).height;
+  await area.fill("A line\nAnother line\nA third line");
+  assert.ok((await area.boundingBox()).height > short);
+  const sendBounds = await page
+    .getByRole("button", { name: "Send message", exact: true })
+    .boundingBox();
+  assert.ok(sendBounds.x >= 0 && sendBounds.x + sendBounds.width <= 360);
+  await page.keyboard.press("Escape");
+  await page.getByRole("heading", { name: /Room for/ }).waitFor();
+  assert.equal(
+    await page.getByLabel("Message Aksara").inputValue(),
+    "A line\nAnother line\nA third line",
+  );
+  mark(
+    "Blob conversation expands, its multiline composer stays in view, and Escape preserves the draft",
+  );
+  await navigateSurface(page, "Settings");
+  const oldAccent = await page.evaluate(() =>
+    getComputedStyle(document.documentElement).getPropertyValue("--green"),
+  );
+  await page.getByRole("button", { name: "Clay", exact: true }).click();
+  await page.waitForFunction(
+    (old) =>
+      getComputedStyle(document.documentElement).getPropertyValue("--green") !==
+      old,
+    oldAccent,
+  );
+  await page.getByText("Simulate time of day", { exact: true }).click();
+  const hour = page.getByLabel("Atmosphere preview hour");
+  await hour.focus();
+  await hour.press("Home");
+  const darkPhase = await page.evaluate(() =>
+    getComputedStyle(document.documentElement).getPropertyValue("--atmo-light"),
+  );
+  await hour.press("End");
+  await hour.press("ArrowLeft");
+  assert.notEqual(
+    await page.evaluate(() =>
+      getComputedStyle(document.documentElement).getPropertyValue(
+        "--atmo-light",
+      ),
+    ),
+    darkPhase,
+  );
+  await page
+    .getByLabel("Reduce glass & shader effects", { exact: true })
+    .check();
+  assert.equal(
+    await page
+      .locator(".work-surface")
+      .evaluate((el) => getComputedStyle(el).backdropFilter),
+    "none",
+  );
+  await page.reload();
+  await page.getByRole("heading", { name: /Room for/ }).waitFor();
+  assert.equal(
+    await page.evaluate(() => localStorage.getItem("aksara-palette")),
+    "clay",
+  );
+  assert.equal(await page.locator(".aksara-launcher canvas").count(), 0);
+  mark(
+    "Palette and reduced effects persist while clock simulation and private drafts remain disposable",
+  );
+
   await page.evaluate(() => (document.documentElement.style.fontSize = "200%"));
   await navigateSurface(page, "Ask PRIVATE");
   await page.getByLabel("Message Aksara").scrollIntoViewIfNeeded();
