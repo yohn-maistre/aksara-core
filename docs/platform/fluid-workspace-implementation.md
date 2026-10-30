@@ -88,3 +88,29 @@ Library/Pack artifacts; source-backed observations and inferences remain distinc
 reviewed derivatives. Valid time and record time, disputed mappings and withdrawal
 must survive future projections. Ontologies do not confer access or force a
 mandatory graph backend. No uploaded private source document is redistributed.
+
+## Follow-on gateway qualification
+
+The [gateway ports](../../packages/gateway/README.md) now include native Mastra
+MCP resource serving, with a real stdio/Rust test for private scope, withdrawal
+and bundled Pack discovery. Knowledge Pack 0.2 declares the registered resource
+screens as well as text cards. The isolated Mastra Docker observation port was
+also tested against a dedicated immutable non-root image, with 128 MiB configured
+memory, fixed CPU/PID limits, no network and no host mounts. This qualifies a
+backend joint; it does not enable product command execution or persistent
+private/shared computers. Those promotion gates remain explicit in the coverage
+matrix. The UI/model preview is deployed independently of these host adapters.
+
+```mermaid
+flowchart LR
+  PWA["PWA · Today / threads / Library"] --> BFF["Scoped host ports"]
+  UI["Bounded generated surfaces"] --> BFF
+  BFF --> Rust["Rust authority · originals / work / receipts"]
+  BFF --> Agent["Mastra Agent"]
+  Agent --> Models["Local / keyless OpenCode / scoped Codex OAuth"]
+  MCP["Trusted local MCP subject"] --> Read["Read-only gateway port"]
+  Read --> Rust
+  Pack["Validated bundled Pack manifests"] --> MCP
+  Computer["Computer observation port"] --> Docker["Mastra DockerSandbox"]
+  Computer -. "promotion requires durable Rust intent / reconciliation" .-> Rust
+```

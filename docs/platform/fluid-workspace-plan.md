@@ -1,3 +1,5 @@
+Implementation status: the first fluid workspace/model checkpoint shipped on 29 October. See [current implementation](fluid-workspace-implementation.md) and [current audit](fluid-ui-audit.md). This document preserves the source research and remaining design gates.
+
 # Aksara fluid workspace: donor study and implementation plan
 
 29 October 2026, Asia/Bangkok. Planning and tooling checkpoint. The user selected

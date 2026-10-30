@@ -30,13 +30,13 @@ Try this path:
 7. In community Tools, prepare, approve and execute a semantic simulator indication.
 8. Select a past date in Today. Dates before recorded work remain empty.
 
-## Next presentation direction
+## Current presentation
 
-The user selected an Octopus-derived fluid workspace with an embedded composer,
-shadcn inset sidebar and selectively adapted Cult/Gooey components. Read the
-[donor study and implementation plan](fluid-workspace-plan.md). This planning
-checkpoint installs developer registry/MCP guidance; the running UI below remains
-the OpenDuet checkpoint.
+The Octopus-derived fluid workspace is implemented with an embedded composer,
+shadcn inset sidebar and selectively adapted Cult components. Read the
+[implementation checkpoint](fluid-workspace-implementation.md) and
+[donor study](fluid-workspace-plan.md). Gooey effects remain optional pending
+phone measurements.
 
 ## Hosted UI preview
 
@@ -46,7 +46,7 @@ the OpenDuet checkpoint.
 
 The hosted preview opens on Today with labeled sample work. You can explore private/shared sample contexts, Library search, document review, memory controls and a guided OpenUI response. These are UI demonstrations, not Rust authorization/effect proofs. Every simulated result is labeled `PREVIEW_ONLY`. No model, device, private backend, account or remote user-data store is connected. Reload resets tab-local data; other visitors have separate state. Do not put important work into the preview.
 
-Pages serves static assets. A minimal `/api/*` guard returns HTTP 501 to explicitly reject live-backend requests; the UI sample transport never makes those requests. Camera/microphone access is disabled for the preview origin. Thirteen browser checks cover disclosure, sample review, tab isolation, no network data egress, reset, history, responsive layout and the API guard. `node tests/preview-browser.mjs` tests the build locally; `AKSARA_PREVIEW_URL=https://… node tests/preview-browser.mjs` checks a deployed version.
+Pages serves static assets. A minimal `/api/*` guard returns HTTP 501 to explicitly reject live-backend requests; the UI sample transport never makes those requests. Camera/microphone access is disabled for the preview origin. Browser checks cover disclosure, sample review, tab isolation, no network data egress, reset, history, responsive layout and the API guard. `node tests/preview-browser.mjs` tests the build locally; `AKSARA_PREVIEW_URL=https://… node tests/preview-browser.mjs` checks a deployed version.
 
 Pages build settings: repository root, `npm run build:preview`, output `apps/platform/dist-preview`, Node `24.19.0`, production branch `main`. `deploy/pages/` contains the guard, routing and response headers. This deployment is separate from the production architecture.
 

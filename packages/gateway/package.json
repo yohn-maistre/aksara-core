@@ -1,0 +1,15 @@
+{
+  "name": "@aksara/gateway",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@mastra/core": "1.80.0",
+    "@mastra/docker": "0.12.1",
+    "@mastra/mcp": "2.6.0",
+    "dockerode": "4.0.12",
+    "zod": "4.3.6",
+    "@aksara/contracts": "*"
+  }
+}

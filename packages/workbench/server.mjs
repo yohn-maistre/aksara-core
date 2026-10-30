@@ -97,6 +97,8 @@ export async function createWorkbench({
   port = 7341,
   generate = generateReply,
   webRoot = path.join(root, "apps/platform/dist"),
+  providerStateDir = process.env.AKSARA_PROVIDER_STATE_DIR ||
+    path.join(root, ".aksara", "providers"),
 } = {}) {
   if (!Array.isArray(profiles) || !profiles.length)
     throw new Error("No development profiles configured");
@@ -106,7 +108,7 @@ export async function createWorkbench({
       throw new Error("Kernel must be fixed loopback");
   }
   const codex = createCodexBridge({
-    root: path.join(root, ".aksara", "providers", "codex"),
+    root: path.join(providerStateDir, "codex"),
   });
   const sessions = new Map();
   const active = new Map();
@@ -275,6 +277,7 @@ export async function createWorkbench({
       };
       const custodyFor = async () => {
         const principal = await kernel(snapshot, "me");
+        await kernel(snapshot, "capabilities");
         assertScope();
         const custody = JSON.stringify([
           principal.institution_id,
@@ -323,7 +326,11 @@ export async function createWorkbench({
         if (action === "login") result = await codex.login(await custodyFor());
         else if (action === "poll" && typeof input.login_id === "string")
           result = await codex.poll(await custodyFor(), input.login_id, {
-            assertCurrent: assertScope,
+            assertCurrent: async () => {
+              assertScope();
+              await custodyFor();
+              assertScope();
+            },
           });
         else if (action === "logout")
           result = await codex.logout(await custodyFor());

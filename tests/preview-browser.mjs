@@ -187,6 +187,24 @@ try {
     0,
   );
   mark("Reload clears preview changes instead of persisting user content");
+  await page.getByRole("button",{name:"Context: Operator",exact:true}).click();
+  await page.getByRole("menuitem",{name:"Personal space",exact:true}).click();
+  await page.locator(".location-name").filter({hasText:"Personal space"}).waitFor();
+  await page.getByRole("button",{name:"Context: Operator",exact:true}).click();
+  await page.getByRole("menuitem",{name:"Community workspace",exact:true}).click();
+  await page.locator(".location-name").filter({hasText:"Aksara Commons"}).waitFor();
+  mark("The workspace switcher changes custody through the same fenced host action");
+  await navigateSurface(page,"Settings");
+  await page.getByRole("button",{name:/Set up Aksara/}).click();
+  await page.getByRole("button",{name:"Next",exact:true}).click();
+  await page.getByRole("group",{name:"Model connection"}).getByRole("button",{name:/ChatGPT subscription/}).click();
+  assert.ok(await page.getByRole("button",{name:"Sign in with ChatGPT",exact:true}).isDisabled());
+  await page.getByRole("button",{name:"Set up later",exact:true}).click();
+  await page.getByLabel("Message Aksara").fill("The setup preview kept the guided transport");
+  await page.getByRole("button",{name:"Send message",exact:true}).click();
+  await page.locator(".today-reply").getByText(/guided UI response/).waitFor();
+  mark("Onboarding can preview provider choices while account and model calls stay disconnected");
+  await page.reload();await page.getByRole("heading",{name:"Hello, Operator."}).waitFor();
   await page.getByRole("button", { name: /^Today/ }).click();
   const shots = process.env.AKSARA_PREVIEW_SCREENSHOTS;
   if (shots) {

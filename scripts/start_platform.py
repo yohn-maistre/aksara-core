@@ -68,7 +68,7 @@ def main():
     children.extend([
         (['python3', str(ROOT / 'scripts/device_simulator.py'), '--db', str(args.state / 'devices.sqlite'), '--port', str(base)], {}),
         ([binary, '--db', str(community_db), 'serve', '--listen', f'127.0.0.1:{base+1}', '--simulator', f'127.0.0.1:{base}'], {}),
-        (['node', '--use-env-proxy', str(ROOT / 'packages/workbench/server.mjs')], dict(AKSARA_PROFILES=str(config.resolve()), AKSARA_PORT=str(args.port))),
+        (['node', '--use-env-proxy', str(ROOT / 'packages/workbench/server.mjs')], dict(AKSARA_PROFILES=str(config.resolve()), AKSARA_PORT=str(args.port), AKSARA_PROVIDER_STATE_DIR=str((args.state / "providers").resolve()))),
     ])
     processes = []
     def stop(*_):

@@ -139,7 +139,7 @@ export function createCodexBridge({
   }
   async function status(profile) {
     try {
-      const value = await load(profile);
+      const value = await serialized(profile, () => load(profile));
       return {
         available: true,
         connected: !!value,
@@ -205,15 +205,40 @@ export function createCodexBridge({
       const result = await auth.poll(current.data, {
         signal: current.abort.signal,
       });
-      assertCurrent();
+      await assertCurrent();
       if (current.abort.signal.aborted || pending.get(profile) !== current)
         throw unavailable();
       if (result.status === "complete") {
         await serialized(profile, async () => {
-          assertCurrent();
+          await assertCurrent();
           if (pending.get(profile) !== current) throw unavailable();
-          await save(profile, result.credentials);
-          epochs.set(profile, epoch(profile) + 1);
+          const generation = epoch(profile),
+            previous = await load(profile);
+          if (pending.get(profile) !== current || epoch(profile) !== generation)
+            throw unavailable();
+          try {
+            await save(profile, result.credentials);
+            await assertCurrent();
+            if (
+              pending.get(profile) !== current ||
+              current.abort.signal.aborted ||
+              epoch(profile) !== generation
+            )
+              throw unavailable();
+            epochs.set(profile, generation + 1);
+          } catch (error) {
+            // A cancelled/revoked promotion never publishes provisional tokens.
+            // Preserve an earlier sign-in unless the caller explicitly signed out.
+            if (epoch(profile) === generation && previous)
+              await save(profile, previous);
+            else
+              await unlink(
+                path.join(directory(profile), "credential.enc"),
+              ).catch((e) => {
+                if (e.code !== "ENOENT") throw e;
+              });
+            throw error;
+          }
         });
         cancelPending(profile);
         return { status: "complete" };
@@ -276,6 +301,7 @@ export function createCodexBridge({
             await save(profile, refreshed);
             credential = refreshed;
           }
+          assertCurrent();
           return { ...credential, type: "oauth" };
         });
       },

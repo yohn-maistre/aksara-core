@@ -76,6 +76,8 @@ jobs:
           docker volume create aksara-ops-test-state
           docker run -d --name aksara-ops-test --memory 768m --cpus 1 --security-opt no-new-privileges --cap-drop ALL -p 127.0.0.1:18080:8080 -v aksara-ops-test-state:/data --mount type=bind,src="$PWD/.aksara/test-host/password",dst=/run/secrets/aksara-test-password,readonly -e AKSARA_PUBLIC_ORIGIN=http://127.0.0.1:18080 aksara-test-host:local
           node tests/test-host-ops.mjs
+          docker build -f deploy/computer/Dockerfile -t aksara-computer:local deploy/computer
+          AKSARA_DOCKER_TEST_IMAGE=$(docker image inspect aksara-computer:local --format '{{.Id}}') node --test packages/gateway/computer.test.mjs
       - name: Package with dependency notices
         run: |
           python3 scripts/package_release.py --binary target/${{ matrix.target }}/release/aksarad --target ${{ matrix.target }}

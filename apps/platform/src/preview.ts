@@ -275,7 +275,7 @@ export function createPreview() {
         {
           id: "aksara.knowledge",
           title: "Knowledge & documents",
-          version: "0.1.0",
+          version: "0.2.0",
           screens: [{ id: "knowledge.finding" }],
           capabilities: ["library.lookup", "artifact.create"],
         },

@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { parseSurfaceProgram } from "@aksara/contracts/surfaces";
 import {
   createLibrary,
@@ -58,7 +59,11 @@ const library = createLibrary({
 export function safeProgram(raw: string): string | null {
   return parseSurfaceProgram(raw)?.program ?? null;
 }
-export function MessageBody({ text }: { text: string }) {
+export const MessageBody = memo(function MessageBody({
+  text,
+}: {
+  text: string;
+}) {
   return (
     <>
       {text.split(/(```openui\s[\s\S]*?```)/g).map((part, i) => {
@@ -78,4 +83,4 @@ export function MessageBody({ text }: { text: string }) {
       })}
     </>
   );
-}
+});

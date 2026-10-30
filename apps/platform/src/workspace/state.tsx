@@ -231,7 +231,19 @@ function useWorkspaceState() {
   useEffect(() => {
     if (detail?.artifact && !artifacts.some((a) => a.id === detail.artifact.id))
       setDetail(null);
-    if (selected && !works.some((w) => w.id === selected.id)) {
+    const eligible = new Set(artifacts.map((a) => a.id));
+    const lostSource = (ids: string[]) => ids.some((id) => !eligible.has(id));
+    if (showDoc && lostSource(docSources)) {
+      setShowDoc(false);
+      setDocContent("");
+      setDocTitle("");
+      setDocSources([]);
+    }
+    if (
+      selected &&
+      (!works.some((w) => w.id === selected.id) ||
+        effects.some((e) => lostSource(e.args?.source_ids || [])))
+    ) {
       setSelected(null);
       setEffects([]);
       setApproved({});
@@ -298,7 +310,14 @@ function useWorkspaceState() {
   }
   async function send(e: FormEvent) {
     e.preventDefault();
-    if (!draft.trim()) return;
+    if (
+      !draft.trim() ||
+      busy ||
+      !model ||
+      works.some((w) => ["HEARD", "WORKING"].includes(w.state)) ||
+      (provider !== "local" && !PREVIEW && !consent)
+    )
+      return;
     await run(async () => {
       await api("chat", {
         text: draft,

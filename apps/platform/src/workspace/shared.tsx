@@ -55,9 +55,8 @@ export function PreviewNotice() {
     <div className="preview-notice" role="status">
       <Sparkles size={16} />
       <span>
-        <strong>Interactive UI preview</strong> · Sample workspace. Changes stay
-        in this tab and reset on reload. Models, devices and the Rust backend
-        are disconnected.
+        <strong>Interactive UI preview</strong> · Tab-only sample data; resets
+        on reload. Models, devices and Rust are disconnected.
       </span>
     </div>
   ) : null;

@@ -1,10 +1,26 @@
 {
- "protocol":"aksara.pack/1",
- "id":"aksara.knowledge",
- "version":"0.1.0",
- "title":"Knowledge & documents",
- "license":"Apache-2.0",
- "trust":"bundled-first-party",
- "screens":[{"id":"knowledge.finding","slot":"conversation","components":["EvidenceCard","MetricCard"]}],
- "capabilities":["library.lookup","artifact.create"]
+  "protocol": "aksara.pack/1",
+  "id": "aksara.knowledge",
+  "version": "0.2.0",
+  "title": "Knowledge & documents",
+  "license": "Apache-2.0",
+  "trust": "bundled-first-party",
+  "screens": [
+    {
+      "id": "knowledge.finding",
+      "slot": "conversation",
+      "components": ["EvidenceCard", "MetricCard"]
+    },
+    {
+      "id": "knowledge.sources",
+      "slot": "library",
+      "components": ["SourceList", "DocumentPreview"]
+    },
+    {
+      "id": "knowledge.work",
+      "slot": "today",
+      "components": ["WorkList", "ProgressStatus"]
+    }
+  ],
+  "capabilities": ["library.lookup", "artifact.create"]
 }

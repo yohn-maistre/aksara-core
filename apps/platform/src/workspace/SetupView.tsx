@@ -33,6 +33,8 @@ export function SetupView() {
     [login, setLogin] = useState<Data | null>(null),
     [status, setStatus] = useState(""),
     [testId, setTestId] = useState("");
+  const [previewChoice, setPreviewChoice] = useState("local");
+  const choice = PREVIEW ? previewChoice : provider;
   const pending = useRef<Data | null>(null);
   pending.current = login;
   useEffect(
@@ -46,8 +48,9 @@ export function SetupView() {
     [session?.scope, api],
   );
   if (!session) return null;
-  const selectedModel =
-    provider === "local"
+  const selectedModel = PREVIEW
+    ? [{ id: "guided-demo", name: "Guided UI demo · no model calls" }]
+    : provider === "local"
       ? providers.local?.models
       : provider === "codex-chatgpt"
         ? providers.codex?.models
@@ -68,6 +71,10 @@ export function SetupView() {
     }
   };
   const choose = (value: string) => {
+    if (PREVIEW) {
+      setPreviewChoice(value);
+      return;
+    }
     setProvider(value);
     setConsent(false);
     setStatus("");
@@ -187,8 +194,8 @@ export function SetupView() {
                     return (
                       <button
                         key={value as string}
-                        disabled={PREVIEW}
-                        aria-pressed={provider === value}
+                        disabled={busy}
+                        aria-pressed={choice === value}
                         onClick={() => choose(value as string)}
                       >
                         <Glyph size={20} />
@@ -196,12 +203,12 @@ export function SetupView() {
                           <strong>{label as string}</strong>
                           <small>{detail as string}</small>
                         </span>
-                        {provider === value && <Check size={16} />}
+                        {choice === value && <Check size={16} />}
                       </button>
                     );
                   })}
                 </div>
-                {provider === "codex-chatgpt" && (
+                {choice === "codex-chatgpt" && (
                   <section className="connection-controls">
                     <h3>Connect this space to Codex via Mastra</h3>
                     <p>
@@ -287,14 +294,17 @@ export function SetupView() {
                     )}
                   </section>
                 )}
-                {provider === "local" && !providers.local?.models?.length && (
-                  <p className="notice">
-                    No local model found.{" "}
-                    <button onClick={() => navigate("Settings")}>
-                      Download a model or connect your local server in Settings.
-                    </button>
-                  </p>
-                )}
+                {!PREVIEW &&
+                  choice === "local" &&
+                  !providers.local?.models?.length && (
+                    <p className="notice">
+                      No local model found.{" "}
+                      <button onClick={() => navigate("Settings")}>
+                        Download a model or connect your local server in
+                        Settings.
+                      </button>
+                    </p>
+                  )}
                 <label className="field-label">
                   Model
                   <select
@@ -311,7 +321,7 @@ export function SetupView() {
                     ))}
                   </select>
                 </label>
-                {provider !== "local" && (
+                {choice !== "local" && (
                   <label className="consent">
                     <input
                       type="checkbox"
@@ -319,8 +329,9 @@ export function SetupView() {
                       checked={consent}
                       onChange={(e) => setConsent(e.target.checked)}
                     />
-                    Allow this setup test prompt to go to{" "}
-                    {provider === "codex-chatgpt"
+                    Allow this setup test prompt and earlier consented turns for
+                    this provider in this conversation to go to{" "}
+                    {choice === "codex-chatgpt"
                       ? "Codex / ChatGPT"
                       : "OpenCode"}
                     . Subscription limits or hosted data terms apply. Library
@@ -333,7 +344,7 @@ export function SetupView() {
                     busy ||
                     PREVIEW ||
                     !model ||
-                    (provider !== "local" && !consent)
+                    (choice !== "local" && !consent)
                   }
                   onClick={() =>
                     void run(async () => {

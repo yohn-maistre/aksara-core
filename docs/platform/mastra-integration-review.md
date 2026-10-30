@@ -11,9 +11,9 @@ replay, licensing or phone resource use.
 | `@mastra/opencode` | Observational Memory plugin installed inside OpenCode, including transcript conversion, compaction and credential discovery | Not the free-model provider adapter. Its ungoverned transcript/observation store cannot replace canonical Aksara memory |
 | Core durable Agent | Resumable streams and evented/Inngest workflow integration | Canonical run fences and receipts remain Rust-owned. Automatic recovery that may reissue a provider/effect call is not silently enabled |
 | Pi durable | Separate installed Pi/Chord durable runtime | Preserved and tested as a runtime port; not represented as a Mastra built-in |
-| `@mastra/docker` | Long-lived DockerSandbox, process/filesystem APIs, resource and Docker HostConfig controls | Candidate first computer backend behind reviewed effects and custody-bound leases; never give the unrestricted object directly to a model |
+| `@mastra/docker` | Long-lived DockerSandbox, process/filesystem APIs, resource and Docker HostConfig controls | Qualified isolated observation/provisioning port; product command execution remains gated on reviewed durable intents; native object never exposed to a model |
 | `@mastra/cloudflare-sandbox` | Workspace provider calling a deployed Cloudflare Sandbox Bridge | Reuse when a funded/enrolled bridge exists. Pages cannot host the Rust kernel or a container runtime; do not change account billing implicitly |
-| `@mastra/mcp` | MCP client/server and tool/resource adapters | Reuse protocol machinery; current-subject access, fresh resource reads and effect review remain host policy |
+| `@mastra/mcp` | MCP client/server and tool/resource adapters | Implemented read-only stdio resource gateway with current-subject reads and real private/revoke protocol tests; remote/external effects remain gated |
 | Mastra Code ACP | Agent Client Protocol adapter and conformance fixtures in the Code SDK | Study as a runtime transport; ACP session IDs do not establish Aksara rights |
 | Pydantic / Monty | No native Monty/Pydantic integration found in the inspected current Mastra tree | Separate qualification target for bounded computation; not evidence that arbitrary Python or host processes are isolated |
 

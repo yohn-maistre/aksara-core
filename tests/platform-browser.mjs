@@ -198,18 +198,23 @@ try {
     "Read-aloud retains explicit Play/Stop controls after mobile autoplay rejection",
   );
 
-  await page.getByRole("button", { name: "Library", exact: true }).click();
-  await page.getByRole("button", { name: /Private original Private/ }).click();
-  await page
-    .getByRole("button", { name: "Withdraw source", exact: true })
-    .click();
-  await page.getByRole("button", { name: "Ask PRIVATE" }).click();
+  await page.getByRole("button",{name:/Turn into a document/}).click();
+  await page.getByRole("button",{name:"Prepare for review",exact:true}).click();
+  await page.getByRole("button",{name:"Approve exact proposal",exact:true}).waitFor();
+  await page.evaluate(async()=>{
+    const session=await (await fetch('/api/session')).json();
+    const library=await (await fetch('/api/kernel/library',{headers:{'x-aksara-scope':session.scope}})).json();
+    const original=library.find(a=>a.title==='Private original');
+    const response=await fetch('/api/kernel/withdraw',{method:'POST',headers:{'content-type':'application/json','x-aksara-scope':session.scope},body:JSON.stringify({id:original.id})});
+    if(!response.ok)throw Error('Source withdrawal failed');
+  });
+  await page.getByRole("button",{name:"Close work",exact:true}).waitFor({state:'hidden'});
   await page.getByRole("heading", { name: "Where shall we begin?" }).waitFor();
   assert.equal(
     await page.getByRole("heading", { name: "Fixture finding" }).count(),
     0,
   );
-  mark("Source withdrawal removes dependent model replies from the surface");
+  mark("Source withdrawal clears dependent model replies and an open derived-effect review");
   await page.getByRole("button", { name: "Today", exact: true }).click();
   await page.getByLabel("Historical date").fill("2001-01-01");
   await page
@@ -259,7 +264,15 @@ try {
   assert.ok(
     await page.getByRole("button", { name: "Send message" }).isDisabled(),
   );
-  mark("Hosted model use requires explicit per-turn consent");
+  let unconsentedCalls=0;
+  const watchUnconsented=request=>{if(new URL(request.url()).pathname==="/api/chat")unconsentedCalls++};
+  page.on("request",watchUnconsented);
+  await page.getByLabel("Message Aksara").press("Enter");
+  await page.waitForTimeout(120);
+  assert.equal(unconsentedCalls,0);
+  assert.equal(await page.getByLabel("Message Aksara").inputValue(),"Synthetic cloud prompt");
+  page.off("request",watchUnconsented);
+  mark("Hosted model use requires explicit per-turn consent, including keyboard submission");
   await page.setViewportSize({ width: 360, height: 800 });
   await page.getByRole("button", { name: "Open navigation" }).click();
   await page.getByRole("button", { name: "Today", exact: true }).click();

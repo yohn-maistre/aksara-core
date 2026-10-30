@@ -16,7 +16,16 @@ export const PackManifest = z
             id: identifier,
             slot: z.enum(["today", "conversation", "library"]),
             components: z
-              .array(z.enum(["EvidenceCard", "MetricCard"]))
+              .array(
+                z.enum([
+                  "EvidenceCard",
+                  "MetricCard",
+                  "WorkList",
+                  "SourceList",
+                  "DocumentPreview",
+                  "ProgressStatus",
+                ]),
+              )
               .min(1)
               .max(8),
           })
@@ -70,4 +79,4 @@ export const PublicationDraft = z
     correction_of: identifier.optional(),
   })
   .strict();
-export { ResourceSurfacePlan, parseSurfaceProgram } from './surfaces.mjs';
+export { ResourceSurfacePlan, parseSurfaceProgram } from "./surfaces.mjs";

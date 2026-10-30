@@ -22,3 +22,9 @@ an embedded Today composer and a scoped read-only resource-surface port. See the
 | All domain tracks remain visible                             | Coverage CSV retains all 28 review tracks and their next gates                                                            |
 
 Deferred without creating new authorities: graph/OM memory engines, Duroxide, Cedar/Wasmtime, generic computer execution, LAN pairing, production installer, native Expo/desktop wrappers, biological/physical actuation and public federation. Deferral is not removal from the product vision. Contracts and promotion evidence must precede enabling those capabilities.
+
+Gateway qualification uses official Mastra MCP/Docker providers. MCP is local,
+read-only and currently serves protocol 2026-07-28. The computer observation port
+requires an explicit host authority callback and validates actual isolation;
+interactive command/persistent-workspace promotion remains blocked on durable
+Rust intent and provenance/reconciliation gates. See `packages/gateway/README.md`.

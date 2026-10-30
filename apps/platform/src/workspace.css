@@ -1327,3 +1327,37 @@ h3 {
 [data-mobile="true"][data-slot="sidebar"] {
   width: min(18rem, calc(100vw - 20px)) !important;
 }
+.setup-page > .page-heading {
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 16px;
+}
+.setup-page > .page-heading > div {
+  min-width: 0;
+  flex: 1 1 260px;
+}
+.setup-page > .page-heading > .text-button {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.setup-wizard button {
+  min-height: 44px;
+  min-width: 44px;
+}
+.workspace-context-menu {
+  min-width: 230px;
+  max-width: calc(100vw - 32px);
+  border: 1px solid var(--line) !important;
+  background: var(--panel) !important;
+  box-shadow: none !important;
+  border-radius: 18px !important;
+  padding: 8px !important;
+}
+.workspace-context-menu [data-slot="dropdown-menu-item"] {
+  min-height: 44px;
+  gap: 10px;
+  border-radius: 10px;
+}
+.workspace-context-menu [data-slot="dropdown-menu-item"] > span {
+  flex: 1;
+}

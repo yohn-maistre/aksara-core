@@ -118,3 +118,11 @@ requires the usual package notices and rendering-cost checks.
 
 The old phone-shell entries document earlier checkpoints. The fluid workspace
 replaces that shell while retaining permissible feature primitives and notices.
+
+The gateway uses installed `@mastra/mcp` 2.6.0 and `@mastra/docker` 0.12.1,
+Apache-2.0. Their actual server/resource handlers, Docker start/reconnect,
+HostConfig controls and process API were studied at Mastra `c6a8570` before use.
+The read-only MCP port is tested against real Rust hosts. The computer port is
+qualified with an immutable, non-root, network-disabled test image; interactive
+command dispatch/persistence is not enabled. No donor thread/account grants
+replace current Aksara authorization.

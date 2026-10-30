@@ -150,6 +150,15 @@ export function Composer() {
             </p>
           )
         )}
+        {!PREVIEW &&
+          provider === "codex-chatgpt" &&
+          !providers.codex?.connected && (
+            <p className="composer-note">
+              Connect your ChatGPT subscription in{" "}
+              <button onClick={() => navigate("Setup")}>model setup</button>,
+              then choose a model.
+            </p>
+          )}
         <form className="composer" onSubmit={send}>
           <textarea
             rows={1}

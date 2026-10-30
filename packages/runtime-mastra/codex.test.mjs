@@ -191,3 +191,22 @@ test("unfinished SSE cannot be committed as a completed model reply", async () =
     await f.close();
   }
 });
+
+test("authorization lost while committing sign-in rolls back provisional credentials", async () => {
+  const f = await fixture();
+  try {
+    const login = await f.bridge.login("personal");
+    let checks = 0;
+    await assert.rejects(
+      f.bridge.poll("personal", login.login_id, {
+        async assertCurrent() {
+          if (++checks === 3)
+            throw Error("Membership revoked during promotion");
+        },
+      }),
+    );
+    assert.equal((await f.bridge.status("personal")).connected, false);
+  } finally {
+    await f.close();
+  }
+});
