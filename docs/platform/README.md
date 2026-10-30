@@ -149,3 +149,10 @@ attribution, keyboard/scoping checks and sample screenshots. Reopen provider
 setup from Settings → Set up Aksara. Local, OpenCode free and Codex subscription
 turns all use the Mastra Agent; see the integration review for the supported
 provider/workspace boundaries.
+
+## Living workspace discussion
+
+The [Home and contextual-panel proposal](living-workspace-proposal.md) records
+the 30 October Hark-reference discussion. It is a proposal for the next interaction
+study, not an implemented redesign or a replacement catalogue. The forthcoming
+v2.5.7 documents still need review.
