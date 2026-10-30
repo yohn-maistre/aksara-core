@@ -341,17 +341,39 @@ try {
     .waitFor({ timeout: 30000 });
   const box = await canvas.boundingBox();
   await page.mouse.dblclick(box.x + 55, box.y + 65);
-  await page.locator('.sheet-editor[data-cell-editing="true"]').waitFor();
-  await page.keyboard.press("ControlOrMeta+A");
-  await page.keyboard.type("Edited paper");
-  await page.keyboard.press("Enter");
-  await page.locator('.sheet-editor[data-cell-editing="false"]').waitFor();
+  const cellValue = page.getByRole("textbox", {
+    name: "Cell value",
+    exact: true,
+  });
+  await cellValue.waitFor();
+  await page.waitForFunction(
+    () => document.activeElement?.getAttribute("aria-label") === "Cell value",
+  );
+  await cellValue.fill("Edited paper");
+  await cellValue.press("Enter");
+  const cellAddress = page.getByRole("textbox", {
+    name: "Cell address",
+    exact: true,
+  });
+  await cellAddress.fill("B4");
+  await cellValue.focus();
+  await cellValue.fill("=SUM(B2:B3)");
+  await page.getByRole("button", { name: "Apply cell", exact: true }).click();
+  await page.waitForFunction(
+    () =>
+      document.querySelector('output[aria-label="Cell result"]')
+        ?.textContent === "52",
+  );
   await page
     .getByRole("button", { name: "Review spreadsheet revision", exact: true })
     .click();
   assert.match(
     await page.getByLabel("Document content", { exact: true }).inputValue(),
     /Edited paper/,
+  );
+  assert.match(
+    await page.getByLabel("Document content", { exact: true }).inputValue(),
+    /=SUM\(B2:B3\)/,
   );
   await page
     .getByRole("button", { name: "Prepare for review", exact: true })

@@ -60,6 +60,9 @@ The owner-only control record authorizes local diagnostics/stop without guessing
 or killing a reused PID. Normal shutdown stops owned workers; hard process-kill,
 power loss, suspend and legacy Windows behavior still require device-level tests.
 The launcher does not yet use Windows Job Objects or signed auto-updates.
+On Windows, authority ownership locks a reserved byte outside the database size
+budget, so a second host (including one using a hard-link alias) is rejected
+without blocking SQLite’s own handles. Windows CI checks this behavior directly.
 
 For source development on Linux/macOS or a Windows Rust environment:
 
@@ -118,6 +121,10 @@ Only one open editor instance is mounted. Initial CSV editing is limited to
 also bounded before review. These are import/save bounds, not a claim that every
 interactive spreadsheet operation has a hard CPU/RSS budget.
 
+Select a cell in the grid and edit it in the compact cell-value bar; double-click
+focuses that input. Changes use Univer’s public Facade API and actual workbook
+model. This avoids a hidden canvas-input selection problem inside modal dialogs.
+Text replacement and a calculated SUM are exercised in the real browser test.
 Imported formula-like strings stay text. Formulas explicitly entered by a person
 are included in the reviewed CSV. CSV does not retain spreadsheet formatting.
 The worktree makes a source-linked **new document** through prepare → exact

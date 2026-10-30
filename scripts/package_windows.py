@@ -31,11 +31,11 @@ def main():
         stage.mkdir()
         for name in ['package.json', 'package-lock.json']:
             shutil.copy2(ROOT / name, stage / name)
-        for name in ['packages', 'apps/platform']:
-            for manifest in (ROOT / name).glob('*/package.json') if name == 'packages' else [ROOT / name / 'package.json']:
-                destination = stage / manifest.relative_to(ROOT)
-                destination.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(manifest, destination)
+        # npm creates workspace junctions. Populate their targets before they
+        # are materialized into the ZIP; manifest-only targets omit runtime code.
+        shutil.copytree(ROOT / 'packages', stage / 'packages', ignore=shutil.ignore_patterns('node_modules', '*.test.mjs', '__pycache__'))
+        (stage / 'apps/platform').mkdir(parents=True)
+        shutil.copy2(ROOT / 'apps/platform/package.json', stage / 'apps/platform/package.json')
         npm = shutil.which('npm.cmd')
         if not npm:
             parser.error('assemble this bundle on Windows with npm installed')

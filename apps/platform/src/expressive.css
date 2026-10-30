@@ -396,6 +396,31 @@
 .sheet-editor {
   margin: 12px 0;
 }
+.sheet-cell-bar {
+  display: grid;
+  grid-template-columns: 72px minmax(100px, 1fr) auto minmax(40px, 120px);
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.sheet-cell-bar input {
+  min-width: 0;
+  margin: 0;
+}
+.sheet-cell-bar output {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+@media (max-width: 600px) {
+  .sheet-cell-bar {
+    grid-template-columns: 64px minmax(100px, 1fr) auto;
+  }
+  .sheet-cell-bar output {
+    grid-column: 2 / -1;
+  }
+}
 .univer-editor-host {
   height: 440px;
   width: 100%;

@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def collect(destination):
     destination.mkdir(parents=True, exist_ok=True)
-    lock = json.loads((ROOT / 'package-lock.json').read_text())
+    lock = json.loads((ROOT / 'package-lock.json').read_text(encoding='utf-8'))
     records = []
     for location, entry in lock['packages'].items():
         if not location or entry.get('link') or 'node_modules/' not in location:
@@ -22,7 +22,7 @@ def collect(destination):
         package = ROOT / location
         if not (package / 'package.json').is_file():
             continue
-        metadata = json.loads((package / 'package.json').read_text())
+        metadata = json.loads((package / 'package.json').read_text(encoding='utf-8'))
         name = metadata.get('name', location.rsplit('node_modules/', 1)[-1])
         version = metadata.get('version', entry.get('version'))
         folder = destination / (name.replace('/', '__').replace('@', '') + '-' + str(version))
@@ -33,7 +33,7 @@ def collect(destination):
                 shutil.copy2(file, folder / file.name)
                 included.append(file.name)
         records.append(dict(name=name, version=version, license=metadata.get('license', entry.get('license')), files=included))
-    (destination / 'inventory.json').write_text(json.dumps(records, indent=2) + '\n')
+    (destination / 'inventory.json').write_text(json.dumps(records, indent=2) + '\n', encoding='utf-8')
     return records
 
 
