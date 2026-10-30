@@ -169,3 +169,21 @@ filename-only attachments or browser speech-recognition implementation.
 The Designali liquid-glass page was studied visually; its registry endpoint
 returned 403 and page license metadata was empty. No Designali source is copied.
 [Implementation and limits](platform/expressive-workspace-implementation.md).
+
+## Local Office / native Windows study — 31 October 2026
+
+`dream-num/univer-cli` pinned at
+`b96357c87be987e14c1771497c25d310d6084746`: repository `LICENSE`, `README.md`,
+root and `apps/cli/package.json`, `docs/architecture.md`, and SQLite migration
+paths were studied. Apache-2.0 covers repository code; Pro SDK/native packages
+and the rotating application runtime credential retain separate terms. Worktree,
+revision and compare/merge patterns are candidates; trusted-JavaScript `execute`
+is explicitly not a code sandbox. No source, runtime credential, binary or npm
+dependency was copied into Aksara. Prefer a separately qualified OSS Univer
+embed before importing the complete CLI stack.
+
+Official Univer editor/import-export/version guidance and Cua Driver/SDK Windows
+documentation were reviewed. Cua remains an unpinned candidate: qualify actual
+Windows implementation and package-specific licensing before reuse. Driver/SDK
+licensing does not imply the same license for Spaces or optional extensions.
+See [readiness review and primary references](platform/surface-local-readiness.md).
