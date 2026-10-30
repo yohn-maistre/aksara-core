@@ -1,5 +1,9 @@
 Current UI checkpoint: [atmospheric workspace](atmospheric-workspace-implementation.md); models: [Mastra integration review](mastra-integration-review.md). The earlier OpenDuet fidelity audit is historical.
 
+Next visual pass: [Expressive workspace direction](expressive-workspace-direction.md)
+records the researched Material 3 Expressive/Hark refinement. It is a proposal,
+not an already deployed appearance change.
+
 # Aksara platform foundation
 
 Implementation checkpoint: 29 October 2026 (Asia/Bangkok). This is a development foundation guided by the accepted v2.5.5 catalogue and Platform Harness v0.2 review. The earlier alpha remains available as the conformance lab. Original private architecture documents are not redistributed in this public repository.
