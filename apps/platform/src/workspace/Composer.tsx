@@ -48,9 +48,13 @@ export function Composer({
             checked={consent}
             onChange={(e) => setConsent(e.target.checked)}
           />
-          Send this prompt and earlier consented turns for this provider to{" "}
-          {providerName(provider)}. Experimental hosted data terms apply;
-          Library and local-only turns are excluded.
+          Send this prompt
+          {attached.length
+            ? `, ${attached.length} selected Library source(s),`
+            : ""}{" "}
+          and eligible earlier consented turns to {providerName(provider)}.
+          Provider data terms apply. Other Library sources and local-only turns
+          stay excluded.
         </label>
       ) : (
         !model && (
@@ -114,41 +118,43 @@ export function Composer({
                   <Popover.Title>Model &amp; sources</Popover.Title>
                   <Popover.Close className="text-button">Done</Popover.Close>
                 </div>
-                {(provider === "local" || provider === "preview") &&
-                  artifacts.length > 0 && (
-                    <details className="source-picker">
-                      <summary>
-                        Reference Library sources locally{" "}
-                        {attached.length > 0 && `· ${attached.length} selected`}
-                      </summary>
-                      {artifacts
-                        .filter(
-                          (a) =>
-                            !a.media_type ||
-                            a.media_type.startsWith("text/") ||
-                            a.media_type === "application/json",
-                        )
-                        .map((a) => (
-                          <label key={a.id}>
-                            <input
-                              type="checkbox"
-                              checked={attached.includes(a.id)}
-                              disabled={
-                                !attached.includes(a.id) && attached.length >= 8
-                              }
-                              onChange={(e) =>
-                                setAttached((v) =>
-                                  e.target.checked
-                                    ? [...v, a.id]
-                                    : v.filter((id) => id !== a.id),
-                                )
-                              }
-                            />
-                            {a.title}
-                          </label>
-                        ))}
-                    </details>
-                  )}
+                {artifacts.length > 0 && (
+                  <details className="source-picker">
+                    <summary>
+                      {provider === "local" || provider === "preview"
+                        ? "Reference Library sources locally"
+                        : "Select Library sources to send this turn"}{" "}
+                      {attached.length > 0 && `· ${attached.length} selected`}
+                    </summary>
+                    {artifacts
+                      .filter(
+                        (a) =>
+                          !a.media_type ||
+                          a.media_type.startsWith("text/") ||
+                          a.media_type === "application/json",
+                      )
+                      .map((a) => (
+                        <label key={a.id}>
+                          <input
+                            type="checkbox"
+                            checked={attached.includes(a.id)}
+                            disabled={
+                              !attached.includes(a.id) && attached.length >= 8
+                            }
+                            onChange={(e) => {
+                              setConsent(false);
+                              setAttached((v) =>
+                                e.target.checked
+                                  ? [...v, a.id]
+                                  : v.filter((id) => id !== a.id),
+                              );
+                            }}
+                          />
+                          {a.title}
+                        </label>
+                      ))}
+                  </details>
+                )}
                 <div className="model-picker">
                   <select
                     aria-label="Model provider"

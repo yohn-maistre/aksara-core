@@ -241,7 +241,7 @@ impl Kernel {
         if req.source_ids.len() > 8 {
             return Err(Error::Limit("choose at most 8 sources".into()));
         }
-        if req.provider != "local" && !req.source_ids.is_empty() {
+        if req.provider != "local" && !req.source_ids.is_empty() && !req.source_consent {
             return Err(Error::Denied);
         }
         let mut sources = std::collections::BTreeSet::new();
@@ -278,7 +278,13 @@ impl Kernel {
                 if !run_visible(ctx, &m.run)
                     || !self.lineage_visible(ctx, &m.run.source_ids)?
                     || (req.provider != "local"
-                        && (!m.run.cloud_consent || m.run.provider != req.provider))
+                        && (!m.run.cloud_consent
+                            || m.run.provider != req.provider
+                            || !m
+                                .run
+                                .source_ids
+                                .iter()
+                                .all(|id| req.source_consent && req.source_ids.contains(id))))
                 {
                     continue;
                 }
@@ -306,6 +312,9 @@ impl Kernel {
             },
         )?;
         let run = ModelRun {
+            authorized_source_ids: req.source_ids.clone(),
+            tool_reads: Vec::new(),
+            note_ids: Vec::new(),
             source_ids: sources.into_iter().collect(),
             input_sha256: digest(frozen_input.as_bytes()),
             id: new_id("run"),
@@ -423,6 +432,146 @@ impl Kernel {
         event(&tx, "model.claimed", id, Some(&run.lane_id), &ctx.actor.id)?;
         tx.commit()?;
         Ok(run)
+    }
+    /// A host-side tool read extends the actual dependency set before returning
+    /// any bytes. Hosted tools can read only this turn's explicitly selected IDs.
+    pub fn model_retrieve(
+        &mut self,
+        ctx: &AccessContext,
+        id: &str,
+        query: Option<&str>,
+        source_id: Option<&str>,
+    ) -> Result<Value> {
+        let checked = self.model_input(ctx, id)?;
+        let mut run: ModelRun = serde_json::from_value(checked["run"].clone())?;
+        if !run.execution_claimed {
+            return Err(Error::Denied);
+        }
+        let (operation, input, ids, result) = match (query, source_id) {
+            (Some(query), None) if run.provider == "local" => {
+                bounded(query, 512)?;
+                let hits = self.search(ctx, query, 5)?;
+                let ids: Vec<String> = hits.iter().map(|h| h.artifact_id.clone()).collect();
+                (
+                    "library_search",
+                    value!({"query":query}),
+                    ids,
+                    value!({"hits":hits}),
+                )
+            }
+            (None, Some(source_id)) => {
+                if run.provider != "local"
+                    && !run.authorized_source_ids.iter().any(|s| s == source_id)
+                {
+                    return Err(Error::Denied);
+                }
+                let artifact = self.artifact(ctx, source_id)?;
+                if !artifact.is_text() {
+                    return Err(Error::Invalid(
+                        "source requires a qualified text projection".into(),
+                    ));
+                }
+                let raw = self.raw_source(ctx, source_id)?;
+                let text = std::str::from_utf8(&raw)
+                    .map_err(|_| Error::Invalid("invalid source text".into()))?;
+                let content: String = text.chars().take(8000).collect();
+                let result = value!({"artifact":artifact,"content":content,"truncated":content.len()<text.len(),"status":"source material; not automatically approved knowledge"});
+                (
+                    "source_read",
+                    value!({"source_id":source_id}),
+                    vec![source_id.into()],
+                    result,
+                )
+            }
+            _ => return Err(Error::Denied),
+        };
+        let sources: std::collections::BTreeSet<String> = run
+            .source_ids
+            .iter()
+            .cloned()
+            .chain(ids.iter().cloned())
+            .collect();
+        if sources.len() > 50 {
+            return Err(Error::Limit("model dependency ceiling reached".into()));
+        }
+        run.source_ids = sources.into_iter().collect();
+        run.tool_reads
+            .push(value!({"operation":operation,"input":input,"source_ids":ids,"result":result}));
+        if run.tool_reads.len() > 12 || json(&run.tool_reads)?.len() > 65536 {
+            return Err(Error::Limit("tool read budget reached".into()));
+        }
+        let mut work = self.work(ctx, &run.work_id)?;
+        work.display_safe_summary = "Reading permitted Library sources".into();
+        work.speech_safe_summary = work.display_safe_summary.clone();
+        let tx = self.db.transaction()?;
+        tx.execute(
+            "UPDATE model_runs SET data=?2 WHERE id=?1",
+            params![id, json(&run)?],
+        )?;
+        tx.execute(
+            "UPDATE work SET data=?2 WHERE id=?1",
+            params![work.id, json(&work)?],
+        )?;
+        event(
+            &tx,
+            "model.tool_read",
+            id,
+            Some(&ctx.lane.id),
+            &ctx.actor.id,
+        )?;
+        tx.commit()?;
+        Ok(result)
+    }
+
+    /// A provisional procedure is private working material, not an approved
+    /// MemoryRecord or installed executable. Original bytes and read lineage
+    /// commit together. Nothing invokes the approval endpoint automatically.
+    pub fn model_procedure(
+        &mut self,
+        ctx: &AccessContext,
+        id: &str,
+        title: &str,
+        content: &str,
+    ) -> Result<Artifact> {
+        bounded(title, 100)?;
+        bounded(content, 12000)?;
+        let checked = self.model_input(ctx, id)?;
+        let mut run: ModelRun = serde_json::from_value(checked["run"].clone())?;
+        if !run.execution_claimed || ctx.lane.audience.len() != 1 {
+            return Err(Error::Denied);
+        }
+        if run.note_ids.len() >= 2 {
+            return Err(Error::Limit("at most two procedure drafts per run".into()));
+        }
+        let input = IngestRequest {
+            title: format!("Procedure draft: {title}"),
+            content: content.into(),
+            visibility: Visibility::Private,
+            purpose: ctx.purpose.clone(),
+            provenance: format!("agent-procedure:{};unreviewed", run.id),
+        };
+        let tx = self.db.transaction()?;
+        let artifact = crate::library::insert_artifact(&tx, ctx, &input)?;
+        for source in &run.source_ids {
+            tx.execute(
+                "INSERT INTO artifact_sources(artifact_id,source_id) VALUES(?1,?2)",
+                params![artifact.id, source],
+            )?;
+        }
+        run.note_ids.push(artifact.id.clone());
+        tx.execute(
+            "UPDATE model_runs SET data=?2 WHERE id=?1",
+            params![id, json(&run)?],
+        )?;
+        event(
+            &tx,
+            "model.procedure_draft",
+            &artifact.id,
+            Some(&ctx.lane.id),
+            &ctx.actor.id,
+        )?;
+        tx.commit()?;
+        Ok(artifact)
     }
     pub fn finish_model(
         &mut self,

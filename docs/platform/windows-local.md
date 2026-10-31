@@ -97,8 +97,10 @@ Keys never return in provider status responses, never enter prompts and are
 scoped by the current Rust institution/principal. Replacement/disconnection
 fences in-flight replies. Codex keeps its existing scoped Mastra donor transport;
 Hermes credential files, ambient environment-key autodetection, account pools and
-automatic provider fallbacks are not imported. Hosted context excludes Library
-source injection and local-only/other-provider turns. Provider errors use safe
+automatic provider fallbacks are not imported. Hosted context excludes local-only
+and other-provider turns. Library sources require explicit selection and per-turn
+source consent; prior sourced turns require those sources to be selected again.
+Provider errors use safe
 categories rather than returning provider bodies that may echo private content.
 
 ## Files and Office worktrees

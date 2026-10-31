@@ -45,6 +45,12 @@ export function FilePreview({ detail }: { detail: Data }) {
   };
   return (
     <div className="file-preview">
+      {artifact.provenance?.startsWith("agent-procedure:") && (
+        <p className="notice">
+          Private procedure draft · unreviewed. This is working advice, not
+          approved institutional knowledge or installed code.
+        </p>
+      )}
       <div className="file-toolbar">
         <span>
           {media} · {artifact.bytes.toLocaleString()} bytes

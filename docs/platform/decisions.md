@@ -53,3 +53,7 @@ explicit Gemini/Groq/OpenRouter keys through Mastra, byte-preserving Library fil
 APIs and lazy OSS Univer CSV worktrees. Channel ingress is a strict unconnected
 port; generic tool/computer execution and production enrollment remain gated.
 See [implementation and run instructions](windows-local.md).
+
+31 October resident increment: actual bounded Mastra tools, recorded actual source
+reads and private provisional procedures are implemented. Hosted selected sources
+require explicit consent. [Implementation and qualifications](resident-agent-implementation.md).

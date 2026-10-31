@@ -323,6 +323,8 @@ async fn api(
             ("GET","messages")=>Ok(json!(k.messages(&ctx,count("after",0)? as i64)?)),
             ("GET","today")=>{let at=query.get("at").map(|s|s.parse::<i64>().map_err(|_|Error::Invalid("invalid timestamp".into()))).transpose()?;Ok(k.today(&ctx,at)?)},
             ("GET","model-input")=>Ok(k.model_input(&ctx,get("id")?)?),
+            ("POST","model-retrieve")=>k.model_retrieve(&ctx,field(&input,"id")?,input["query"].as_str(),input["source_id"].as_str()),
+            ("POST","model-procedure")=>Ok(json!(k.model_procedure(&ctx,field(&input,"id")?,field(&input,"title")?,field(&input,"content")?)?)),
             ("POST","channel-create")=>Ok(json!(k.create_channel(&ctx,field(&input,"name")?)?)),
             ("POST","model-claim")=>Ok(json!(k.claim_model(&ctx,field(&input,"id")?)?)),
             ("POST","model-interrupt")=>{k.interrupt_model(&ctx,field(&input,"work_id")?)?;Ok(json!({"interrupted":true}))},

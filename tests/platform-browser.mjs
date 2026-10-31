@@ -41,7 +41,12 @@ const model = http.createServer(async (req, res) => {
   let data = "";
   for await (const part of req) data += part;
   const body = JSON.parse(data || "{}");
-  assert.ok(!body.tools?.length);
+  assert.deepEqual(body.tools.map((t) => t.function.name).sort(), [
+    "calculate",
+    "library_search",
+    "save_procedure",
+    "source_read",
+  ]);
   res.setHeader("content-type", "application/json");
   res.end(
     JSON.stringify({

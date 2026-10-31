@@ -43,6 +43,7 @@ fn binary_originals_survive_rebuild_and_respect_custody_withdrawal_and_parser_bo
         provider: "local".into(),
         model: "fixture".into(),
         cloud_consent: false,
+        source_consent: false,
         source_ids: vec![artifact.id.clone()],
         idempotency_key: "binary-prompt".into(),
     };

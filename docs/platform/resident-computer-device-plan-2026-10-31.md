@@ -2,11 +2,12 @@
 
 31 October 2026, Asia/Bangkok. This extends the
 [source-based reassessment](resident-agent-reassessment-2026-10-31.md) with the
-user's `vercel-labs/agent-desktop` reference and pitch deadline of 1 November.
+user's `vercel-labs/agent-desktop` reference. The user clarified that the pitch
+is due next week: prioritize a usable end-to-end system over a staged pitch demo.
 It distinguishes implemented capabilities from the next implementation. It does
 not claim every catalogue track can become production-ready in one day.
 
-## Product to demonstrate
+## Product to test
 
 Aksara is the person-facing collaborator. A person can speak/type naturally,
 receive a prompt acknowledgement, keep talking, inspect work, correct it, and
@@ -186,7 +187,7 @@ No mandatory hardware daemon is required when no device is attached. Native
 adapters can become optional workers when OS permissions, transports or lifecycle
 justify a process boundary.
 
-## Delivery order for the pitch and subsequent completion
+## Delivery order for end-to-end testing
 
 1. **Preserve and repair the runnable base.** Keep the existing UI/provider/file
    work. Repair the responsive duplicate blob origin and Windows ZIP timestamp

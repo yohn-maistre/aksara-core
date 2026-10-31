@@ -190,8 +190,8 @@ pub struct MemoryRecord {
     pub expires_at: i64,
 }
 
-/// A model invocation has no tool or Library authority. Only explicitly consented
-/// conversational text may leave the host; local-only turns stay out of cloud context.
+/// Hosted access to selected sources needs separate explicit per-turn consent.
+/// Model configuration alone grants no broader Library or tool authority.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ModelRequest {
@@ -201,10 +201,18 @@ pub struct ModelRequest {
     pub provider: String,
     pub model: String,
     pub cloud_consent: bool,
+    #[serde(default)]
+    pub source_consent: bool,
     pub idempotency_key: String,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ModelRun {
+    #[serde(default)]
+    pub authorized_source_ids: Vec<String>,
+    #[serde(default)]
+    pub tool_reads: Vec<serde_json::Value>,
+    #[serde(default)]
+    pub note_ids: Vec<String>,
     pub source_ids: Vec<String>,
     pub input_sha256: String,
     pub id: String,

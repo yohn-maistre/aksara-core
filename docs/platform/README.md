@@ -1,4 +1,5 @@
-Current implementation: [native local package, persistent assistant, providers and files](windows-local.md).
+Current implementation: [resident tool loop and private procedure drafts](resident-agent-implementation.md),
+plus [native local package, persistent assistant, providers and files](windows-local.md).
 Earlier [expressive dock workspace](expressive-workspace-implementation.md) and
 [Mastra integration review](mastra-integration-review.md) remain historical evidence.
 

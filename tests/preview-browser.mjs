@@ -396,11 +396,10 @@ try {
       animations: "disabled",
     });
   mark("Hosted preview is usable at a 360 px viewport");
-  assert.ok(
-    await page
-      .getByRole("navigation", { name: "Main navigation", exact: true })
-      .isVisible(),
-  );
+  // The responsive dock mounts on the media-query update after resize.
+  await page
+    .getByRole("navigation", { name: "Main navigation", exact: true })
+    .waitFor({ state: "visible" });
   assert.equal(
     await page
       .getByRole("navigation", { name: "Main navigation", exact: true })

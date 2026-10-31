@@ -371,6 +371,7 @@ function useWorkspaceState() {
         provider,
         model,
         cloud_consent: consent,
+        source_consent: consent && attached.length > 0,
         idempotency_key: key(),
         source_ids: attached,
       });

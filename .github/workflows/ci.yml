@@ -52,6 +52,7 @@ jobs:
           cargo build --locked --workspace
           python3 scripts/browser_smoke.py
           npm run test:platform
+          node tests/resident-agent.mjs
           node tests/platform-browser.mjs
           node tests/preview-browser.mjs
       - name: Static phone host

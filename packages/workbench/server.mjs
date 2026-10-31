@@ -555,6 +555,7 @@ export async function createWorkbench({
             provider: b.provider,
             model: b.model,
             cloud_consent: b.cloud_consent === true,
+            source_consent: b.source_consent === true,
             idempotency_key: b.idempotency_key,
             source_ids: b.source_ids || [],
           });
@@ -616,6 +617,31 @@ export async function createWorkbench({
                 messages: context.messages,
                 signal: abort.signal,
                 apiKey: credential?.apiKey,
+                toolPort: {
+                  assertCurrent: async () => {
+                    assertScope();
+                    subscription?.assertCurrent();
+                    credential?.assertCurrent();
+                    if (abort.signal.aborted) throw fail("Task stopped", 409);
+                    await kernel(
+                      snapshot,
+                      "model-input",
+                      undefined,
+                      `?id=${encodeURIComponent(run.id)}`,
+                    );
+                    assertScope();
+                  },
+                  retrieve: (input) =>
+                    kernel(snapshot, "model-retrieve", {
+                      id: run.id,
+                      ...input,
+                    }),
+                  procedure: (input) =>
+                    kernel(snapshot, "model-procedure", {
+                      id: run.id,
+                      ...input,
+                    }),
+                },
               });
               assertScope();
               subscription?.assertCurrent();

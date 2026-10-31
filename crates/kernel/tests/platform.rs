@@ -30,6 +30,7 @@ impl F {
             provider: provider.into(),
             model: "fixture".into(),
             cloud_consent: provider != "local",
+            source_consent: false,
             idempotency_key: key.into(),
         }
     }
@@ -300,4 +301,166 @@ fn additional_hosted_providers_require_consent_and_never_mix_custody() {
             assert!(!input.contains(secret));
         }
     }
+}
+
+#[test]
+fn agent_tool_reads_bind_actual_sources_and_withdrawal_fences_reply() {
+    let mut f = F::new();
+    let c = f.ctx(0, 1);
+    let source =
+        f.k.ingest(
+            &c,
+            &IngestRequest {
+                title: "Water report".into(),
+                content: "TOOL_SOURCE water 17 25".into(),
+                visibility: Visibility::Private,
+                purpose: "knowledge".into(),
+                provenance: "fixture".into(),
+            },
+        )
+        .unwrap();
+    let other = f.ctx(1, 2);
+    let hidden =
+        f.k.ingest(
+            &other,
+            &IngestRequest {
+                title: "Hidden".into(),
+                content: "OTHER_PERSON_SECRET".into(),
+                visibility: Visibility::Private,
+                purpose: "knowledge".into(),
+                provenance: "fixture".into(),
+            },
+        )
+        .unwrap();
+    let run = f.k.begin_model(&c, &f.req("local", "tools")).unwrap();
+    assert!(f
+        .k
+        .model_retrieve(&c, &run.id, Some("water"), None)
+        .is_err());
+    f.k.claim_model(&c, &run.id).unwrap();
+    assert!(f
+        .k
+        .model_retrieve(&c, &run.id, None, Some(&hidden.id))
+        .is_err());
+    let result =
+        f.k.model_retrieve(&c, &run.id, Some("water"), None)
+            .unwrap();
+    assert!(result.to_string().contains("TOOL_SOURCE"));
+    assert!(!result.to_string().contains("OTHER_PERSON_SECRET"));
+    let checked = f.k.model_input(&c, &run.id).unwrap();
+    assert!(checked["run"]["source_ids"]
+        .as_array()
+        .unwrap()
+        .contains(&Value::String(source.id.clone())));
+    assert_eq!(
+        checked["run"]["tool_reads"][0]["operation"],
+        "library_search"
+    );
+    f.k.withdraw_artifact(&c, &source.id).unwrap();
+    assert!(f.k.model_input(&c, &run.id).is_err());
+    assert!(f
+        .k
+        .finish_model(&c, &run.id, "STALE_TOOL_REPLY", false)
+        .is_err());
+}
+
+#[test]
+fn hosted_source_egress_is_explicit_per_turn_and_does_not_grant_search() {
+    let mut f = F::new();
+    let c = f.ctx(0, 1);
+    let source =
+        f.k.ingest(
+            &c,
+            &IngestRequest {
+                title: "Selected".into(),
+                content: "HOSTED_SELECTED_ONLY".into(),
+                visibility: Visibility::Private,
+                purpose: "knowledge".into(),
+                provenance: "fixture".into(),
+            },
+        )
+        .unwrap();
+    let mut req = f.req("opencode-free", "consented-source");
+    req.source_ids = vec![source.id.clone()];
+    assert!(f.k.begin_model(&c, &req).is_err());
+    req.source_consent = true;
+    let run = f.k.begin_model(&c, &req).unwrap();
+    f.k.claim_model(&c, &run.id).unwrap();
+    assert!(f
+        .k
+        .model_retrieve(&c, &run.id, Some("anything"), None)
+        .is_err());
+    assert!(f
+        .k
+        .model_retrieve(&c, &run.id, None, Some("unselected"))
+        .is_err());
+    assert!(f
+        .k
+        .model_retrieve(&c, &run.id, None, Some(&source.id))
+        .unwrap()
+        .to_string()
+        .contains("HOSTED_SELECTED_ONLY"));
+    f.k.finish_model(&c, &run.id, "HOSTED_DERIVED_REPLY", false)
+        .unwrap();
+    let next =
+        f.k.begin_model(&c, &f.req("opencode-free", "no-source-consent"))
+            .unwrap();
+    let input = f.k.model_input(&c, &next.id).unwrap()["messages"].to_string();
+    assert!(!input.contains("HOSTED_SELECTED_ONLY"));
+    assert!(!input.contains("HOSTED_DERIVED_REPLY"));
+}
+
+#[test]
+fn private_procedure_drafts_preserve_lineage_without_becoming_approved_memory() {
+    let mut f = F::new();
+    let c = f.ctx(0, 1);
+    let source =
+        f.k.ingest(
+            &c,
+            &IngestRequest {
+                title: "Correction".into(),
+                content: "Use litres and include the date.".into(),
+                visibility: Visibility::Private,
+                purpose: "knowledge".into(),
+                provenance: "fixture".into(),
+            },
+        )
+        .unwrap();
+    let run = f.k.begin_model(&c, &f.req("local", "learn")).unwrap();
+    f.k.claim_model(&c, &run.id).unwrap();
+    f.k.model_retrieve(&c, &run.id, None, Some(&source.id))
+        .unwrap();
+    let note =
+        f.k.model_procedure(
+            &c,
+            &run.id,
+            "Field briefing",
+            "Report litres, then date. This is provisional.",
+        )
+        .unwrap();
+    assert!(note.provenance.starts_with("agent-procedure:"));
+    assert_eq!(note.visibility, Visibility::Private);
+    assert_eq!(
+        f.k.raw_source(&c, &note.id).unwrap(),
+        b"Report litres, then date. This is provisional."
+    );
+    assert!(f.k.memories(&c).unwrap().is_empty());
+    assert!(f
+        .k
+        .library_items(&f.ctx(0, 0))
+        .unwrap()
+        .iter()
+        .all(|a| a.id != note.id));
+    f.k.model_procedure(&c, &run.id, "Second", "Second draft")
+        .unwrap();
+    assert!(f
+        .k
+        .model_procedure(&c, &run.id, "Third", "Over budget")
+        .is_err());
+    f.k.withdraw_artifact(&c, &source.id).unwrap();
+    assert!(f.k.artifact(&c, &note.id).is_err());
+    assert!(f
+        .k
+        .model_procedure(&c, &run.id, "Late", "Denied after withdrawal")
+        .is_err());
 }
