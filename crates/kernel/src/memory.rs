@@ -6,6 +6,73 @@ struct StoredMemory {
     candidate: MemoryCandidate,
 }
 impl Kernel {
+    pub(crate) fn memory_dependencies_visible(
+        &self,
+        ctx: &AccessContext,
+        ids: &[String],
+    ) -> Result<bool> {
+        if ids.len() > 50 {
+            return Ok(false);
+        }
+        for id in ids {
+            let data: Option<(String, String, String)> = self
+                .db
+                .query_row(
+                    "SELECT institution_id,owner,data FROM memory WHERE id=?1",
+                    [id],
+                    |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+                )
+                .optional()?;
+            let Some((institution, owner, data)) = data else {
+                return Ok(false);
+            };
+            let memory: StoredMemory = serde_json::from_str(&data)?;
+            if institution != ctx.institution_id
+                || memory.record.state != "APPROVED"
+                || memory.record.expires_at <= now()
+                || !visible(
+                    ctx,
+                    &owner,
+                    &memory.candidate.visibility,
+                    &memory.candidate.purpose,
+                )
+            {
+                return Ok(false);
+            }
+        }
+        Ok(true)
+    }
+    /// Rebuildable knowledge view from currently eligible originals and reviewed
+    /// excerpts. No new facts, inferred people profiles or independent ACL store.
+    pub fn knowledge(&self, ctx: &AccessContext) -> Result<serde_json::Value> {
+        self.check_context(ctx)?;
+        let approved = self.memories(ctx)?.into_iter().take(20).collect::<Vec<_>>();
+        let mut drafts = Vec::new();
+        for artifact in self.library_items(ctx)? {
+            let kind = if artifact.title.starts_with("Wiki: ") {
+                "wiki"
+            } else if artifact.title.starts_with("People: ") {
+                "person"
+            } else if artifact.provenance.starts_with("agent-procedure:") {
+                "procedure"
+            } else {
+                continue;
+            };
+            if !artifact.is_text() {
+                continue;
+            }
+            let bytes = self.raw_source(ctx, &artifact.id)?;
+            let text = String::from_utf8_lossy(&bytes);
+            let excerpt: String = text.chars().take(1200).collect();
+            drafts.push(serde_json::json!({"kind":kind,"artifact":artifact,"excerpt":excerpt,"truncated":excerpt.len()<text.len(),"review":"unreviewed working material"}));
+            if drafts.len() == 10 {
+                break;
+            }
+        }
+        Ok(
+            serde_json::json!({"protocol":"aksara.memory/1","engine":"canonical-source-projection","scope":{"institution_id":ctx.institution_id,"principal_id":ctx.actor.id,"lane_id":ctx.lane.id,"purpose":ctx.purpose,"policy_epoch":ctx.policy_epoch},"reviewed":approved,"drafts":drafts,"public_release_enabled":false}),
+        )
+    }
     pub fn memory_candidate(
         &mut self,
         ctx: &AccessContext,

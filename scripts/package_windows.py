@@ -8,6 +8,8 @@ import shutil
 import subprocess
 import tempfile
 import zipfile
+import tarfile
+import urllib.request
 from collect_npm_notices import collect
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -75,6 +77,20 @@ def main():
         shutil.copy2(args.binary, bundle / 'bin/aksarad.exe')
         shutil.copy2(args.node, bundle / 'bin/node.exe')
         shutil.copy2(args.node.parent / 'LICENSE', bundle / 'bin/NODE-LICENSE')
+        # A pinned native driver needs no Docker/WSL. Installing it grants no
+        # desktop access: connection/expiry/action permissions stay explicit.
+        driver_archive = Path(temporary) / 'agent-desktop.tar.gz'
+        urllib.request.urlretrieve('https://github.com/vercel-labs/agent-desktop/releases/download/v1.0.2/agent-desktop-v1.0.2-x86_64-pc-windows-msvc.tar.gz', driver_archive)
+        if hashlib.sha256(driver_archive.read_bytes()).hexdigest() != '2186c76e7df197c0e67365e45d36d869f74714c56bb8a73817e2a66f3e18e222':
+            parser.error('native desktop archive checksum mismatch')
+        with tarfile.open(driver_archive) as archive:
+            entries = [entry for entry in archive.getmembers() if entry.name == 'agent-desktop.exe' and entry.isfile()]
+            if len(entries) != 1:
+                parser.error('native desktop archive layout changed')
+            (bundle / 'bin/agent-desktop.exe').write_bytes(archive.extractfile(entries[0]).read())
+        driver = json.loads(subprocess.check_output([str(bundle / 'bin/agent-desktop.exe'), 'version'], text=True))
+        if driver.get('version') != '2.5' or driver.get('data', {}).get('version') != '1.0.2':
+            parser.error('native desktop binary version mismatch')
         (bundle / 'aksara.cmd').write_text('@echo off\r\n"%~dp0bin\\node.exe" --use-env-proxy "%~dp0scripts\\aksara.mjs" %*\r\n', newline='')
         (bundle / 'README-WINDOWS.txt').write_text(
             'Aksara native Windows development bundle\n\n'

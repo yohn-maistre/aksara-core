@@ -43,9 +43,13 @@ const model = http.createServer(async (req, res) => {
   const body = JSON.parse(data || "{}");
   assert.deepEqual(body.tools.map((t) => t.function.name).sort(), [
     "calculate",
+    "delegate_task",
     "library_search",
+    "memory_recall",
+    "save_document",
     "save_procedure",
     "source_read",
+    "task_status",
   ]);
   res.setHeader("content-type", "application/json");
   res.end(

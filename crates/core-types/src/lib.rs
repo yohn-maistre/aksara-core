@@ -65,6 +65,10 @@ pub struct FileIngestRequest {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Artifact {
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub memory_ids: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub lane_binding: Option<ConversationLane>,
     pub id: String,
     pub title: String,
     pub sha256: String,
@@ -196,6 +200,8 @@ pub struct MemoryRecord {
 #[serde(deny_unknown_fields)]
 pub struct ModelRequest {
     #[serde(default)]
+    pub kind: ModelKind,
+    #[serde(default)]
     pub source_ids: Vec<String>,
     pub text: String,
     pub provider: String,
@@ -205,8 +211,21 @@ pub struct ModelRequest {
     pub source_consent: bool,
     pub idempotency_key: String,
 }
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ModelKind {
+    #[default]
+    Interactive,
+    Background,
+}
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ModelRun {
+    #[serde(default)]
+    pub memory_ids: Vec<String>,
+    #[serde(default)]
+    pub kind: ModelKind,
+    #[serde(default)]
+    pub parent_run_id: Option<String>,
     #[serde(default)]
     pub authorized_source_ids: Vec<String>,
     #[serde(default)]

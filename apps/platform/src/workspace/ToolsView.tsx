@@ -1,6 +1,7 @@
 import { ArrowUpRight, Layers } from "lucide-react";
 import { DuetCard, OutcomePill } from "../components/duet/kit";
 import { PREVIEW } from "../transport";
+import { ComputerConnection } from "./ComputerConnection";
 
 import { key } from "./shared";
 import { useWorkspace } from "./state";
@@ -230,6 +231,7 @@ export function ToolsView() {
             <p>No eligible memory records in this context.</p>
           )}
         </DuetCard>
+        <ComputerConnection />
       </>
     </>
   );

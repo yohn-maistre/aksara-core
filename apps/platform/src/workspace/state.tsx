@@ -62,6 +62,7 @@ function useWorkspaceState() {
     [provider, setProvider] = useState(PREVIEW ? "preview" : "local"),
     [model, setModel] = useState(""),
     [consent, setConsent] = useState(false),
+    [background, setBackground] = useState(false),
     [uploadedText, setUploadedText] = useState<string | null>(null),
     [query, setQuery] = useState(""),
     [hits, setHits] = useState<Data[]>([]),
@@ -183,6 +184,7 @@ function useWorkspaceState() {
     setShowDoc(false);
     setError("");
     setConsent(false);
+    setBackground(false);
     setDevice(null);
     setProviders({});
     setProvider(PREVIEW ? "preview" : "local");
@@ -355,7 +357,9 @@ function useWorkspaceState() {
       !draft.trim() ||
       busy ||
       !model ||
-      works.some((w) => ["HEARD", "WORKING"].includes(w.state)) ||
+      (background
+        ? working.some((w) => backgroundWorkIds.has(w.id))
+        : foregroundWorking.length > 0) ||
       (provider !== "local" && !PREVIEW && !consent)
     )
       return;
@@ -367,6 +371,7 @@ function useWorkspaceState() {
     await run(async () => {
       const after = Math.max(0, ...messages.map((m) => Number(m.seq)));
       await api("chat", {
+        kind: background ? "background" : "interactive",
         text: draft,
         provider,
         model,
@@ -418,6 +423,12 @@ function useWorkspaceState() {
       ["AWAITING_APPROVAL", "NEEDS_INPUT"].includes(w.state),
     ),
     visibleWorks = history ? history.work.map((h: Data) => h.work) : works;
+  const backgroundWorkIds = new Set(
+    messages
+      .filter((m) => m.run.kind === "background")
+      .map((m) => m.run.work_id),
+  );
+  const foregroundWorking = working.filter((w) => !backgroundWorkIds.has(w.id));
   const closeAssistant = () => {
     const origin = assistantOrigin.current;
     assistantOrigin.current = null;
@@ -538,6 +549,8 @@ function useWorkspaceState() {
     setModel,
     consent,
     setConsent,
+    background,
+    setBackground,
     uploadedText,
     setUploadedText,
     query,
@@ -586,6 +599,8 @@ function useWorkspaceState() {
     lane,
     privateLane,
     working,
+    foregroundWorking,
+    backgroundWorkIds,
     needs,
     visibleWorks,
     navigate,

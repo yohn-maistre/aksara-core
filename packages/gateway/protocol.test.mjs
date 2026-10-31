@@ -70,6 +70,16 @@ test(
         request: "PRIVATE_MCP_WORK_SENTINEL",
         idempotency_key: "mcp-private-work",
       });
+      const memory = await write("memory-candidate", {
+        text: "MCP_PRIVATE_SENTINEL",
+        source_artifact_id: source.id,
+        visibility: "private",
+        purpose: "knowledge",
+        kind: "semantic",
+        evidence_kind: "source_fact",
+        retention_seconds: 3600,
+      });
+      await write("memory-approve", { id: memory.id });
       const create = (person) => {
         const client = new MCPClient({
           id: crypto.randomUUID(),
@@ -146,7 +156,22 @@ test(
       );
       const tools = await alice.listTools();
       assert.equal(Object.keys(tools).length, 0);
+      const recalled = JSON.parse(
+        (await alice.resources.read("aksara", "aksara://workspace/knowledge"))
+          .contents[0].text,
+      );
+      assert.equal(recalled.reviewed[0].id, memory.id);
+      const otherMemory = JSON.parse(
+        (await bob.resources.read("aksara", "aksara://workspace/knowledge"))
+          .contents[0].text,
+      );
+      assert.deepEqual(otherMemory.reviewed, []);
       await write("withdraw", { id: source.id });
+      const withdrawnMemory = JSON.parse(
+        (await alice.resources.read("aksara", "aksara://workspace/knowledge"))
+          .contents[0].text,
+      );
+      assert.deepEqual(withdrawnMemory.reviewed, []);
       await assert.rejects(
         alice.resources.read("aksara", resource.uri),
         (e) => !String(e).includes("MCP_PRIVATE_SENTINEL"),

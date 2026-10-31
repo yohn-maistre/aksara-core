@@ -230,3 +230,20 @@ and quoting/formula handling were studied. It handles CSV parsing/serialization
 inside that editor. Imported formula-like strings remain text cells; explicit
 editor formulas enter the reviewed CSV. Static-site licenses are shipped under
 `apps/platform/public/licenses/`; release inventories retain package notices.
+
+## Resident computer increment — 31 October 2026
+
+Vercel agent-desktop release **v1.0.2**, Apache-2.0, JSON contract **2.5**:
+platform Linux docs, CLI observation/interaction/system skill, ref validation,
+interaction leases, snapshot implementation and disposition contracts were read.
+The pinned release archive checksums are verified before distribution or CI use.
+`third_party/agent-desktop/` retains the original LICENSE and reuse notes. No
+upstream source block is copied. The optional native binary is bundled on Windows;
+its PID/ref/session namespace never supplies Aksara rights. Actual Linux native
+actions and independent form readback pass through the Rust/Mastra integration.
+A real Windows desktop action and isolated shared desktop remain unqualified.
+
+LongMemory's project/wiki/store APIs remain studied candidates, not installed
+runtime dependencies. The implemented `aksara.memory/1` source projection and MCP
+resource enforce Aksara eligibility and reviewed-memory revocation. No LongMemory
+server or independent identity/ACL database is started.

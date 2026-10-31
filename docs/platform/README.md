@@ -88,7 +88,7 @@ Keep Strata/Ruara's social system separate. Its membership and publication decis
 
 ## Authority and read dependencies
 
-Schema 3 migrates existing schema 1/2 databases. It adds conversation runs/messages, frozen model inputs, lane labels, and WorkObject history. Existing source bytes, effect/receipt behavior and source lineage remain canonical.
+Schema 4 migrates existing schema 1/2/3 databases; it adds separate interactive/background admission and native computer journals. The earlier schema 3 increment It adds conversation runs/messages, frozen model inputs, lane labels, and WorkObject history. Existing source bytes, effect/receipt behavior and source lineage remain canonical.
 
 Each model run binds the current owner, lane revision, audience snapshot, purpose, policy epoch and WorkObject. A durable execution claim prevents duplicate delivery and host restart from automatically invoking the provider again. Interrupted work requires explicit interruption and a new user turn. This adapter does **not** claim Mastra crash recovery, live stream resumption or durable tool loops. Pi's existing checkpoint/replay qualification remains separate.
 
@@ -96,9 +96,9 @@ For local turns, the user selects up to eight eligible sources. Rust materialize
 
 Model context is limited to 32 KiB and the latest 80 candidate messages. At most 50 source dependencies can enter a run. The frontend shows the latest 200 eligible messages; earlier messages remain canonical but older-message browsing is not implemented. Library listing is bounded. These are development resource ceilings, not a claim of complete long-context memory.
 
-Approved memory remains a separately reviewed source-excerpt store. It is not silently injected into the new model adapter. Rich memory/OM/summary/subagent integration must carry the same actual-read dependency checks before being enabled.
+Approved memory remains a separately reviewed source-excerpt store. It can now be recalled by a local model through a dependency-recording tool; revoked memory fences dependent output. Rich LongMemory/OM engines remain uninstalled.
 
-The workbench admits one model call at a time across its configured contexts; the kernel also admits one running turn per lane. Output is committed before it is visible in the browser. There is no partial model output stream to leak after revocation. A process crash may consume provider compute while leaving an interrupted turn; it never proves a reply or authorizes an effect.
+The workbench now admits one interactive and one background run across its configured contexts; the kernel enforces one of each per lane. The [resident checkpoint](resident-agent-implementation.md) describes tools and finite worker lifetimes. Output is committed before it is visible in the browser. There is no partial model output stream to leak after revocation. A process crash may consume provider compute while leaving an interrupted turn; it never proves a reply or authorizes an effect.
 
 ## Models and offline behavior
 
@@ -144,7 +144,7 @@ Pocket TTS 4.0.1's `english_2m_2026-10` produced a real three-second synthetic W
 
 ## Computers, hardware and publication joints
 
-Computer execution remains disabled. A private Ask computer and a Channel computer must be distinct scoped sessions with controller generations, current observation bindings, explicit tool admission, durable remote intents, outcome reconciliation and artifact postconditions. `computer-intent.schema.json` is a contract draft for those joints, not a provisioned VM or shell API. PRoot must not be presented as production isolation. Add a real backend only after stale observation, human takeover, secret/egress and crash tests pass.
+Native private computer use is now available through an explicit finite selected-window permit and the Vercel driver. See the [current implementation and measured limits](resident-agent-implementation.md). Isolated shared computer execution remains disabled. A private Ask computer and a Channel computer must be distinct scoped sessions with controller generations, current observation bindings, explicit tool admission, durable remote intents, outcome reconciliation and artifact postconditions. `computer-intent.schema.json` is a contract draft for those joints, not a provisioned VM or shell API. PRoot must not be presented as production isolation. Add a real backend only after stale observation, human takeover, secret/egress and crash tests pass.
 
 Pamir's [Lapis One](https://www.pamir.ai/) is a useful appliance reference: its official page describes a Debian-based RK3576 host, 8 GB RAM, memory LCD, GPIO, USB-C capture/HID KVM, signed A/B updates and a continuity battery. These are vendor claims, not our hardware measurements. The same page says internet is required; Aksara's local-first requirement must be qualified independently. No usable licensed Lapis SDK source was established during this pass, so no Pamir source is copied. HID/KVM authorization is an actuation boundary, not ordinary screen rendering.
 

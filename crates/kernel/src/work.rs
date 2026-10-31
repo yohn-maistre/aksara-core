@@ -43,6 +43,13 @@ impl Kernel {
         Ok(w)
     }
     pub fn work(&self, ctx: &AccessContext, id: &str) -> Result<WorkObject> {
+        let work = self.work_authorized(ctx, id)?;
+        if !self.model_work_eligible(ctx, id)? {
+            return Err(Error::Denied);
+        }
+        Ok(work)
+    }
+    pub(crate) fn work_authorized(&self, ctx: &AccessContext, id: &str) -> Result<WorkObject> {
         self.check_context(ctx)?;
         let w: WorkObject = load(&self.db, "work", id)?;
         if w.institution_id != ctx.institution_id
@@ -63,7 +70,9 @@ impl Kernel {
         let mut out = Vec::new();
         for r in rows {
             let w: WorkObject = serde_json::from_str(&r?)?;
-            if w.purpose == ctx.purpose && ctx.lane.audience.iter().all(|p| w.audience.contains(p))
+            if w.purpose == ctx.purpose
+                && ctx.lane.audience.iter().all(|p| w.audience.contains(p))
+                && self.model_work_eligible(ctx, &w.id)?
             {
                 out.push(w);
             }
@@ -117,7 +126,7 @@ impl Kernel {
         Ok(w)
     }
     pub fn cancel(&mut self, ctx: &AccessContext, id: &str) -> Result<WorkObject> {
-        let mut w = self.work(ctx, id)?;
+        let mut w = self.work_authorized(ctx, id)?;
         if w.owner != ctx.actor.id {
             return Err(Error::Denied);
         }

@@ -3,8 +3,17 @@ import { stateWord } from "./shared";
 import { useWorkspace } from "./state";
 /** Actual authorized work and artifacts only. No simulated tool traces or computer screenshots. */
 export function WorkActivity() {
-  const { works, working, artifacts, openWork, api, run, setDetail, navigate } =
-    useWorkspace();
+  const {
+    works,
+    working,
+    artifacts,
+    openWork,
+    api,
+    run,
+    setDetail,
+    navigate,
+    backgroundWorkIds,
+  } = useWorkspace();
   const work = [...working, ...works.filter((w) => !working.includes(w))].slice(
     0,
     4,
@@ -25,7 +34,10 @@ export function WorkActivity() {
             />
             <span>
               <strong>{w.request}</strong>
-              <small>{stateWord(w.state)}</small>
+              <small>
+                {backgroundWorkIds.has(w.id) ? "Background · " : ""}
+                {stateWord(w.state)}
+              </small>
             </span>
             <ArrowUpRight size={13} />
           </button>

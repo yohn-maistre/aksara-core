@@ -57,3 +57,9 @@ See [implementation and run instructions](windows-local.md).
 31 October resident increment: actual bounded Mastra tools, recorded actual source
 reads and private provisional procedures are implemented. Hosted selected sources
 require explicit consent. [Implementation and qualifications](resident-agent-implementation.md).
+
+Resident phase two: schema 4; responsive front agent and one finite background
+worker; thread-bound working documents; revocation-aware memory/wiki/people
+projection shared with MCP; explicit native private computer permits and durable
+Vercel action journals. Real Linux GUI fixture passed. Shared desktop isolation,
+live messaging accounts and Strata receiving-side release remain distinct gates.

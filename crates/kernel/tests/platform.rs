@@ -25,6 +25,7 @@ impl F {
     }
     fn req(&self, provider: &str, key: &str) -> ModelRequest {
         ModelRequest {
+            kind: ModelKind::Interactive,
             source_ids: vec![],
             text: format!("synthetic {key}"),
             provider: provider.into(),
@@ -50,6 +51,153 @@ fn conversation_is_canonical_idempotent_and_scoped() {
     assert_eq!(f.k.messages(&c, 0).unwrap().len(), 2);
     assert!(f.k.finish_model(&c, &r.id, "duplicate", false).is_err());
     assert_eq!(f.k.works(&c).unwrap()[0].state, WorkState::Completed);
+}
+#[test]
+fn reviewed_memory_revocation_fences_recall_and_derived_wiki_without_destroying_original() {
+    let mut f = F::new();
+    let c = f.ctx(0, 1);
+    let source =
+        f.k.ingest(
+            &c,
+            &IngestRequest {
+                title: "Office evidence".into(),
+                content: "Use litres and an observation date.".into(),
+                visibility: Visibility::Private,
+                purpose: "knowledge".into(),
+                provenance: "fixture".into(),
+            },
+        )
+        .unwrap();
+    let candidate =
+        f.k.memory_candidate(
+            &c,
+            &MemoryCandidate {
+                text: "Use litres and an observation date.".into(),
+                source_artifact_id: source.id.clone(),
+                visibility: Visibility::Private,
+                purpose: "knowledge".into(),
+                kind: "semantic".into(),
+                evidence_kind: "source_fact".into(),
+                retention_seconds: 3600,
+            },
+        )
+        .unwrap();
+    f.k.approve_memory(&c, &candidate.id).unwrap();
+    let run = f.k.begin_model(&c, &f.req("local", "recall")).unwrap();
+    f.k.claim_model(&c, &run.id).unwrap();
+    assert_eq!(
+        f.k.model_memory(&c, &run.id).unwrap()["reviewed"][0]["id"],
+        candidate.id
+    );
+    let wiki =
+        f.k.model_document(
+            &c,
+            &run.id,
+            "Wiki: Reporting",
+            "Use litres; source-linked working advice.",
+        )
+        .unwrap();
+    assert_eq!(wiki.memory_ids, vec![candidate.id.clone()]);
+    f.k.finish_model(&c, &run.id, "I used the reviewed reporting rule.", false)
+        .unwrap();
+    assert_eq!(f.k.knowledge(&c).unwrap()["drafts"][0]["kind"], "wiki");
+    f.k.revoke_memory(&c, &candidate.id).unwrap();
+    assert!(f.k.artifact(&c, &source.id).is_ok());
+    assert!(f.k.artifact(&c, &wiki.id).is_err());
+    assert!(!f
+        .k
+        .messages(&c, 0)
+        .unwrap()
+        .iter()
+        .any(|m| m.role == "assistant"));
+    let next = f.k.begin_model(&c, &f.req("local", "later")).unwrap();
+    assert!(!f
+        .k
+        .model_input(&c, &next.id)
+        .unwrap()
+        .to_string()
+        .contains("I used the reviewed"));
+}
+#[test]
+fn worker_runs_beside_front_agent_and_saves_channel_bound_artifact() {
+    let mut f = F::new();
+    let c = f.ctx(0, 0);
+    let front = f.k.begin_model(&c, &f.req("local", "front")).unwrap();
+    f.k.claim_model(&c, &front.id).unwrap();
+    let worker =
+        f.k.delegate_model(&c, &front.id, "Prepare a draft in the background")
+            .unwrap();
+    assert_eq!(worker.parent_run_id, Some(front.id.clone()));
+    assert_eq!(worker.kind, ModelKind::Background);
+    assert!(f.k.delegate_model(&c, &front.id, "Second worker").is_err());
+    f.k.claim_model(&c, &worker.id).unwrap();
+    assert!(f.k.delegate_model(&c, &worker.id, "Nested worker").is_err());
+    f.k.finish_model(&c, &front.id, "I started the task.", false)
+        .unwrap();
+    let next = f.k.begin_model(&c, &f.req("local", "front-again")).unwrap();
+    assert!(!f
+        .k
+        .model_input(&c, &next.id)
+        .unwrap()
+        .to_string()
+        .contains("Prepare a draft in the background"));
+    let doc =
+        f.k.model_document(&c, &worker.id, "Office draft", "A real working draft")
+            .unwrap();
+    assert_eq!(
+        f.k.raw_source(&f.ctx(1, 0), &doc.id).unwrap(),
+        b"A real working draft"
+    );
+    assert!(f.k.artifact(&f.ctx(0, 1), &doc.id).is_err());
+    assert!(f.k.search(&f.ctx(0, 1), "Office", 5).unwrap().is_empty());
+    f.k.finish_model(&c, &worker.id, "Saved the draft.", false)
+        .unwrap();
+    assert_eq!(
+        f.k.messages(&f.ctx(1, 0), 0)
+            .unwrap()
+            .iter()
+            .filter(|m| m.run.id == worker.id)
+            .count(),
+        2
+    );
+}
+#[test]
+fn worker_inherits_parent_actual_reads_and_cannot_publish_after_withdrawal() {
+    let mut f = F::new();
+    let c = f.ctx(0, 1);
+    let source =
+        f.k.ingest(
+            &c,
+            &IngestRequest {
+                title: "Private evidence".into(),
+                content: "PRIVATE_WATER".into(),
+                visibility: Visibility::Private,
+                purpose: "knowledge".into(),
+                provenance: "fixture".into(),
+            },
+        )
+        .unwrap();
+    let front = f.k.begin_model(&c, &f.req("local", "front")).unwrap();
+    f.k.claim_model(&c, &front.id).unwrap();
+    f.k.model_retrieve(&c, &front.id, None, Some(&source.id))
+        .unwrap();
+    let worker =
+        f.k.delegate_model(&c, &front.id, "Work based on that reading")
+            .unwrap();
+    assert_eq!(worker.source_ids, vec![source.id.clone()]);
+    f.k.claim_model(&c, &worker.id).unwrap();
+    f.k.withdraw_artifact(&c, &source.id).unwrap();
+    assert!(f
+        .k
+        .model_document(&c, &worker.id, "Late", "Must not save")
+        .is_err());
+    assert!(f.k.model_input(&c, &worker.id).is_err());
+    assert!(f
+        .k
+        .messages(&c, 0)
+        .unwrap()
+        .iter()
+        .all(|m| m.run.id != worker.id));
 }
 #[test]
 fn cloud_context_excludes_local_only_turns_and_library() {

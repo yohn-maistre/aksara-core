@@ -28,7 +28,9 @@ export class KernelReadPort {
     this.#fetch = fetchImpl;
   }
   async read(operation, id) {
-    if (!["me", "library", "artifact", "threads"].includes(operation))
+    if (
+      !["me", "library", "artifact", "threads", "knowledge"].includes(operation)
+    )
       throw new Error("Read capability unavailable");
     if (
       id !== undefined &&

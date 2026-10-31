@@ -29,6 +29,7 @@ const { values, positionals } = parseArgs({
     port: { type: "string", default: "7341" },
     "service-base": { type: "string", default: "7350" },
     simulator: { type: "boolean", default: false },
+    background: { type: "boolean", default: false },
     open: { type: "boolean", default: false },
     json: { type: "boolean", default: false },
     profile: { type: "string", default: "personal" },
@@ -424,6 +425,7 @@ async function chat() {
   if (provider !== "local" && !values["cloud-consent"])
     throw new Error("Hosted prompts require --cloud-consent for this turn");
   const run = await api("chat", {
+    kind: values.background ? "background" : "interactive",
     text,
     provider,
     model,
@@ -431,17 +433,35 @@ async function chat() {
     source_ids: [],
     idempotency_key: randomBytes(24).toString("hex"),
   });
+  let detachedWorker = values.background;
   try {
+    if (values.background) {
+      console.log(
+        `Background task started: ${run.run.work_id}. Follow it in the web workspace.`,
+      );
+      return;
+    }
     for (let i = 0; i < 190; i++) {
       const work = await api(
         `kernel/thread?id=${encodeURIComponent(run.run.work_id)}`,
       );
       if (work.state === "COMPLETED") {
-        const message = (await api("kernel/messages")).find(
+        const messages = await api("kernel/messages");
+        const message = messages.find(
           (m) => m.run.id === run.run.id && m.role === "assistant",
         );
         if (!message) throw new Error("No currently eligible reply");
+        detachedWorker = messages.some(
+          (m) =>
+            m.run.parent_run_id === run.run.id &&
+            !messages.some(
+              (reply) =>
+                reply.run.id === m.run.id && reply.role === "assistant",
+            ),
+        );
         console.log(message.text);
+        if (detachedWorker)
+          console.log("Background work continues in the web workspace.");
         return;
       }
       if (["FAILED", "CANCELLED"].includes(work.state))
@@ -450,7 +470,7 @@ async function chat() {
     }
     throw new Error("Model turn did not finish within the CLI wait period");
   } finally {
-    await api("logout", {}).catch(() => {});
+    if (!detachedWorker) await api("logout", {}).catch(() => {});
   }
 }
 try {
@@ -503,7 +523,7 @@ try {
     console.log(stdout.trim());
   } else
     console.log(
-      "Aksara development CLI\n  setup | start [--open] [--simulator]\n  doctor [--json] | stop\n  chat [--profile personal|community] [--provider ID] [--model ID] [--cloud-consent] PROMPT\n  backup DESTINATION --profile personal|community\nGlobal: --state PATH --binary PATH --port 7341 --service-base 7350\nThe simulator alone needs Python. Hosted sign-in and keys are configured in the local PWA.",
+      "Aksara development CLI\n  setup | start [--open] [--simulator]\n  doctor [--json] | stop\n  chat [--background] [--profile personal|community] [--provider ID] [--model ID] [--cloud-consent] PROMPT\n  backup DESTINATION --profile personal|community\nGlobal: --state PATH --binary PATH --port 7341 --service-base 7350\nThe simulator alone needs Python. Hosted sign-in and keys are configured in the local PWA.",
     );
 } catch (error) {
   console.error(

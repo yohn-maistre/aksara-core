@@ -1,6 +1,19 @@
 use crate::*;
 use base64::Engine;
 
+fn artifact_visible(ctx: &AccessContext, artifact: &Artifact) -> bool {
+    visible(
+        ctx,
+        &artifact.owner,
+        &artifact.visibility,
+        &artifact.purpose,
+    ) && artifact.lane_binding.as_ref().is_none_or(|lane| {
+        lane.id == ctx.lane.id
+            && lane.institution_id == ctx.institution_id
+            && ctx.lane.audience.iter().all(|p| lane.audience.contains(p))
+    })
+}
+
 pub(crate) fn insert_artifact(
     tx: &Transaction,
     ctx: &AccessContext,
@@ -39,6 +52,8 @@ fn insert_artifact_data(
         ));
     }
     let artifact = Artifact {
+        memory_ids: Vec::new(),
+        lane_binding: None,
         id: new_id("artifact"),
         title: input.title.clone(),
         sha256: digest(raw),
@@ -177,12 +192,8 @@ impl Kernel {
             let artifact: Artifact = serde_json::from_str(&data)?;
             if active != Some(1)
                 || institution.as_deref() != Some(&ctx.institution_id)
-                || !visible(
-                    ctx,
-                    &artifact.owner,
-                    &artifact.visibility,
-                    &artifact.purpose,
-                )
+                || !artifact_visible(ctx, &artifact)
+                || !self.memory_dependencies_visible(ctx, &artifact.memory_ids)?
             {
                 return Ok(false);
             }
@@ -210,7 +221,7 @@ impl Kernel {
         let a: Artifact = serde_json::from_str(&s)?;
         if active != 1
             || institution != ctx.institution_id
-            || !visible(ctx, &a.owner, &a.visibility, &a.purpose)
+            || !artifact_visible(ctx, &a)
             || !self.lineage_visible(ctx, &[id.to_owned()])?
         {
             return Err(Error::Denied);
@@ -257,7 +268,7 @@ impl Kernel {
             let mut count = 0usize;
             for row in rows {
                 let a: Artifact = serde_json::from_str(&row?)?;
-                if !visible(ctx, &a.owner, &a.visibility, &a.purpose) {
+                if !artifact_visible(ctx, &a) {
                     continue;
                 }
                 if !self.lineage_visible(ctx, std::slice::from_ref(&a.id))? {

@@ -51,7 +51,7 @@ export function ConversationView() {
     send,
     lane,
     privateLane,
-    working,
+    foregroundWorking,
     pinnedReplies,
     setPinnedReplies,
   } = useWorkspace();
@@ -104,9 +104,13 @@ export function ConversationView() {
                   <div>
                     <span className="message-label">
                       {m.role === "assistant"
-                        ? "Aksara"
+                        ? m.run.kind === "background"
+                          ? "Aksara · task result"
+                          : "Aksara"
                         : m.run.owner === me.id
-                          ? "You"
+                          ? m.run.kind === "background"
+                            ? "Background task"
+                            : "You"
                           : "Member"}
                       <small>
                         {m.run.provider === "preview"
@@ -183,7 +187,7 @@ export function ConversationView() {
                   </div>
                 </article>
               ))}
-              {working.length > 0 && (
+              {foregroundWorking.length > 0 && (
                 <div className="turn-status">
                   <span className="typing">
                     <i />
@@ -194,7 +198,7 @@ export function ConversationView() {
                   <button
                     onClick={() =>
                       void run(async () => {
-                        for (const w of working)
+                        for (const w of foregroundWorking)
                           await api("kernel/model-interrupt", {
                             work_id: w.id,
                           });

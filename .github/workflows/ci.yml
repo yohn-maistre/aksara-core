@@ -56,12 +56,18 @@ jobs:
           node tests/platform-browser.mjs
           node tests/preview-browser.mjs
       - name: Static phone host
+        # A real native desktop fixture supplements the driver contract tests.
         env:
           CC: musl-gcc
         run: |
           target_key=$(echo '${{ matrix.target }}' | tr '[:lower:]-' '[:upper:]_')
           export "CARGO_TARGET_${target_key}_LINKER=musl-gcc"
           cargo build --locked --release --target ${{ matrix.target }} -j 2
+      - name: Native computer use through Vercel driver
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: |
+          sudo apt-get install -y xvfb openbox at-spi2-core dbus-x11
+          bash scripts/qualify_desktop.sh
       - name: Real-process stress on native architecture
         run: python3 scripts/stress.py --binary target/${{ matrix.target }}/release/aksarad --documents 200
       - name: Protected backend operational checks

@@ -33,6 +33,13 @@ export function createResourceGateway(port, { packs = [] } = {}) {
               "Bundled capability pack. Descriptive only; this grants no authority.",
           })),
           {
+            uri: "aksara://workspace/knowledge",
+            name: "Knowledge and procedural memory",
+            mimeType: "application/json",
+            description:
+              "Current source-linked reviewed knowledge and provisional notes. Fresh scope and withdrawal checks on every read.",
+          },
+          {
             uri: "aksara://workspace/work",
             name: "Work in this context",
             mimeType: "application/json",
@@ -59,7 +66,7 @@ export function createResourceGateway(port, { packs = [] } = {}) {
           parsed.hash ||
           !idPattern.test(id) ||
           !["library", "workspace", "packs"].includes(kind) ||
-          (kind === "workspace" && id !== "work")
+          (kind === "workspace" && !["work", "knowledge"].includes(id))
         )
           throw unavailable();
         if (kind === "packs") {
@@ -69,6 +76,8 @@ export function createResourceGateway(port, { packs = [] } = {}) {
           return { text: JSON.stringify(manifest) };
         }
         if (kind === "workspace") {
+          if (id === "knowledge")
+            return { text: JSON.stringify(await port.read("knowledge")) };
           const work = await port.read("threads");
           return {
             text: JSON.stringify({

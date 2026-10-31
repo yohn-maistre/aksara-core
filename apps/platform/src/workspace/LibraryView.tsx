@@ -43,7 +43,9 @@ export function LibraryView() {
     visibleIds.has(m.source_artifact_id),
   );
   const isDocument = (a: (typeof artifacts)[number]) =>
-    a.provenance?.startsWith("effect:") || a.provenance === "governed artifact";
+    a.provenance?.startsWith("effect:") ||
+    a.provenance?.startsWith("agent-document:") ||
+    a.provenance === "governed artifact";
   const collectionFiles = artifacts.filter(
     (a) =>
       collection === "all" ||
@@ -123,6 +125,51 @@ export function LibraryView() {
           </div>
         )}
       </section>
+      {artifacts.some(
+        (a) =>
+          a.title.startsWith("Wiki: ") ||
+          a.title.startsWith("People: ") ||
+          a.provenance?.startsWith("agent-procedure:"),
+      ) && (
+        <section className="knowledge-section" aria-label="Working knowledge">
+          <div className="section-title">
+            <h2>Working knowledge</h2>
+            <span>Source-linked · unreviewed</span>
+          </div>
+          <div className="knowledge-grid">
+            {artifacts
+              .filter(
+                (a) =>
+                  a.title.startsWith("Wiki: ") ||
+                  a.title.startsWith("People: ") ||
+                  a.provenance?.startsWith("agent-procedure:"),
+              )
+              .map((a) => (
+                <button
+                  className="knowledge-card"
+                  key={a.id}
+                  onClick={() => open(a.id)}
+                >
+                  <BookOpen size={19} />
+                  <h3>
+                    {a.title.replace(
+                      /^(Wiki: |People: |Procedure draft: )/,
+                      "",
+                    )}
+                  </h3>
+                  <span>
+                    {a.title.startsWith("Wiki: ")
+                      ? "Wiki page"
+                      : a.title.startsWith("People: ")
+                        ? "People note"
+                        : "Learned procedure"}{" "}
+                    <ArrowUpRight size={14} />
+                  </span>
+                </button>
+              ))}
+          </div>
+        </section>
+      )}
       <section className="file-explorer" aria-label="Files and documents">
         <div className="section-title">
           <h2>

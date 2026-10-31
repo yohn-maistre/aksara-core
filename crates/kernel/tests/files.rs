@@ -39,6 +39,7 @@ fn binary_originals_survive_rebuild_and_respect_custody_withdrawal_and_parser_bo
         .unwrap()
         .is_empty());
     let run = ModelRequest {
+        kind: ModelKind::Interactive,
         text: "test".into(),
         provider: "local".into(),
         model: "fixture".into(),

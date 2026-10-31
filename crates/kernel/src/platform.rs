@@ -14,9 +14,29 @@ fn run_visible(ctx: &AccessContext, run: &ModelRun) -> bool {
         && ctx.lane.audience.iter().all(|p| run.audience.contains(p))
 }
 impl Kernel {
+    pub(crate) fn model_work_eligible(&self, ctx: &AccessContext, work_id: &str) -> Result<bool> {
+        let data: Option<String> = self
+            .db
+            .query_row(
+                "SELECT data FROM model_runs WHERE json_extract(data,'$.work_id')=?1",
+                [work_id],
+                |r| r.get(0),
+            )
+            .optional()?;
+        let Some(data) = data else {
+            return Ok(true);
+        };
+        let run: ModelRun = serde_json::from_str(&data)?;
+        Ok(run_visible(ctx, &run)
+            && self.lineage_visible(ctx, &run.source_ids)?
+            && self.run_memory_visible(ctx, &run)?)
+    }
+    fn run_memory_visible(&self, ctx: &AccessContext, run: &ModelRun) -> Result<bool> {
+        self.memory_dependencies_visible(ctx, &run.memory_ids)
+    }
     /// Clear an interrupted provider turn without replaying it or accepting late output.
     pub fn interrupt_model(&mut self, ctx: &AccessContext, work_id: &str) -> Result<()> {
-        let work = self.work(ctx, work_id)?;
+        let work = self.work_authorized(ctx, work_id)?;
         if work.owner != ctx.actor.id {
             return Err(Error::Denied);
         }
@@ -196,7 +216,10 @@ impl Kernel {
         for row in rows {
             let (seq, data) = row?;
             let mut m: ConversationMessage = serde_json::from_str(&data)?;
-            if run_visible(ctx, &m.run) && self.lineage_visible(ctx, &m.run.source_ids)? {
+            if run_visible(ctx, &m.run)
+                && self.lineage_visible(ctx, &m.run.source_ids)?
+                && self.run_memory_visible(ctx, &m.run)?
+            {
                 m.seq = seq;
                 out.push(m);
             }
@@ -207,6 +230,14 @@ impl Kernel {
         Ok(out)
     }
     pub fn begin_model(&mut self, ctx: &AccessContext, req: &ModelRequest) -> Result<ModelRun> {
+        self.begin_model_with_parent(ctx, req, None)
+    }
+    fn begin_model_with_parent(
+        &mut self,
+        ctx: &AccessContext,
+        req: &ModelRequest,
+        parent: Option<&ModelRun>,
+    ) -> Result<ModelRun> {
         self.check_context(ctx)?;
         bounded(&req.text, MAX_TEXT_BYTES)?;
         bounded(&req.idempotency_key, 128)?;
@@ -223,7 +254,20 @@ impl Kernel {
         let hash = digest(json(req)?.as_bytes());
         let old:Option<(String,String)>=self.db.query_row("SELECT data,request_hash FROM model_runs WHERE lane_id=?1 AND owner=?2 AND request_key=?3",params![ctx.lane.id,ctx.actor.id,req.idempotency_key],|r|Ok((r.get(0)?,r.get(1)?))).optional()?;
         if let Some((s, h)) = old {
-            if h != hash {
+            let mut compatible = h == hash;
+            if req.kind == ModelKind::Interactive {
+                let legacy = json(req)?.replacen("\"kind\":\"interactive\",", "", 1);
+                compatible |= h == digest(legacy.as_bytes());
+                if !req.source_consent {
+                    compatible |= h
+                        == digest(
+                            legacy
+                                .replacen(",\"source_consent\":false", "", 1)
+                                .as_bytes(),
+                        );
+                }
+            }
+            if !compatible {
                 return Err(Error::Conflict("request key changed".into()));
             }
             let run: ModelRun = serde_json::from_str(&s)?;
@@ -232,7 +276,7 @@ impl Kernel {
             }
             return Ok(run);
         }
-        let busy:i64=self.db.query_row("SELECT count(*) FROM model_runs WHERE lane_id=?1 AND json_extract(data,'$.state')='running'",[&ctx.lane.id],|r|r.get(0))?;
+        let busy:i64=self.db.query_row("SELECT count(*) FROM model_runs WHERE lane_id=?1 AND json_extract(data,'$.state')='running' AND coalesce(json_extract(data,'$.kind'),'interactive')=?2",params![&ctx.lane.id,if req.kind==ModelKind::Background {"background"} else {"interactive"}],|r|r.get(0))?;
         if busy > 0 {
             return Err(Error::Conflict(
                 "a model turn is running; cancel or recover it first".into(),
@@ -244,7 +288,12 @@ impl Kernel {
         if req.provider != "local" && !req.source_ids.is_empty() && !req.source_consent {
             return Err(Error::Denied);
         }
-        let mut sources = std::collections::BTreeSet::new();
+        let mut sources: std::collections::BTreeSet<String> = parent
+            .map(|p| p.source_ids.iter().cloned().collect())
+            .unwrap_or_default();
+        let mut memory_ids: std::collections::BTreeSet<String> = parent
+            .map(|p| p.memory_ids.iter().cloned().collect())
+            .unwrap_or_default();
         let mut source_text = String::new();
         for id in &req.source_ids {
             let a = self.artifact(ctx, id)?;
@@ -276,6 +325,9 @@ impl Kernel {
             for row in rows {
                 let m: ConversationMessage = serde_json::from_str(&row?)?;
                 if !run_visible(ctx, &m.run)
+                    || !self.run_memory_visible(ctx, &m.run)?
+                    || m.run.kind == ModelKind::Background
+                    || req.kind == ModelKind::Background
                     || !self.lineage_visible(ctx, &m.run.source_ids)?
                     || (req.provider != "local"
                         && (!m.run.cloud_consent
@@ -293,6 +345,7 @@ impl Kernel {
                 }
                 bytes += m.text.len();
                 sources.extend(m.run.source_ids.iter().cloned());
+                memory_ids.extend(m.run.memory_ids.iter().cloned());
                 if sources.len() > 50 {
                     return Err(Error::Limit(
                         "model dependency ceiling reached; start a fresh conversation".into(),
@@ -312,6 +365,9 @@ impl Kernel {
             },
         )?;
         let run = ModelRun {
+            memory_ids: memory_ids.into_iter().collect(),
+            kind: req.kind.clone(),
+            parent_run_id: parent.map(|p| p.id.clone()),
             authorized_source_ids: req.source_ids.clone(),
             tool_reads: Vec::new(),
             note_ids: Vec::new(),
@@ -370,6 +426,99 @@ impl Kernel {
         tx.commit()?;
         Ok(run)
     }
+    /// One non-recursive worker inherits the parent's complete actual read set.
+    /// Model-written task text cannot select another identity, lane or provider.
+    pub fn delegate_model(
+        &mut self,
+        ctx: &AccessContext,
+        id: &str,
+        task: &str,
+    ) -> Result<ModelRun> {
+        bounded(task, 12000)?;
+        let checked = self.model_input(ctx, id)?;
+        let parent: ModelRun = serde_json::from_value(checked["run"].clone())?;
+        if !parent.execution_claimed || parent.kind != ModelKind::Interactive {
+            return Err(Error::Denied);
+        }
+        let count: i64 = self.db.query_row(
+            "SELECT count(*) FROM model_runs WHERE json_extract(data,'$.parent_run_id')=?1",
+            [id],
+            |r| r.get(0),
+        )?;
+        if count > 0 {
+            return Err(Error::Limit(
+                "one background task per interactive turn".into(),
+            ));
+        }
+        let req = ModelRequest {
+            kind: ModelKind::Background,
+            source_ids: parent.authorized_source_ids.clone(),
+            text: task.into(),
+            provider: parent.provider.clone(),
+            model: parent.model.clone(),
+            cloud_consent: parent.cloud_consent,
+            source_consent: true,
+            idempotency_key: format!("worker:{}", parent.id),
+        };
+        self.begin_model_with_parent(ctx, &req, Some(&parent))
+    }
+
+    /// Save an unreviewed working document, bounded to this exact lane. Shared
+    /// members see one artifact; other lanes do not gain an institution-wide copy.
+    pub fn model_document(
+        &mut self,
+        ctx: &AccessContext,
+        id: &str,
+        title: &str,
+        content: &str,
+    ) -> Result<Artifact> {
+        bounded(title, 100)?;
+        bounded(content, 24000)?;
+        let checked = self.model_input(ctx, id)?;
+        let mut run: ModelRun = serde_json::from_value(checked["run"].clone())?;
+        if !run.execution_claimed || run.note_ids.len() >= 4 {
+            return Err(Error::Denied);
+        }
+        let input = IngestRequest {
+            title: title.into(),
+            content: content.into(),
+            visibility: if ctx.lane.audience.len() == 1 {
+                Visibility::Private
+            } else {
+                Visibility::Institution
+            },
+            purpose: ctx.purpose.clone(),
+            provenance: format!("agent-document:{};unreviewed", run.id),
+        };
+        let tx = self.db.transaction()?;
+        let mut artifact = crate::library::insert_artifact(&tx, ctx, &input)?;
+        artifact.lane_binding = Some(ctx.lane.clone());
+        artifact.memory_ids = run.memory_ids.clone();
+        tx.execute(
+            "UPDATE artifacts SET data=?2 WHERE id=?1",
+            params![artifact.id, json(&artifact)?],
+        )?;
+        for source in &run.source_ids {
+            tx.execute(
+                "INSERT INTO artifact_sources(artifact_id,source_id) VALUES(?1,?2)",
+                params![artifact.id, source],
+            )?;
+        }
+        run.note_ids.push(artifact.id.clone());
+        tx.execute(
+            "UPDATE model_runs SET data=?2 WHERE id=?1",
+            params![run.id, json(&run)?],
+        )?;
+        event(
+            &tx,
+            "model.document_draft",
+            &artifact.id,
+            Some(&ctx.lane.id),
+            &ctx.actor.id,
+        )?;
+        tx.commit()?;
+        Ok(artifact)
+    }
     pub fn model_input(&self, ctx: &AccessContext, id: &str) -> Result<Value> {
         self.check_context(ctx)?;
         let s: String = self
@@ -392,7 +541,7 @@ impl Kernel {
         {
             return Err(Error::Denied);
         }
-        if !self.lineage_visible(ctx, &run.source_ids)? {
+        if !self.lineage_visible(ctx, &run.source_ids)? || !self.run_memory_visible(ctx, &run)? {
             return Err(Error::Denied);
         }
         let data: String =
@@ -443,7 +592,7 @@ impl Kernel {
         source_id: Option<&str>,
     ) -> Result<Value> {
         let checked = self.model_input(ctx, id)?;
-        let mut run: ModelRun = serde_json::from_value(checked["run"].clone())?;
+        let run: ModelRun = serde_json::from_value(checked["run"].clone())?;
         if !run.execution_claimed {
             return Err(Error::Denied);
         }
@@ -485,6 +634,17 @@ impl Kernel {
             }
             _ => return Err(Error::Denied),
         };
+        self.record_model_read(ctx, run, operation, input, ids, result)
+    }
+    pub(crate) fn record_model_read(
+        &mut self,
+        ctx: &AccessContext,
+        mut run: ModelRun,
+        operation: &str,
+        input: Value,
+        ids: Vec<String>,
+        result: Value,
+    ) -> Result<Value> {
         let sources: std::collections::BTreeSet<String> = run
             .source_ids
             .iter()
@@ -493,6 +653,9 @@ impl Kernel {
             .collect();
         if sources.len() > 50 {
             return Err(Error::Limit("model dependency ceiling reached".into()));
+        }
+        if run.memory_ids.len() > 50 {
+            return Err(Error::Limit("memory dependency ceiling reached".into()));
         }
         run.source_ids = sources.into_iter().collect();
         run.tool_reads
@@ -506,7 +669,7 @@ impl Kernel {
         let tx = self.db.transaction()?;
         tx.execute(
             "UPDATE model_runs SET data=?2 WHERE id=?1",
-            params![id, json(&run)?],
+            params![run.id, json(&run)?],
         )?;
         tx.execute(
             "UPDATE work SET data=?2 WHERE id=?1",
@@ -515,12 +678,99 @@ impl Kernel {
         event(
             &tx,
             "model.tool_read",
-            id,
+            &run.id,
             Some(&ctx.lane.id),
             &ctx.actor.id,
         )?;
         tx.commit()?;
         Ok(result)
+    }
+
+    /// Read worker results through the same source-dependency boundary. Hosted
+    /// front agents cannot fetch local worker results or unconsented sources.
+    pub fn model_tasks(&mut self, ctx: &AccessContext, id: &str) -> Result<Value> {
+        let checked = self.model_input(ctx, id)?;
+        let mut parent: ModelRun = serde_json::from_value(checked["run"].clone())?;
+        if !parent.execution_claimed {
+            return Err(Error::Denied);
+        }
+        let runs = {
+            let mut stmt=self.db.prepare("SELECT data FROM model_runs WHERE lane_id=?1 AND json_extract(data,'$.kind')='background' ORDER BY json_extract(data,'$.created_ms') DESC LIMIT 10")?;
+            let rows = stmt.query_map([&ctx.lane.id], |r| r.get::<_, String>(0))?;
+            rows.collect::<std::result::Result<Vec<_>, _>>()?
+        };
+        let mut tasks = Vec::new();
+        let mut ids = std::collections::BTreeSet::new();
+        for data in runs {
+            let run: ModelRun = serde_json::from_str(&data)?;
+            if !run_visible(ctx, &run)
+                || !self.run_memory_visible(ctx, &run)?
+                || !self.lineage_visible(ctx, &run.source_ids)?
+                || (parent.provider != "local"
+                    && (run.provider != parent.provider
+                        || !run.cloud_consent
+                        || run
+                            .source_ids
+                            .iter()
+                            .any(|s| !parent.authorized_source_ids.contains(s))))
+            {
+                continue;
+            }
+            let work = self.work(ctx, &run.work_id)?;
+            let text:Option<String>=self.db.query_row("SELECT json_extract(data,'$.text') FROM messages WHERE run_id=?1 AND json_extract(data,'$.role')='assistant' ORDER BY seq DESC LIMIT 1",[&run.id],|r|r.get(0)).optional()?;
+            let artifacts: Vec<_> = run
+                .note_ids
+                .iter()
+                .filter(|source| self.artifact(ctx, source).is_ok())
+                .cloned()
+                .collect();
+            ids.extend(run.source_ids.iter().cloned());
+            parent.memory_ids.extend(run.memory_ids.iter().cloned());
+            // Hosted models receive only already-consented source-derived text,
+            // not an additional unselected artifact's contents.
+            if parent.provider == "local" {
+                ids.extend(artifacts.iter().cloned());
+            }
+            tasks.push(value!({"run_id":run.id,"work_id":work.id,"request":work.request,"state":work.state,"result":text,"artifact_ids":artifacts}));
+        }
+        self.record_model_read(
+            ctx,
+            parent,
+            "task_status",
+            value!({}),
+            ids.into_iter().collect(),
+            value!({"tasks":tasks}),
+        )
+    }
+    pub fn model_memory(&mut self, ctx: &AccessContext, id: &str) -> Result<Value> {
+        let checked = self.model_input(ctx, id)?;
+        let mut run: ModelRun = serde_json::from_value(checked["run"].clone())?;
+        if !run.execution_claimed || run.provider != "local" {
+            return Err(Error::Denied);
+        }
+        let result = self.knowledge(ctx)?;
+        let mut ids = std::collections::BTreeSet::new();
+        for memory in result["reviewed"].as_array().unwrap() {
+            if let Some(id) = memory["id"].as_str() {
+                run.memory_ids.push(id.into());
+            }
+            if let Some(id) = memory["source_artifact_id"].as_str() {
+                ids.insert(id.into());
+            }
+        }
+        for draft in result["drafts"].as_array().unwrap() {
+            if let Some(id) = draft["artifact"]["id"].as_str() {
+                ids.insert(id.into());
+            }
+        }
+        self.record_model_read(
+            ctx,
+            run,
+            "memory_recall",
+            value!({}),
+            ids.into_iter().collect(),
+            result,
+        )
     }
 
     /// A provisional procedure is private working material, not an approved
@@ -551,7 +801,12 @@ impl Kernel {
             provenance: format!("agent-procedure:{};unreviewed", run.id),
         };
         let tx = self.db.transaction()?;
-        let artifact = crate::library::insert_artifact(&tx, ctx, &input)?;
+        let mut artifact = crate::library::insert_artifact(&tx, ctx, &input)?;
+        artifact.memory_ids = run.memory_ids.clone();
+        tx.execute(
+            "UPDATE artifacts SET data=?2 WHERE id=?1",
+            params![artifact.id, json(&artifact)?],
+        )?;
         for source in &run.source_ids {
             tx.execute(
                 "INSERT INTO artifact_sources(artifact_id,source_id) VALUES(?1,?2)",

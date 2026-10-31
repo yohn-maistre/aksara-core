@@ -32,7 +32,12 @@ let child,
   note,
   requests = 0,
   round = 0;
-let fixtureError;
+let fixtureError,
+  releaseWorker,
+  workerStarted = false;
+const workerGate = new Promise((resolve) => {
+  releaseWorker = resolve;
+});
 const model = http.createServer(async (req, res) => {
   try {
     res.setHeader("content-type", "application/json");
@@ -45,7 +50,7 @@ const model = http.createServer(async (req, res) => {
     const input = JSON.parse(data);
     const tools = input.messages.filter((m) => m.role === "tool");
     const step = tools.length;
-    let call;
+    let call, finalText;
     if (round === 0) {
       if (step === 0) call = ["library_search", { query: "water" }];
       if (step === 1) {
@@ -69,7 +74,7 @@ const model = http.createServer(async (req, res) => {
         ];
       }
       if (step === 4) note = JSON.parse(tools[3].content);
-    } else {
+    } else if (round === 1) {
       if (step === 0) call = ["library_search", { query: "Procedure draft" }];
       if (step === 1) {
         assert.ok(
@@ -81,6 +86,39 @@ const model = http.createServer(async (req, res) => {
       }
       if (step === 2)
         assert.match(JSON.parse(tools[1].content).content, /observation date/);
+    }
+    if (round === 2) {
+      const prompt = input.messages
+        .filter((m) => m.role === "user")
+        .at(-1).content;
+      if (prompt.includes("BACKGROUND_REPORT_FIXTURE")) {
+        assert.ok(
+          !input.tools.some((t) => t.function.name === "delegate_task"),
+        );
+        if (step === 0) {
+          workerStarted = true;
+          await workerGate;
+          call = [
+            "save_document",
+            {
+              title: "Water background report",
+              content: "42 litres; observed 31 October. Working draft.",
+            },
+          ];
+        }
+        finalText = "The background report is saved in the Library.";
+      } else if (prompt.includes("FRONT_STILL_AVAILABLE")) {
+        finalText = "I am still here while the worker continues.";
+      } else {
+        if (step === 0)
+          call = [
+            "delegate_task",
+            {
+              task: "BACKGROUND_REPORT_FIXTURE: prepare and save the water report.",
+            },
+          ];
+        finalText = "The task is running; I am here with you.";
+      }
     }
     requests++;
     res.end(
@@ -109,9 +147,11 @@ const model = http.createServer(async (req, res) => {
                 }
               : {
                   role: "assistant",
-                  content: round
-                    ? "Reusing the private procedure: include litres and observation date."
-                    : "42 litres. A private procedure draft was saved.",
+                  content:
+                    finalText ||
+                    (round
+                      ? "Reusing the private procedure: include litres and observation date."
+                      : "42 litres. A private procedure draft was saved."),
                 },
             finish_reason: call ? "tool_calls" : "stop",
           },
@@ -229,6 +269,39 @@ try {
   console.log(
     "PASS restart retains procedure; duplicate request makes no new model call; later task retrieves it",
   );
+  round = 2;
+  const delegated = await api("chat", {
+    ...request,
+    text: "Start the background report.",
+    idempotency_key: "resident-delegate",
+  });
+  assert.match((await settled(delegated.run)).text, /task is running/);
+  for (let i = 0; i < 50 && !workerStarted; i++) await wait(100);
+  assert.equal(workerStarted, true);
+  const background = (await api("kernel/messages")).find(
+    (m) => m.run.parent_run_id === delegated.run.id,
+  ).run;
+  const moved = await api("scope", { profile: "community" });
+  scope = moved.scope;
+  const front = await api("chat", {
+    ...request,
+    text: "FRONT_STILL_AVAILABLE",
+    idempotency_key: "resident-front-while-worker",
+  });
+  assert.match((await settled(front.run)).text, /still here/);
+  const back = await api("scope", { profile: "personal" });
+  scope = back.scope;
+  releaseWorker();
+  const completed = await settled(background);
+  assert.match(completed.text, /report is saved/);
+  const report = (await api("kernel/library")).find(
+    (a) => a.title === "Water background report",
+  );
+  assert.ok(report);
+  assert.equal(report.lane_binding.id, back.lane);
+  console.log(
+    "PASS actual delegated worker continues across context changes; front agent responds; finished artifact persists",
+  );
   await api("kernel/withdraw", { id: source.id });
   assert.ok(!(await api("kernel/library")).some((a) => a.id === note.id));
   assert.equal(
@@ -239,6 +312,7 @@ try {
     "PASS original withdrawal hides derived procedure and both dependent replies",
   );
 } finally {
+  releaseWorker();
   await stop().catch(() => child?.kill());
   await new Promise((r) => model.close(r));
   await rm(dir, { recursive: true, force: true });

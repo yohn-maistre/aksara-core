@@ -51,6 +51,12 @@ export function FilePreview({ detail }: { detail: Data }) {
           approved institutional knowledge or installed code.
         </p>
       )}
+      {artifact.provenance?.startsWith("agent-document:") && (
+        <p className="notice">
+          Working document · unreviewed. Shared only in its bound thread; not
+          published or approved policy.
+        </p>
+      )}
       <div className="file-toolbar">
         <span>
           {media} · {artifact.bytes.toLocaleString()} bytes

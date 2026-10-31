@@ -4,11 +4,13 @@ import {
   HOSTED_PROVIDERS,
   providerFailure,
 } from "../runtime-mastra/hosted.mjs";
+import { NativeDesktopPort } from "../gateway/desktop.mjs";
 import { resolveResourceSurface } from "./surfaces.mjs";
 import { validatePack } from "@aksara/contracts";
 import { finalizePcmWav } from "./audio.mjs";
 import http from "node:http";
 import { readFile, stat } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import path from "node:path";
 import { randomBytes, timingSafeEqual } from "node:crypto";
 import { fileURLToPath } from "node:url";
@@ -46,6 +48,7 @@ const readOps = new Set([
   "capabilities",
   "today",
   "messages",
+  "knowledge",
   "simulator-status",
 ]);
 const writeOps = new Set([
@@ -122,7 +125,21 @@ export async function createWorkbench({
   );
   const sessions = new Map();
   const active = new Map();
-  const admitted = new Set();
+  const admitted = new Map();
+  const bundledDesktop = path.join(
+    root,
+    "bin",
+    process.platform === "win32" ? "agent-desktop.exe" : "agent-desktop",
+  );
+  const desktopBinary =
+    process.env.AKSARA_DESKTOP_BINARY ||
+    (existsSync(bundledDesktop) ? bundledDesktop : null);
+  const desktop = desktopBinary
+    ? new NativeDesktopPort({
+        binary: desktopBinary,
+        stateRoot: path.resolve(providerStateDir, "desktop"),
+      })
+    : null;
   let voiceBusy = false;
   const origin = `http://127.0.0.1:${port}`;
   async function kernel(session, operation, input, query = "") {
@@ -256,7 +273,7 @@ export async function createWorkbench({
           "aksara_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0",
         );
         for (const a of active.values())
-          if (a.scope === s.scope) a.abort.abort();
+          if (a.sessionKey === cookie) a.abort.abort();
         reply(res, { logged_out: true });
         return;
       }
@@ -276,7 +293,7 @@ export async function createWorkbench({
         s.lane = lane;
         s.scope = uid();
         for (const a of active.values())
-          if (a.scope === oldScope) a.abort.abort();
+          if (a.scope === oldScope && !a.background) a.abort.abort();
         reply(res, await sessionView(s));
         return;
       }
@@ -296,6 +313,46 @@ export async function createWorkbench({
         s.providerCustody = custody;
         return custody;
       };
+      if (url.pathname === "/api/computer" && req.method === "GET") {
+        await kernel(snapshot, "me");
+        const grant = await kernel(snapshot, "computer-current");
+        const driver = desktop ? await desktop.status() : null;
+        const windows =
+          desktop && driver?.ok ? await desktop.windows().catch(() => []) : [];
+        assertScope();
+        reply(res, { configured: !!desktop, driver, windows, grant });
+        return;
+      }
+      if (url.pathname === "/api/computer/connect" && req.method === "POST") {
+        if (!desktop)
+          throw fail("Configure the native desktop driver on this host first");
+        const b = await body(req);
+        if (b.acknowledge !== true)
+          throw fail("Review the selected-window permission first");
+        const window = (await desktop.windows()).find(
+          (w) => w.id === b.window_id,
+        );
+        if (!window) throw fail("Select a current accessible window");
+        assertScope();
+        const grant = await kernel(snapshot, "computer-connect", {
+          app: window.app_name,
+          window_id: window.id,
+          pid: window.pid,
+          process_instance: window.process_instance,
+          allow_actions: b.allow_actions === true,
+          allow_headed: b.allow_actions === true && b.allow_headed === true,
+        });
+        assertScope();
+        reply(res, grant);
+        return;
+      }
+      if (url.pathname === "/api/computer/stop" && req.method === "POST") {
+        const b = await body(req);
+        await kernel(snapshot, "computer-stop", { id: b.id });
+        assertScope();
+        reply(res, { stopped: true });
+        return;
+      }
       if (req.method === "POST" && url.pathname === "/api/surfaces/resolve") {
         const input = await body(req);
         const result = await resolveResourceSurface(input, {
@@ -538,6 +595,9 @@ export async function createWorkbench({
       }
       if (req.method === "POST" && url.pathname === "/api/chat") {
         const b = await body(req);
+        const kind = b.kind === "background" ? "background" : "interactive";
+        if (b.kind && !["interactive", "background"].includes(b.kind))
+          throw fail("Unknown task kind");
         modelConfig(b.provider, b.model);
         const custody = await custodyFor();
         const credential = Object.hasOwn(HOSTED_PROVIDERS, b.provider)
@@ -551,6 +611,7 @@ export async function createWorkbench({
         ]);
         const begin = () =>
           kernel(snapshot, "model-begin", {
+            kind,
             text: b.text,
             provider: b.provider,
             model: b.model,
@@ -564,12 +625,12 @@ export async function createWorkbench({
           reply(res, { run, duplicate: true });
           return;
         }
-        if (admitted.size >= 1)
+        if ([...admitted.values()].includes(kind))
           throw fail(
-            "This host is already running a model turn. Try again after it finishes.",
+            "This host already has a task of this kind. Wait or stop it first.",
             429,
           );
-        admitted.add(fingerprint);
+        admitted.set(fingerprint, kind);
         try {
           const run = await begin();
           // Duplicate delivery never repeats a potentially billable/in-flight provider call.
@@ -588,91 +649,197 @@ export async function createWorkbench({
             }
             throw e;
           }
-          const abort = new AbortController();
-          const timeout = setTimeout(() => abort.abort(), 180000);
-          active.set(run.id, {
-            abort,
-            scope: snapshot.scope,
-            workId: run.work_id,
-            custody,
-            provider: b.provider,
-          });
-          const task = (async () => {
-            try {
-              const context = await kernel(
-                snapshot,
-                "model-input",
-                undefined,
-                `?id=${encodeURIComponent(run.id)}`,
-              );
-              assertScope();
-              const subscription =
-                run.provider === "codex-chatgpt"
-                  ? await codex.model(await custodyFor(), run.model)
-                  : null;
-              const text = await generate({
-                modelPort: subscription?.model,
-                provider: run.provider,
-                model: run.model,
-                messages: context.messages,
-                signal: abort.signal,
-                apiKey: credential?.apiKey,
-                toolPort: {
-                  assertCurrent: async () => {
-                    assertScope();
-                    subscription?.assertCurrent();
-                    credential?.assertCurrent();
-                    if (abort.signal.aborted) throw fail("Task stopped", 409);
-                    await kernel(
-                      snapshot,
-                      "model-input",
-                      undefined,
-                      `?id=${encodeURIComponent(run.id)}`,
-                    );
-                    assertScope();
-                  },
-                  retrieve: (input) =>
-                    kernel(snapshot, "model-retrieve", {
-                      id: run.id,
-                      ...input,
-                    }),
-                  procedure: (input) =>
-                    kernel(snapshot, "model-procedure", {
-                      id: run.id,
-                      ...input,
-                    }),
-                },
-              });
-              assertScope();
-              subscription?.assertCurrent();
-              credential?.assertCurrent();
-              await kernel(snapshot, "model-finish", {
-                id: run.id,
-                text,
-                failed: false,
-              });
-            } catch (error) {
-              // Generic failure detail avoids returning provider echoes of private prompts.
+          const launch = (run, taskKey, background) => {
+            const assertTask = () => {
+              if (sessions.get(cookie) !== s || s.expires < Date.now())
+                throw fail("Session ended", 409);
+              if (!background) assertScope();
+            };
+            const abort = new AbortController();
+            const timeout = setTimeout(
+              () => abort.abort(),
+              background ? 600000 : 180000,
+            );
+            active.set(run.id, {
+              abort,
+              scope: snapshot.scope,
+              sessionKey: cookie,
+              background,
+              workId: run.work_id,
+              snapshot,
+              custody,
+              provider: run.provider,
+            });
+            const task = (async () => {
               try {
+                const context = await kernel(
+                  snapshot,
+                  "model-input",
+                  undefined,
+                  `?id=${encodeURIComponent(run.id)}`,
+                );
+                assertTask();
+                const computerGrant =
+                  desktop && run.provider === "local"
+                    ? await kernel(snapshot, "computer-current")
+                    : null;
+                const computerBinding = computerGrant
+                  ? { ...computerGrant.window, id: computerGrant.id }
+                  : null;
+                const assertComputer = async () => {
+                  assertTask();
+                  if (abort.signal.aborted) throw fail("Task stopped", 409);
+                  await kernel(snapshot, "computer-check", {
+                    run_id: run.id,
+                    grant_id: computerGrant.id,
+                  });
+                };
+                const subscription =
+                  run.provider === "codex-chatgpt"
+                    ? await codex.model(custody, run.model)
+                    : null;
+                const text = await generate({
+                  modelPort: subscription?.model,
+                  provider: run.provider,
+                  model: run.model,
+                  messages: context.messages,
+                  signal: abort.signal,
+                  apiKey: credential?.apiKey,
+                  toolPort: {
+                    assertCurrent: async () => {
+                      assertTask();
+                      subscription?.assertCurrent();
+                      credential?.assertCurrent();
+                      if (abort.signal.aborted) throw fail("Task stopped", 409);
+                      await kernel(
+                        snapshot,
+                        "model-input",
+                        undefined,
+                        `?id=${encodeURIComponent(run.id)}`,
+                      );
+                      assertTask();
+                    },
+                    retrieve: (input) =>
+                      kernel(snapshot, "model-retrieve", {
+                        id: run.id,
+                        ...input,
+                      }),
+                    procedure: (input) =>
+                      kernel(snapshot, "model-procedure", {
+                        id: run.id,
+                        ...input,
+                      }),
+                    document: (input) =>
+                      kernel(snapshot, "model-document", {
+                        id: run.id,
+                        ...input,
+                      }),
+                    tasks: () =>
+                      kernel(snapshot, "model-tasks", { id: run.id }),
+                    ...(run.provider === "local"
+                      ? {
+                          memory: () =>
+                            kernel(snapshot, "model-memory", { id: run.id }),
+                        }
+                      : {}),
+                    ...(computerBinding
+                      ? {
+                          computerObserve: async () => {
+                            const observation = await desktop.observe(
+                              computerBinding,
+                              assertComputer,
+                            );
+                            return kernel(snapshot, "computer-observed", {
+                              run_id: run.id,
+                              grant_id: computerGrant.id,
+                              content: JSON.stringify(observation),
+                            });
+                          },
+                          ...(computerGrant.window.allow_actions
+                            ? {
+                                computerAct: (input) =>
+                                  desktop.act(computerBinding, input, {
+                                    assertCurrent: assertComputer,
+                                    intent: (action) =>
+                                      kernel(snapshot, "computer-intent", {
+                                        run_id: run.id,
+                                        grant_id: computerGrant.id,
+                                        action,
+                                      }),
+                                    receipt: (pending, result) =>
+                                      kernel(snapshot, "computer-receipt", {
+                                        id: pending.id,
+                                        result,
+                                      }),
+                                  }),
+                              }
+                            : {}),
+                        }
+                      : {}),
+                    ...(!background && run.provider === "local"
+                      ? {
+                          delegate: async ({ task }) => {
+                            if ([...admitted.values()].includes("background"))
+                              throw fail("Background slot occupied", 429);
+                            const childKey = `worker:${run.id}`;
+                            admitted.set(childKey, "background");
+                            try {
+                              const child = await kernel(
+                                snapshot,
+                                "model-delegate",
+                                { id: run.id, task },
+                              );
+                              await kernel(snapshot, "model-claim", {
+                                id: child.id,
+                              });
+                              launch(child, childKey, true);
+                              return {
+                                run_id: child.id,
+                                work_id: child.work_id,
+                                state: "running",
+                                task,
+                                note: "A background task has started. Continue the conversation; its result will appear in this thread.",
+                              };
+                            } catch (e) {
+                              admitted.delete(childKey);
+                              throw e;
+                            }
+                          },
+                        }
+                      : {}),
+                  },
+                });
+                assertTask();
+                subscription?.assertCurrent();
+                credential?.assertCurrent();
                 await kernel(snapshot, "model-finish", {
                   id: run.id,
-                  text: providerFailure(error, abort.signal),
-                  failed: true,
+                  text,
+                  failed: false,
                 });
-              } catch {
+              } catch (error) {
                 try {
-                  await kernel(snapshot, "model-interrupt", {
-                    work_id: run.work_id,
+                  await kernel(snapshot, "model-finish", {
+                    id: run.id,
+                    text: providerFailure(error, abort.signal),
+                    failed: true,
                   });
-                } catch {}
+                } catch {
+                  try {
+                    await kernel(snapshot, "model-interrupt", {
+                      work_id: run.work_id,
+                    });
+                  } catch {}
+                }
+              } finally {
+                clearTimeout(timeout);
+                active.delete(run.id);
+                admitted.delete(taskKey);
               }
-            } finally {
-              clearTimeout(timeout);
-              active.delete(run.id);
-              admitted.delete(fingerprint);
-            }
-          })();
-          active.get(run.id).task = task;
+            })();
+            active.get(run.id).task = task;
+          };
+          launch(run, fingerprint, kind === "background");
           assertScope();
           reply(res, { run }, 202);
           return;
@@ -692,6 +859,26 @@ export async function createWorkbench({
         if (req.method === "POST" && writeOps.has(op)) {
           const b = await body(req);
           const data = await kernel(snapshot, op, b);
+          if (["withdraw", "memory-revoke"].includes(op)) {
+            for (const [id, task] of active) {
+              try {
+                await kernel(
+                  task.snapshot,
+                  "model-input",
+                  undefined,
+                  `?id=${encodeURIComponent(id)}`,
+                );
+              } catch {
+                task.abort.abort();
+                try {
+                  await kernel(task.snapshot, "model-interrupt", {
+                    work_id: task.workId,
+                  });
+                } catch {}
+              }
+            }
+          }
+
           if (op === "model-interrupt" || op === "cancel")
             for (const running of active.values())
               if (running.workId === (b.work_id || b.id)) running.abort.abort();

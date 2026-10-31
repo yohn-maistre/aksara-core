@@ -30,10 +30,14 @@ export function Composer({
     model,
     setModel,
     consent,
+    background,
+    setBackground,
+    working,
+    backgroundWorkIds,
     setConsent,
     selected,
     send,
-    working,
+    foregroundWorking,
     navigate,
   } = useWorkspace();
   const [optionsOpen, setOptionsOpen] = useState(false);
@@ -211,6 +215,22 @@ export function Composer({
                       ))}
                   </select>
                 </div>
+                {!PREVIEW && (
+                  <label className="background-choice">
+                    <input
+                      type="checkbox"
+                      checked={background}
+                      onChange={(e) => setBackground(e.target.checked)}
+                    />{" "}
+                    Run as a background task
+                  </label>
+                )}
+                {background && (
+                  <p className="composer-note">
+                    Give the task a self-contained brief. You can keep talking
+                    while it works.
+                  </p>
+                )}
                 <p className="composer-note">
                   {PREVIEW
                     ? "Guided sample · no model connection"
@@ -258,7 +278,9 @@ export function Composer({
             (!PREVIEW &&
               KEY_PROVIDERS.includes(provider) &&
               !providers.hosted?.[provider]?.connected) ||
-            working.length > 0 ||
+            (background
+              ? working.some((w) => backgroundWorkIds.has(w.id))
+              : foregroundWorking.length > 0) ||
             (provider !== "local" && !PREVIEW && !consent)
           }
           aria-label="Send message"
