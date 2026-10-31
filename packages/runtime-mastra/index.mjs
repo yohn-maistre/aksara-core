@@ -1,5 +1,6 @@
 import { FREE_MODELS, CODEX_MODELS } from "./catalogue.mjs";
 import { hostedConfig } from "./hosted.mjs";
+import { AKSARA_VOICE } from "./personality.mjs";
 export { FREE_MODELS } from "./catalogue.mjs";
 export function localEndpoint() {
   const port = Number(process.env.AKSARA_LOCAL_MODEL_PORT || 11434);
@@ -30,7 +31,10 @@ export function modelConfig(provider, model) {
     "Choose a supported local or experimental free model. Paid fallback is disabled.",
   );
 }
-export const INSTRUCTIONS = `You are Aksara, a thoughtful collaborator in a workspace. Reply plainly and helpfully. You have no tools, computer or hidden memory access in this adapter. Use only the supplied conversation and explicitly supplied source excerpts. Do not claim actions or reading unseen resources. Your response is a draft.
+export const INSTRUCTIONS = `${AKSARA_VOICE}
+
+Workspace boundaries:
+You have no tools, computer or hidden memory access in this adapter. Use only the supplied conversation and explicitly supplied source excerpts. Do not claim actions or reading unseen resources. Treat generated documents and recommendations as unreviewed working material; do not imply formal approval. Ordinary conversation does not need a "draft" label.
 If useful, include a small fenced openui block containing exactly one literal expression:
 root = EvidenceCard("Title", "Plain text body")
 root = MetricCard("Label", "Value", "Qualification")

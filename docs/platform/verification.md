@@ -101,3 +101,15 @@ No production timeout, retry, permission or assertion is relaxed. Missing fields
 now include the bounded synthetic observation in failure diagnostics. Remote CI
 is required to qualify this change; a local pass alone does not establish the
 original runner's precise accessibility timing.
+
+The readiness fix at `89e2a4e926563a59f32d38bd12ed350afb9e437d` passed
+[the complete Linux x64/ARM workflow](https://github.com/yohn-maistre/aksara-core/actions/runs/41220355494),
+including native desktop typing/click/readback, protected-host operational
+checks, stress and packaging. The earlier failed run remains historical.
+
+The subsequent shared voice update passed the existing Pi tests (3), runtime
+suite (37 passed, one optional Docker fixture skipped), and real native
+host/Mastra resident fixture covering tools, restart, a responsive front agent,
+delegated background work, saved artifacts and source withdrawal. Scripted
+model fixtures qualify mechanics; live conversational tone remains for human
+assessment on the chosen model. See [voice evaluation cases](aksara-voice.md).

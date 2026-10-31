@@ -72,3 +72,8 @@ SunCalc solar height drives continuous sky color independently of binary text/
 component theme. Approximate location is explicitly chosen; no GPS or automatic
 weather egress. The optional weather broker is fixed-endpoint, bounded and
 replaceable; the disconnected preview never contacts it.
+
+Aksara's voice is one shared prompt module across Mastra provider routes and the
+Codex API envelope: concise, warm, language-adaptive, willing to disagree, with
+context-sensitive wit. Conversational style remains separate from host authority
+and actual task status. [Voice and live evaluation cases](aksara-voice.md).

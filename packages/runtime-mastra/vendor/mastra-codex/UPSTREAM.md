@@ -11,3 +11,7 @@ Only device authorization/refresh and the OAuth Responses transport/SSE aggregat
 host-provided tools instead of asserting that every turn has no tools. The host
 still controls discovery, scope, consent and effects. No donor implicit tools or
 account authority is enabled.
+
+31 October voice update: the required Codex API instruction envelope imports the
+same Aksara voice as the main Mastra prompt. Provider selection does not introduce
+a separate personality; consent and tool limits remain supplied by the host.
