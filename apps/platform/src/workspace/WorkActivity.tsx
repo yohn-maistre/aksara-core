@@ -1,6 +1,7 @@
 import { ArrowUpRight, FileText, Monitor, Sprout } from "lucide-react";
 import { stateWord } from "./shared";
 import { useWorkspace } from "./state";
+import { PREVIEW } from "../transport";
 /** Actual authorized work and artifacts only. No simulated tool traces or computer screenshots. */
 export function WorkActivity() {
   const {
@@ -13,6 +14,7 @@ export function WorkActivity() {
     setDetail,
     navigate,
     backgroundWorkIds,
+    privateLane,
   } = useWorkspace();
   const work = [...working, ...works.filter((w) => !working.includes(w))].slice(
     0,
@@ -68,11 +70,17 @@ export function WorkActivity() {
       <details className="computer-status">
         <summary>
           <Monitor size={17} />
-          Computer <span>Not connected</span>
+          Computer
         </summary>
-        <p>Interactive computers are not enabled on this host.</p>
+        <p>
+          {PREVIEW
+            ? "Connect a window from your local Aksara host."
+            : privateLane
+              ? "Manage the window Aksara can see and use, with a time-limited connection."
+              : "Shared channels need their own isolated computer. Your personal desktop stays private."}
+        </p>
         <button className="text-button" onClick={() => navigate("Tools")}>
-          View capabilities <ArrowUpRight size={13} />
+          Manage computer access <ArrowUpRight size={13} />
         </button>
       </details>
     </aside>

@@ -73,3 +73,7 @@ Their licenses are distributed in apps/platform/public/licenses and release inve
 Hermes Agent, MIT, Nous Research, was studied at 5057eaa3a4d0cbef0e30078418a5115faa62889e
 for provider setup and platform/sender/thread routing patterns. No Hermes runtime,
 credential import, credential pool, session database or Composio service is bundled.
+
+SunCalc 2.1.1, BSD-2-Clause, Copyright (c) 2026 Volodymyr Agafonkin.
+Used for local solar calculations. Its original license is distributed in
+apps/platform/public/licenses/suncalc-BSD-2-Clause.txt and release inventories.

@@ -4,6 +4,8 @@ import {
   themeFromSourceColor,
 } from "@material/material-color-utilities";
 import { useEffect, useLayoutEffect, useMemo, useState } from "react";
+import { apiFetch, PREVIEW } from "../transport";
+import { daylightAt, validLocation, type SkyLocation } from "./daylight";
 export const PALETTES = {
   lilac: "#aa8bd5",
   clay: "#b7775c",
@@ -43,7 +45,63 @@ export function atmosphereForHour(hour: number) {
     lightness: a[2] + (b[2] - a[2]) * t,
   };
 }
-export function useAppearance(theme: string) {
+export function useAppearance(theme: string, scope = "") {
+  const [skyLocation, setSkyLocation] = useState<SkyLocation | null>(() => {
+    try {
+      const value = JSON.parse(read("aksara-sky-location", "null"));
+      return validLocation(value) ? value : null;
+    } catch {
+      return null;
+    }
+  });
+  const [weatherEnabled, setWeatherEnabled] = useState(
+    () => read("aksara-weather", "off") === "on",
+  );
+  const [skyScene, setSkyScene] = useState(() => {
+    const v = read("aksara-sky-scene", "auto");
+    return ["auto", "clear", "haze", "cloudy", "rain"].includes(v) ? v : "auto";
+  });
+  const [weather, setWeather] = useState<{
+    scene: string;
+    cloud_cover: number;
+    fetched_at: number;
+  } | null>(null);
+  useEffect(() => {
+    let live = true;
+    setWeather(null);
+    if (!skyLocation || !weatherEnabled || !scope || PREVIEW) return;
+    const update = async () => {
+      if (document.hidden) return;
+      try {
+        const r = await apiFetch("/api/weather/current", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-aksara-scope": scope,
+          },
+          body: JSON.stringify({
+            latitude: skyLocation.latitude,
+            longitude: skyLocation.longitude,
+            service_consent: true,
+          }),
+        });
+        if (r.ok) {
+          const value = await r.json();
+          if (live) setWeather(value);
+        }
+      } catch {
+        /* Solar daylight keeps working offline. */
+      }
+    };
+    void update();
+    const timer = setInterval(update, 15 * 60 * 1000);
+    document.addEventListener("visibilitychange", update);
+    return () => {
+      live = false;
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", update);
+    };
+  }, [skyLocation, weatherEnabled, scope]);
   const [palette, setPalette] = useState<Palette>(() => {
     const p = read("aksara-palette", "lilac");
     return Object.hasOwn(PALETTES, p) ? (p as Palette) : "lilac";
@@ -60,7 +118,7 @@ export function useAppearance(theme: string) {
     const update = () => {
       if (!document.hidden) setNow(new Date());
     };
-    const timer = setInterval(update, 60000);
+    const timer = setInterval(update, 15000);
     document.addEventListener("visibilitychange", update);
     window.addEventListener("focus", update);
     return () => {
@@ -70,8 +128,11 @@ export function useAppearance(theme: string) {
     };
   }, []);
   const hour = previewHour ?? now.getHours() + now.getMinutes() / 60;
+  const skyDate = new Date(now);
+  if (previewHour !== null) skyDate.setHours(previewHour, 0, 0, 0);
+  const solar = daylightAt(skyDate, skyLocation);
   const resolvedTheme =
-    theme === "auto" ? (hour >= 7 && hour < 18 ? "light" : "dark") : theme;
+    theme === "auto" ? (solar.isLight ? "light" : "dark") : theme;
   const colors = useMemo(
     () =>
       themeFromSourceColor(argbFromHex(PALETTES[palette])).schemes[
@@ -108,6 +169,33 @@ export function useAppearance(theme: string) {
     for (const [token, role] of Object.entries(roles))
       root.style.setProperty(token, c(role));
     root.style.setProperty("--glass-tint", c("surface"));
+    // The atmosphere never reads resolvedTheme: Auto's binary role switch
+    // cannot make the sky jump. Explicit theme overrides add a gentle scrim.
+    root.style.setProperty("--canvas", solar.ground);
+    root.style.setProperty("--sky-ground", solar.ground);
+    root.style.setProperty("--sky-upper", solar.upper);
+    root.style.setProperty("--sky-lower", solar.lower);
+    root.style.setProperty("--sky-cloud", solar.cloud);
+    root.style.setProperty("--sky-daylight", String(solar.daylight));
+    root.style.setProperty(
+      "--sky-theme-scrim",
+      theme === "auto"
+        ? "transparent"
+        : resolvedTheme === "dark"
+          ? "#171923bc"
+          : "#e3e5e7b8",
+    );
+    if (solar.twilight > 0.35 && theme === "auto") {
+      const ink = solar.isLight ? "#000000" : "#ffffff";
+      root.style.setProperty("--ink", ink);
+      root.style.setProperty("--ink-muted", ink);
+    }
+    root.dataset.sky =
+      skyScene === "auto"
+        ? weather && Date.now() - weather.fetched_at < 60 * 60 * 1000
+          ? weather.scene
+          : "clear"
+        : skyScene;
     root.style.setProperty("--atmo-hue", String(phase.hue));
     root.style.setProperty("--atmo-light", `${phase.lightness}%`);
     root.dataset.atmosphere = atmosphere;
@@ -119,6 +207,16 @@ export function useAppearance(theme: string) {
     atmosphere,
     reducedEffects,
     resolvedTheme,
+    solar.ground,
+    solar.upper,
+    solar.lower,
+    solar.cloud,
+    solar.daylight,
+    solar.twilight,
+    solar.isLight,
+    theme,
+    skyScene,
+    weather,
   ]);
   useEffect(() => {
     try {
@@ -128,10 +226,20 @@ export function useAppearance(theme: string) {
         "aksara-effects",
         reducedEffects ? "reduced" : "full",
       );
+      localStorage.setItem("aksara-sky-location", JSON.stringify(skyLocation));
+      localStorage.setItem("aksara-weather", weatherEnabled ? "on" : "off");
+      localStorage.setItem("aksara-sky-scene", skyScene);
     } catch {
       /* Presentation still works when storage is unavailable. */
     }
-  }, [palette, atmosphere, reducedEffects]);
+  }, [
+    palette,
+    atmosphere,
+    reducedEffects,
+    skyLocation,
+    weatherEnabled,
+    skyScene,
+  ]);
   return {
     resolvedTheme,
     palette,
@@ -142,5 +250,13 @@ export function useAppearance(theme: string) {
     setReducedEffects,
     previewHour,
     setPreviewHour,
+    skyLocation,
+    setSkyLocation,
+    weatherEnabled,
+    setWeatherEnabled,
+    skyScene,
+    setSkyScene,
+    weather,
+    solar,
   };
 }

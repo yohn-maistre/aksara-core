@@ -14,6 +14,7 @@ import { useState } from "react";
 import { Dock, DockItem } from "./ui/dock";
 import { useWorkspace } from "../workspace/state";
 import { ContextMenu } from "../workspace/ContextMenu";
+import { Mark } from "../workspace/shared";
 import { AksaraLauncher } from "../workspace/AksaraLauncher";
 import {
   Sidebar,
@@ -57,24 +58,11 @@ export function AppSidebar() {
               aria-label="Aksara Home"
               onClick={() => go("Today")}
             >
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path
-                  d="M5 19 12 5l7 14"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              <span>Aksara</span>
+              <Mark />
+              <span className="brand-wordmark">aksara</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-        {!isMobile && (
-          <div className="sidebar-assistant">
-            <AksaraLauncher />
-          </div>
-        )}
       </SidebarHeader>
       <SidebarContent>
         <nav aria-label="Main">
@@ -98,9 +86,13 @@ export function AppSidebar() {
                     <span className="dock-label">{label}</span>
                   </DockItem>
                   {id === "Channels" &&
-                    (state === "expanded" || isMobile) &&
                     session.lanes.some((l) => l.lane.audience.length > 1) && (
-                      <div className="channel-branch">
+                      <div
+                        className="channel-branch"
+                        data-expanded={state === "expanded" || isMobile}
+                        aria-hidden={state !== "expanded" && !isMobile}
+                        inert={state !== "expanded" && !isMobile}
+                      >
                         <button
                           className="branch-toggle"
                           aria-label="Show shared channels"
@@ -117,35 +109,41 @@ export function AppSidebar() {
                             }}
                           />
                         </button>
-                        {channelsOpen &&
-                          session.lanes
-                            .filter((l) => l.lane.audience.length > 1)
-                            .map((l) => (
-                              <button
-                                key={l.lane.id}
-                                className="branch-channel"
-                                disabled={busy}
-                                aria-current={
-                                  session.lane === l.lane.id &&
-                                  page === "Conversation"
-                                    ? "page"
-                                    : undefined
-                                }
-                                aria-label={`Open channel ${l.name}`}
-                                onClick={() =>
-                                  void run(async () => {
-                                    const s = await api("scope", {
-                                      profile: session.profile.id,
-                                      lane: l.lane.id,
-                                    });
-                                    accept(s);
-                                    go("Conversation");
-                                  })
-                                }
-                              >
-                                {l.name}
-                              </button>
-                            ))}
+                        <div
+                          className="channel-branch-list"
+                          data-open={channelsOpen}
+                        >
+                          <div>
+                            {session.lanes
+                              .filter((l) => l.lane.audience.length > 1)
+                              .map((l) => (
+                                <button
+                                  key={l.lane.id}
+                                  className="branch-channel"
+                                  disabled={busy}
+                                  aria-current={
+                                    session.lane === l.lane.id &&
+                                    page === "Conversation"
+                                      ? "page"
+                                      : undefined
+                                  }
+                                  aria-label={`Open channel ${l.name}`}
+                                  onClick={() =>
+                                    void run(async () => {
+                                      const s = await api("scope", {
+                                        profile: session.profile.id,
+                                        lane: l.lane.id,
+                                      });
+                                      accept(s);
+                                      go("Conversation");
+                                    })
+                                  }
+                                >
+                                  <span>{l.name}</span>
+                                </button>
+                              ))}
+                          </div>
+                        </div>
                       </div>
                     )}
                 </SidebarMenuItem>
@@ -155,7 +153,11 @@ export function AppSidebar() {
         </nav>
       </SidebarContent>
       <SidebarFooter>
-        <div className="rail-presence" aria-hidden />
+        {!isMobile && (
+          <div className="sidebar-assistant">
+            <AksaraLauncher />
+          </div>
+        )}
         <SidebarMenuButton
           tooltip={
             state === "collapsed" ? "Expand sidebar" : "Collapse sidebar"

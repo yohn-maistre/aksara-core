@@ -17,7 +17,7 @@
     "worker": "node packages/runtime-pi/worker.mjs",
     "build": "npm run build -w @aksara/platform",
     "platform": "python3 scripts/start_platform.py",
-    "test:platform": "node --test --test-concurrency=2 packages/workbench/*.test.mjs packages/runtime-mastra/*.test.mjs packages/contracts/*.test.mjs packages/gateway/*.test.mjs",
+    "test:platform": "node --test --test-concurrency=2 packages/workbench/*.test.mjs packages/runtime-mastra/*.test.mjs packages/contracts/*.test.mjs packages/gateway/*.test.mjs tests/daylight.test.mjs",
     "check": "npm run typecheck -w @aksara/platform",
     "build:preview": "npm run build:preview -w @aksara/platform",
     "gateway:mcp": "node --use-env-proxy packages/gateway/mcp.mjs"

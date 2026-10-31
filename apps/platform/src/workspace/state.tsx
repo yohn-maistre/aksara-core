@@ -85,7 +85,7 @@ function useWorkspaceState() {
       localStorage.getItem("aksara-ambient-motion") !== "off",
     ),
     [device, setDevice] = useState<Data | null>(null);
-  const appearance = useAppearance(theme);
+  const appearance = useAppearance(theme, session?.scope);
   useLayoutEffect(() => {
     const el = composerInput.current;
     if (!el) return;
@@ -384,6 +384,7 @@ function useWorkspaceState() {
       setDraft((current) => (current === draft ? "" : current));
       setAttached((current) => (current === attached ? [] : current));
       setConsent(false);
+      setBackground(false);
       await refresh();
     });
   }

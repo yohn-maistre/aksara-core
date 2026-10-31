@@ -67,11 +67,11 @@ export function PreviewNotice() {
 export function Mark() {
   return (
     <span className="mark" aria-hidden>
-      <svg width="23" height="23" viewBox="0 0 24 24" fill="none">
+      <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
         <path
-          d="M5 19 12 5l7 14"
+          d="M6 26 16 6l10 20"
           stroke="currentColor"
-          strokeWidth="2.5"
+          strokeWidth="2.4"
           strokeLinecap="round"
           strokeLinejoin="round"
         />

@@ -5,6 +5,7 @@ import {
   providerFailure,
 } from "../runtime-mastra/hosted.mjs";
 import { NativeDesktopPort } from "../gateway/desktop.mjs";
+import { createWeatherPort } from "./weather.mjs";
 import { resolveResourceSurface } from "./surfaces.mjs";
 import { validatePack } from "@aksara/contracts";
 import { finalizePcmWav } from "./audio.mjs";
@@ -126,6 +127,7 @@ export async function createWorkbench({
   const sessions = new Map();
   const active = new Map();
   const admitted = new Map();
+  const weather = createWeatherPort();
   const bundledDesktop = path.join(
     root,
     "bin",
@@ -313,6 +315,22 @@ export async function createWorkbench({
         s.providerCustody = custody;
         return custody;
       };
+      if (
+        req.method === "POST" &&
+        ["/api/weather/search", "/api/weather/current"].includes(url.pathname)
+      ) {
+        const input = await body(req);
+        if (input.service_consent !== true)
+          throw fail("Enable the optional weather service first");
+        await kernel(snapshot, "me");
+        assertScope();
+        const value = url.pathname.endsWith("search")
+          ? await weather.search(input.query)
+          : await weather.current(input.latitude, input.longitude);
+        assertScope();
+        reply(res, value);
+        return;
+      }
       if (url.pathname === "/api/computer" && req.method === "GET") {
         await kernel(snapshot, "me");
         const grant = await kernel(snapshot, "computer-current");

@@ -80,6 +80,44 @@ try {
   await page.getByRole("heading", { name: /Room for/ }).waitFor();
   await page.getByText("Interactive UI preview", { exact: true }).waitFor();
   mark("Preview opens on Today and identifies sample data without a backend");
+  const navLeft = await page
+    .locator('[data-slot="sidebar-container"]')
+    .evaluate((el) => el.getBoundingClientRect().left);
+  const iconLeft = await page
+    .getByRole("button", { name: "Home", exact: true })
+    .locator("svg")
+    .evaluate((el) => el.getBoundingClientRect().left);
+  await page
+    .getByRole("button", { name: "Expand sidebar", exact: true })
+    .click();
+  await page.waitForTimeout(550);
+  assert.ok(
+    Math.abs(
+      (
+        await page
+          .getByRole("button", { name: "Home", exact: true })
+          .locator("svg")
+          .boundingBox()
+      ).x - iconLeft,
+    ) < 1,
+  );
+  assert.ok(await page.locator(".brand-button .mark").isVisible());
+  await page
+    .getByRole("button", { name: "Collapse sidebar", exact: true })
+    .click();
+  for (let i = 0; i < 5; i++) {
+    assert.equal(
+      await page
+        .locator('[data-slot="sidebar-container"]')
+        .evaluate((el) => el.getBoundingClientRect().left),
+      navLeft,
+    );
+    await page.waitForTimeout(100);
+  }
+  assert.ok(await page.locator(".brand-button .mark").isVisible());
+  mark(
+    "Navbar keeps its left edge and icon column while folding, with a visible brand in both states",
+  );
   assert.ok(
     (await page.locator("#workspace-content").boundingBox()).width > 1000,
   );
@@ -126,6 +164,28 @@ try {
   await page
     .getByRole("button", { name: "Continue our conversation", exact: true })
     .click();
+  await page
+    .getByRole("heading", { name: "Private thread", exact: true })
+    .waitFor();
+  const peerLayout = await page.locator(".work-surface").evaluate((el) => {
+    const home = document.querySelector(".home-surface");
+    return {
+      position: getComputedStyle(el).position,
+      main: el.getBoundingClientRect().toJSON(),
+      home: home.getBoundingClientRect().toJSON(),
+      compact: home.dataset.compact,
+    };
+  });
+  assert.equal(peerLayout.position, "relative");
+  assert.equal(peerLayout.compact, "true");
+  assert.ok(peerLayout.home.x >= peerLayout.main.right);
+  assert.equal(
+    await page
+      .locator(".home-surface")
+      .getByRole("button", { name: "Continue our conversation", exact: true })
+      .count(),
+    0,
+  );
   assert.equal(
     await page.getByLabel("Message Aksara").inputValue(),
     "A thought started on Today",
@@ -148,6 +208,19 @@ try {
     .getByLabel("Message Aksara")
     .fill("Show my selected sample source");
   await page.getByRole("button", { name: "Send message", exact: true }).click();
+  await page.getByRole("region", { name: "Latest Home reply" }).waitFor();
+  assert.equal(
+    await page
+      .getByRole("button", { name: "Continue our conversation", exact: true })
+      .count(),
+    0,
+  );
+  assert.equal(
+    await page
+      .getByRole("button", { name: "Open conversation", exact: true })
+      .count(),
+    1,
+  );
   await page
     .getByRole("region", { name: "Latest Home reply" })
     .getByRole("button", { name: "Open conversation", exact: true })
@@ -427,6 +500,11 @@ try {
     .getByRole("button", { name: "Send message", exact: true })
     .boundingBox();
   assert.ok(sendBounds.x >= 0 && sendBounds.x + sendBounds.width <= 360);
+  const dockBounds = await page.locator(".mobile-dock").boundingBox();
+  assert.ok(
+    sendBounds.y + sendBounds.height < dockBounds.y,
+    "private composer must sit above the floating navigation",
+  );
   await page.keyboard.press("Escape");
   await page.getByRole("heading", { name: /Room for/ }).waitFor();
   assert.equal(
@@ -434,7 +512,7 @@ try {
     "A line\nAnother line\nA third line",
   );
   mark(
-    "Blob conversation expands, its multiline composer stays in view, and Escape preserves the draft",
+    "Private conversation uses a peer surface, its multiline composer stays in view, and Escape preserves the draft",
   );
   const slow = await one.newCDPSession(page);
   await slow.send("Emulation.setCPUThrottlingRate", { rate: 4 });

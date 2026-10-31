@@ -79,9 +79,7 @@ export function AksaraLauncher() {
   return (
     <motion.button
       ref={anchor}
-      layoutId={
-        page === "Ask" ? undefined : `aksara-personal:${session?.scope}`
-      }
+      whileTap={{ scale: 0.97 }}
       className="aksara-launcher"
       aria-label="Ask PRIVATE"
       title="Open private conversation"
@@ -89,24 +87,30 @@ export function AksaraLauncher() {
       disabled={busy}
       onClick={() => navigate("Ask")}
     >
-      <ShaderBoundary>
-        <Suspense fallback={<StillBlob />}>
-          {live ? (
-            <Blob
-              className="aksara-blob"
-              warpProps={{
-                colors,
-                speed: 0.22,
-                swirlIterations: 3,
-                width: 120,
-                height: 120,
-              }}
-            />
-          ) : (
-            <StillBlob />
-          )}
-        </Suspense>
-      </ShaderBoundary>
+      <span className="launcher-orb" aria-hidden>
+        <ShaderBoundary>
+          <Suspense fallback={<StillBlob />}>
+            {live ? (
+              <Blob
+                className="aksara-blob"
+                warpProps={{
+                  colors,
+                  speed: 0.22,
+                  swirlIterations: 3,
+                  width: 120,
+                  height: 120,
+                }}
+              />
+            ) : (
+              <StillBlob />
+            )}
+          </Suspense>
+        </ShaderBoundary>
+      </span>
+      <span className="launcher-label">
+        <strong>Talk to Aksara</strong>
+        <small>Your private thread</small>
+      </span>
       <span className="sr-only">Aksara · private conversation</span>
     </motion.button>
   );

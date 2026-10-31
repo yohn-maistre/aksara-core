@@ -19,6 +19,7 @@ import {
   DropdownMenuItem,
 } from "../components/ui/dropdown-menu";
 import { WorkActivity } from "./WorkActivity";
+import { ScrollEdges } from "./ScrollEdges";
 import {
   SpeechBubbleRoot,
   SpeechBubbleBody,
@@ -217,6 +218,7 @@ export function ConversationView() {
                 </div>
               )}
             </div>
+            <ScrollEdges selector=".conversation-scroll" />
           </div>
           <WorkActivity />
         </div>

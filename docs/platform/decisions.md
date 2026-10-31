@@ -63,3 +63,12 @@ worker; thread-bound working documents; revocation-aware memory/wiki/people
 projection shared with MCP; explicit native private computer permits and durable
 Vercel action journals. Real Linux GUI fixture passed. Shared desktop isolation,
 live messaging accounts and Strata receiving-side release remain distinct gates.
+
+Open workspace polish: private conversation is a peer surface alongside Library,
+not a full-screen modal. Home contracts first, with one conversation entry after
+its first reply. Navigation's left edge and icon column remain anchored while its
+right side folds. The main plane is transparent; smaller objects carry material.
+SunCalc solar height drives continuous sky color independently of binary text/
+component theme. Approximate location is explicitly chosen; no GPS or automatic
+weather egress. The optional weather broker is fixed-endpoint, bounded and
+replaceable; the disconnected preview never contacts it.

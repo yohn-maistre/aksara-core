@@ -1,77 +1,69 @@
-# Aksara Core
+# Aksara
 
-Native local development: [Windows portable package, CLI, model setup and files](docs/platform/windows-local.md).
-The Windows Actions workflow builds a Docker-free development ZIP; the hosted
-Pages link remains a disconnected interactive UI preview.
+A local-first AI workspace for people and teams. Talk with Aksara, send work to a background agent, and keep the resulting documents and knowledge in one place.
 
-**Open the hosted interface:** [aksara-core-preview.pages.dev](https://aksara-core-preview.pages.dev). This is a clearly labeled, tab-local UI preview with sample data; no local server is needed. The live Rust app remains available below. [Deployment notes](deploy/pages/README.md) · [Protected backend test-host profile](deploy/test-host/README.md).
+**Development alpha.** [Try the interactive UI preview](https://aksara-core-preview.pages.dev) · [Run locally](docs/platform/windows-local.md) · [Implementation status](docs/platform/resident-agent-implementation.md)
 
-Aksara now has an **atmospheric React PWA** backed by the Rust kernel: Home, private threads, Channels, Library, reviewed documents/memory, local model conversations and optional Pocket TTS read-aloud. Personal mode uses separate databases. Start with the [platform guide](docs/platform/README.md), [current decisions](docs/platform/decisions.md), [component coverage](docs/platform/component-coverage.csv) and [new verification evidence](docs/platform/verification.md).
+The hosted preview uses disposable sample data. Models, files on your computer, and the Rust backend are disconnected there. Run the local app to test the working platform.
+
+## Run on Windows
+
+Download `aksara-windows-x64` from a **successful** [Windows build](https://github.com/yohn-maistre/aksara-core/actions/workflows/windows.yml), extract the complete ZIP, and run this in PowerShell from its folder:
+
+```powershell
+.\aksara.cmd setup
+```
+
+Keep the terminal open and visit **http://127.0.0.1:7341**. The bundle includes Node and the Rust host; the baseline needs no Docker, WSL, Python, or compiler. Models and optional voice services are separate downloads. The unsigned bundle is tested on Windows CI; performance on older Surface hardware still needs testing.
+
+Choose a development identity, then follow model setup. The identity chooser is a local testing aid, not production authentication.
+
+```powershell
+.\aksara.cmd doctor --json
+.\aksara.cmd chat "Hello"
+.\aksara.cmd stop
+```
+
+[Setup, data locations, backups, and troubleshooting](docs/platform/windows-local.md)
+
+## What you can test
+
+- **A continuing workspace:** Home, private conversation, shared channels, a searchable Library, and source-linked working knowledge. Personal and community profiles use separate databases.
+- **Interactive and background work:** a Mastra agent can use bounded tools, delegate a worker, check its progress, and save a draft document while the main conversation remains available.
+- **Files and documents:** preserve uploaded originals, read supported formats, create document drafts, and edit a CSV worktree with the lazy-loaded Univer spreadsheet editor.
+- **Memory with provenance:** reviewed facts and working wiki, people, and procedure drafts stay linked to their sources. Current access and withdrawal checks apply when retrieving them or using derived results.
+- **Native computer use:** explicitly connect one private desktop window for a limited time through Vercel agent-desktop. Observation, clicks, field edits, and physical typing have separate bounds. Currently available to local models. This controls your signed-in desktop; it is **not an OS sandbox**.
+- **Shared interfaces:** the CLI and scoped MCP gateway read the same canonical workspace. Optional local Pocket TTS supports read-aloud.
+
+Model setup supports a local compatible server, ChatGPT/Codex device sign-in, Google AI Studio, Groq, and OpenRouter API keys. Keyless OpenCode is experimental and can be unavailable or rate-limited. Account eligibility, provider terms, and quotas still apply. Aksara does not silently switch to a paid provider.
+
+## Develop from source
+
+Requires Rust **1.99.0** and Node **24.19+**.
 
 ```sh
 cargo build --locked --workspace
 npm ci
 npm run build
-npm run platform
+npm run aksara -- start
 ```
 
-Open **http://127.0.0.1:7341**. The chooser is local development identity selection, not production authentication. Local models are optional; OpenCode keyless completion was reachable but rate-limited (429), so it is experimental. The lightweight alpha lab below remains available for conformance and very constrained devices.
-
-
-A local Rust authority kernel for one institution: individual identity, audience-aware retrieval, durable work, exact approvals and verified effects. Apache-2.0. **Development alpha**, with an offline Pi Durable runtime and a separate controller simulator.
-
-The [v1 catalogue](docs/northstar-v1.md) is the northstar. The [design review](docs/design-review.md) records implementation choices and gaps. The [donor ledger](docs/donors.md) distinguishes actual reuse, studied patterns and pending adapters.
-
-[Verification evidence](docs/verification.md) records 67 local checks and the ARM64 emulation limits. The [Hermes handoff](docs/handoff.md) explains importing the source/history bundle, pushing to the private repo and starting the phone binary.
-
-## Run the alpha conformance lab
-
-Requires Rust 1.99.0, Python 3.9+ and, for the optional Pi worker, Node 24.19+ with built-in SQLite.
-
-```sh
-cargo build --locked --workspace
-npm ci --ignore-scripts
-python3 scripts/dev.py
-```
-
-Open **http://127.0.0.1:7341**. The launcher writes `.aksara/dev-identities.json` with three separate development identities: Operator, Maria and Yohan. Paste one individual's token into the web client. A shared lane contains all three; each person also has a private lane. Tokens stay in browser memory until disconnect.
-
-Try adding an institution-visible source in Library, delegating a matching task in Threads, preparing a cited artifact, switching to Operator to approve its exact arguments, then returning as the initiator to execute it. Device proposals follow the same path. Memory candidates require exact source excerpts and separate Operator review. Restricted sources cannot be widened through either path.
-
-To run the **real Pi Durable** retrieval task, copy the delegated WorkObject ID from the API/worker examples in the [runbook](docs/runbook.md), set the initiator's `AKSARA_TOKEN` and shared `AKSARA_LANE`, then:
-
-```sh
-npm run worker -- work_ID
-```
-
-The worker uses upstream Pi checkpoints and SQLite. It retrieves authorized evidence and prepares a proposal. It uses no LLM, cloud keys or builtin shell/file/network tools. Approval and effects remain in Rust.
-
-## Verify and stress
+The native launcher starts two Rust authority processes and a Node workbench serving the PWA. The older Python launcher remains a multi-person conformance fixture.
 
 ```sh
 cargo test --locked --workspace
-cargo clippy --locked --workspace --all-targets -- -D warnings
 npm test
-python3 -m unittest discover -s tests -v
-python3 scripts/stress.py --documents 200
+npm run test:platform
 ```
 
-Optional browser conformance: `npx playwright install chromium` followed by `python3 scripts/browser_smoke.py`. Browser binaries are unnecessary for the phone runtime.
+[Platform guide](docs/platform/README.md) · [Verification](docs/platform/verification.md) · [Native desktop qualification](docs/platform/resident-agent-implementation.md)
 
-The stress harness launches real processes, injects crashes around commits and destination delivery, kills/resumes Pi workers, tests concurrent duplicates, checks privacy, validates recovery and writes measurements to `stress-results.json`. Use `--keep` to retain private fixture logs after a run. It never contacts an AI provider.
+## How it fits together
 
-[Samsung A12 / Termux + proot Debian instructions](docs/phone.md) include a lightweight profile, artifact installation, source builds and phone measurements. The included CI workflow is configured to test native x86-64 and ARM64 and package static musl binaries with dependency notices; a successful remote run is still required.
+React renders the workspace. The Node workbench connects providers and tools. Mastra runs the agent loop; Rust and SQLite hold identity, scope, source custody, work, approvals, and effect receipts. UI state and agent output cannot grant authority.
 
-## What exists
+Original bytes are retained. Search, wiki, memory, and other indexes are projections over authorized sources. Local effects and receipts commit together; external actions record an intent before delivery, and uncertain outcomes remain uncertain until reconciled. Interrupted model and computer actions are not automatically replayed.
 
-- Rust/SQLite modular kernel, schema versioning, exclusive host ownership, immutable raw text evidence, stable block IDs, eligible-only FTS5 search, identity bindings and revocation.
-- Durable WorkObjects, revision/generation fencing, local exact approvals, scoped HMAC development leases, transactional artifact/receipt/ledger/outbox commits, destination reconciliation and backups.
-- Reviewed source-excerpt memory with purpose, visibility, retention and withdrawal checks.
-- Loopback HTTP API, small phone-responsive web test client, offline Pi Durable adapter.
-- Four-profile **behavior simulator** with durable command deduplication, privacy/stop interlocks, capture-lease fixtures, human takeover fences, offline queue bounds and OTA rollback fixtures.
+This is a working foundation, with substantial seams still open: production identity and enrollment, isolated shared-channel computers, live Telegram/WhatsApp and Strata federation, fuller memory indexing, and physical hardware. The device SDK currently includes behavior simulators. Local data is not encrypted at rest against the host OS account. See the [component coverage](docs/platform/component-coverage.csv) and [decisions](docs/platform/decisions.md) for the full boundary.
 
-## Alpha limitations and remaining platform work
-
-Cedar policy evaluation, Duroxide institutional workflows, Wasmtime/WIT packs, ConnectRPC/AG-UI, Hermes channel adapters, a Dim0/canvas-harness Workbench, Library hierarchy/wiki/long-document adapters, Graphiti, model streaming, production computers, voice and real MCU hardware are not implemented. The simulator does not emulate silicon, timing, radio, audio acquisition, e-paper or signed OTA cryptography. The current fixed policy and HMAC leases are development mechanisms.
-
-Private data is access-controlled through the host, not encrypted at rest or protected from the host's OS account. PRoot is a development backend, not a production computer isolation boundary. Local transactional effects have one committed result per idempotency key; external effects may remain `OUTCOME_UNKNOWN` until the destination can prove their outcome.
+Apache-2.0. Third-party components retain their own terms: [donor ledger](docs/donors.md), [NOTICE](NOTICE), and bundled licenses.

@@ -1,5 +1,6 @@
 import { PALETTES, type Palette } from "./appearance";
 import { useWorkspace } from "./state";
+import { SkyControls } from "./SkyControls";
 export function AppearanceControls() {
   const {
     palette,
@@ -46,6 +47,7 @@ export function AppearanceControls() {
         />
         Reduce glass & shader effects
       </label>
+      <SkyControls />
       <details>
         <summary>Simulate time of day</summary>
         <label className="field-label">

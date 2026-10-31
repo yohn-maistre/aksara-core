@@ -19,6 +19,7 @@ import "./style.css";
 import "./workspace.css";
 import "./atmosphere.css";
 import "./expressive.css";
+import "./open-workspace.css";
 import { motion, useReducedMotion } from "motion/react";
 import { Composer } from "./workspace/Composer";
 import { ConversationView } from "./workspace/ConversationView";
@@ -28,6 +29,7 @@ import { TodayView } from "./workspace/TodayView";
 import { Welcome } from "./workspace/Welcome";
 import { WorkspaceOverlays } from "./workspace/WorkspaceOverlays";
 import { WorkspaceShell } from "./workspace/WorkspaceShell";
+import { ScrollEdges } from "./workspace/ScrollEdges";
 const ChannelsView = lazy(() =>
   import("./workspace/ChannelsView").then((m) => ({ default: m.ChannelsView })),
 );
@@ -64,7 +66,6 @@ function App() {
     const mustContract =
       previous.current === "Today" &&
       page !== "Today" &&
-      page !== "Ask" &&
       innerWidth > 1100 &&
       !reduced;
     previous.current = page;
@@ -75,7 +76,7 @@ function App() {
     // Completion callback is primary; bounded fallback handles layout cancellation.
     const timer = setTimeout(() => {
       if (activeRoute.current === routeKey) setSettled(routeKey);
-    }, 600);
+    }, 750);
     return () => clearTimeout(timer);
   }, [routeKey, reduced]);
   const ready = settled === routeKey || !!reduced;
@@ -149,25 +150,20 @@ function App() {
           {page !== "Today" && (
             <motion.section
               key={`active-surface:${session.scope}:${page}`}
-              layoutId={
-                page === "Ask" ? `aksara-personal:${session.scope}` : undefined
-              }
               initial={{
                 opacity: reduced ? 1 : 0,
-                x: reduced ? 0 : -8,
-                clipPath:
-                  page === "Ask" || reduced
-                    ? "inset(0% 0% 0% 0% round 38px)"
-                    : "inset(0% 100% 0% 0% round 28px)",
+                y: reduced ? 0 : 10,
+                filter: reduced ? "none" : "blur(5px)",
               }}
               animate={{
                 opacity: ready ? 1 : 0,
-                x: ready ? 0 : -8,
-                clipPath: ready
-                  ? `inset(0% 0% 0% 0% round ${page === "Ask" ? 38 : 28}px)`
-                  : "inset(0% 100% 0% 0% round 28px)",
+                y: ready ? 0 : 10,
+                filter: ready ? "blur(0px)" : "blur(5px)",
               }}
-              transition={{ duration: reduced ? 0 : 0.17 }}
+              transition={{
+                duration: reduced ? 0 : 0.46,
+                ease: [0.16, 1, 0.3, 1],
+              }}
               inert={!ready}
               aria-hidden={!ready}
               className={`work-surface content page-${page.toLowerCase()}`}
@@ -200,6 +196,7 @@ function App() {
                   {page === "Setup" && <SetupView />}
                 </Suspense>
               </div>
+              <ScrollEdges selector=".surface-body" />
               {!["Settings", "Setup"].includes(page) && (
                 <div className="surface-composer">
                   <Composer />

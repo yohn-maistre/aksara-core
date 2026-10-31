@@ -247,3 +247,27 @@ LongMemory's project/wiki/store APIs remain studied candidates, not installed
 runtime dependencies. The implemented `aksara.memory/1` source projection and MCP
 resource enforce Aksara eligibility and reviewed-memory revocation. No LongMemory
 server or independent identity/ACL database is started.
+
+## Open workspace and local sky — 31 October 2026
+
+- **SunCalc 2.1.1**, BSD-2-Clause, exact npm dependency. `index.js`,
+  `index.d.ts`, README and LICENSE inspected. V2 solar altitude is in degrees;
+  polar sunrise/sunset can be null. Used for offline solar height and times at
+  an explicitly selected approximate location. License ships in
+  `apps/platform/public/licenses/suncalc-BSD-2-Clause.txt` and the package inventory.
+- **Motion 13.0.0**, already installed, remains the single layout/interaction
+  motion engine. Official layout and reduced-motion documentation checked.
+  Home uses an interruptible 540ms position transition, followed by the peer
+  surface's 460ms opacity/lift/blur settle; no old-page screenshot transition.
+  No Anime.js, GSAP or full-screen shader runtime added.
+- **Open-Meteo**, optional fixed-endpoint HTTP integration, not copied code.
+  Current city-search and weather docs and service terms checked. Public hosted
+  service is presented as non-commercial; data/service terms are linked in the
+  UI with Open-Meteo/GeoNames attribution. Only city queries and rounded chosen
+  coordinates leave the host after explicit opt-in. No GPS, account key or model
+  context is sent. Commercial deployments must use a suitable service agreement
+  or a replaceable weather port. Solar daylight remains offline.
+
+The requested sky, translucent objects and lilac identity override Taste v2's
+flat-fill/neutral-palette preferences. Its browser probes remain useful for
+layout and readability. See [current audit](platform/open-workspace-audit.md).

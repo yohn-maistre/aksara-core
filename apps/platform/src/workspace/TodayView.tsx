@@ -103,6 +103,7 @@ export function TodayView({
 }) {
   const {
     session,
+    page,
     privateLane,
     at,
     setAt,
@@ -148,7 +149,7 @@ export function TodayView({
     <motion.section
       layout="position"
       onLayoutAnimationComplete={onSettled}
-      transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: 0.54, ease: [0.22, 1, 0.36, 1] }}
       className="home-surface"
       data-compact={compact}
       aria-label="Home"
@@ -167,11 +168,13 @@ export function TodayView({
             </>
           )}
         </Heading>
-        {!at && (
-          <button className="text-button home-continue" onClick={openThread}>
-            Continue our conversation <ArrowUpRight size={15} />
-          </button>
-        )}
+        {!at &&
+          (compact || !homeReply) &&
+          !["Ask", "Conversation"].includes(page) && (
+            <button className="text-button home-continue" onClick={openThread}>
+              Continue our conversation <ArrowUpRight size={15} />
+            </button>
+          )}
         {!PREVIEW &&
           !localStorage.getItem(`aksara-setup:${session.profile.id}`) && (
             <button

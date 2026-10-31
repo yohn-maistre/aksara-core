@@ -13,7 +13,7 @@ import { useWorkspace } from "./state";
 import { MobileDock } from "./NavigationDock";
 import { ContextMenu } from "./ContextMenu";
 function Atmosphere() {
-  const { ambientMotion } = useWorkspace();
+  const { ambientMotion, reducedEffects } = useWorkspace();
   const [visible, setVisible] = useState(!document.hidden);
   useEffect(() => {
     const update = () => setVisible(!document.hidden);
@@ -24,10 +24,12 @@ function Atmosphere() {
     <div
       className="ambient-field"
       aria-hidden
-      data-moving={ambientMotion && visible}
+      data-moving={ambientMotion && visible && !reducedEffects}
     >
       <div className="smoke-layer smoke-layer-one" />
       <div className="smoke-layer smoke-layer-two" />
+      <div className="smoke-layer smoke-layer-three" />
+      <div className="sky-scrim" />
     </div>
   );
 }
