@@ -51,7 +51,10 @@ const model = http.createServer(async (req, res) => {
       const field = walk(obs.tree).find(
         (n) => n.name === "Report title" && n.ref,
       );
-      assert.ok(field);
+      assert.ok(
+        field,
+        `Synthetic field absent from native observation: ${JSON.stringify(obs)}`,
+      );
       call = [
         "computer_act",
         {
@@ -185,6 +188,48 @@ try {
     w.title.includes("Aksara isolated office fixture"),
   );
   assert.ok(window, JSON.stringify(lastComputer));
+  // A visible Chromium window can precede its renderer's native accessibility
+  // tree. Wait on the real synthetic field, not a fixed sleep or a test rerun.
+  // This read-only probe has its own namespace/store; none of its refs reach
+  // Aksara. The agent must still observe and qualify fresh refs through its port.
+  const { stdout: readyTree } = await exec(
+    process.env.AKSARA_DESKTOP_BINARY,
+    [
+      "snapshot",
+      "--app",
+      window.app_name,
+      "--window-id",
+      window.id,
+      "--max-depth",
+      "20",
+      "--wait-for",
+      "textfield:Report title",
+      "--wait-timeout",
+      "30000",
+      "--session",
+      "fixture-readiness",
+    ],
+    {
+      env: { ...process.env, AGENT_DESKTOP_HOME: path.join(dir, "readiness") },
+      timeout: 40000,
+      maxBuffer: 1024 * 1024,
+    },
+  );
+  const nativeReady = JSON.parse(readyTree);
+  assert.equal(nativeReady.ok, true, readyTree);
+  assert.ok(
+    walk(nativeReady.data.tree).some(
+      (n) => n.name === "Report title" && n.ref_id,
+    ),
+  );
+  assert.ok(
+    walk(nativeReady.data.tree).some(
+      (n) => n.name === "Save draft" && n.ref_id,
+    ),
+  );
+  console.log(
+    "PASS synthetic window exposes its form through native accessibility before task admission",
+  );
   const grant = await api("computer/connect", {
     window_id: window.id,
     allow_actions: true,

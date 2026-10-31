@@ -82,3 +82,22 @@ UI, sky/weather, browser/privacy and runtime evidence. It changes the view and
 optional weather port, not schema 4 or the native computer authority boundary.
 The README now directs source installs to the native launcher; Python remains
 a separate conformance/simulator dependency.
+
+### Native GUI fixture readiness follow-up
+
+The x64 job for `2017d5b` failed at the first scripted native form lookup
+(`assert.ok(field)`); its Windows package and ARM conformance passed. The
+fixture had admitted the task as soon as a Chromium window existed. A visible
+window does not establish that its renderer's AT-SPI form is available. The
+pinned Vercel driver's snapshot implementation documents cold Chromium settles
+longer than its default observation deadline.
+
+The fixture now waits, within 30 seconds, for the synthetic form through the
+actual native driver before connecting/admitting the task. This is a read-only
+probe in a separate store/namespace; its refs are never given to Aksara. The
+subsequent Mastra loop must still obtain fresh refs through the real port, type,
+click, independently read back the GUI, save the document and revoke access.
+No production timeout, retry, permission or assertion is relaxed. Missing fields
+now include the bounded synthetic observation in failure diagnostics. Remote CI
+is required to qualify this change; a local pass alone does not establish the
+original runner's precise accessibility timing.
