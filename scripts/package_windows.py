@@ -94,7 +94,9 @@ def main():
             'Model weights, Office converters and voice runtimes are not bundled.\n'
             'Database backups do not by themselves export provider credentials.\n', encoding='utf8')
         target = args.output / 'aksara-windows-x64.zip'
-        with zipfile.ZipFile(target, 'w', zipfile.ZIP_DEFLATED) as archive:
+        # Some npm artifacts use the Unix epoch for reproducible timestamps;
+        # ZIP starts at 1980. Clamp metadata instead of failing the distribution.
+        with zipfile.ZipFile(target, 'w', zipfile.ZIP_DEFLATED, strict_timestamps=False) as archive:
             for file in sorted(bundle.rglob('*')):
                 if file.is_file():
                     archive.write(file, file.relative_to(bundle.parent))

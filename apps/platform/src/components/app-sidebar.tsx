@@ -70,9 +70,11 @@ export function AppSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-        <div className="sidebar-assistant">
-          <AksaraLauncher />
-        </div>
+        {!isMobile && (
+          <div className="sidebar-assistant">
+            <AksaraLauncher />
+          </div>
+        )}
       </SidebarHeader>
       <SidebarContent>
         <nav aria-label="Main">

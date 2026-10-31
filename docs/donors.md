@@ -1,5 +1,14 @@
 # Pinned donor ledger
 
+31 October resident reassessment: [review](platform/resident-agent-reassessment-2026-10-31.md)
+and [computer/device delivery plan](platform/resident-computer-device-plan-2026-10-31.md)
+record current runtime alternatives and source activity separately from selections.
+`vercel-labs/agent-desktop` at `893a4140d35261c5f8e3a6aa646d1558bb4f386f`
+(Apache-2.0) was studied: README, `docs/json-output.md`, agent Skill, snapshot,
+ref validation/scope, adapter-session and interaction-lease implementations.
+Candidate native accessibility driver, not an adopted sandbox or new agent runtime.
+No donor native binary is bundled or claimed qualified by that study.
+
 Read code at a pinned revision before implementing its associated adapter. Clones used for this first study live outside the deliverable repository; no donor app has been bulk-vendored. This ledger records actual study and reuse rather than claiming that every catalogue reference has been audited.
 
 ## Studied now

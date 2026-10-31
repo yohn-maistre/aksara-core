@@ -5,7 +5,10 @@ import { useWorkspace } from "./state";
 import { AksaraLauncher } from "./AksaraLauncher";
 export function MobileDock() {
   const { page, navigate } = useWorkspace();
-  const { setOpenMobile } = useSidebar();
+  const { setOpenMobile, isMobile } = useSidebar();
+  // CSS-hidden responsive origins still participate in Motion's layout group.
+  // Mount just one launcher so an invisible phone source cannot hide the rail.
+  if (!isMobile) return null;
   return (
     <nav className="mobile-dock" aria-label="Main navigation">
       <Dock className="mobile-dock-items">

@@ -1,0 +1,20 @@
+{
+  "scope": "Mechanical research probes using scripted providers, not agent capability or performance benchmarks",
+  "pi": {
+    "installed": "pi-durable 1.0.2",
+    "toolCalls": 1,
+    "modelCalls": 2,
+    "completed": true,
+    "sameRequestAfterReopen": "same submission; no model/tool reinvocation",
+    "hostedInference": false,
+    "learningEvaluated": false
+  },
+  "mastra": {
+    "installed": "Mastra core 1.80.0",
+    "toolCalls": 1,
+    "modelCalls": 2,
+    "completed": true,
+    "hostedInference": false,
+    "learningEvaluated": false
+  }
+}

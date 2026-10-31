@@ -1,5 +1,11 @@
 # Current implementation decisions
 
+31 October reassessment: [resident-agent review](resident-agent-reassessment-2026-10-31.md)
+and [delivery plan](resident-computer-device-plan-2026-10-31.md) propose reducing
+the default architecture and enabling a full tool loop. They distinguish proposals,
+mechanical probes and existing product behavior; no runtime migration follows
+merely from adding a research candidate to the ledger.
+
 Accepted direction implemented from the v2.5.5 review, 29 October 2026.
 
 Presentation update: the fluid Octopus/shadcn/Cult workspace is implemented, with
