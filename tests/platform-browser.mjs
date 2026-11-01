@@ -528,7 +528,11 @@ try {
   await page
     .getByRole("button", { name: "Model & sources", exact: true })
     .click();
-  await page.getByLabel("Model provider").selectOption("opencode-free");
+  await page.getByLabel("Model provider").selectOption("gemini");
+  assert.equal(
+    await page.getByLabel("Model", { exact: true }).inputValue(),
+    "gemini-2.5-flash",
+  );
   await page.getByLabel("Message Aksara").fill("Synthetic cloud prompt");
   assert.ok(
     await page.getByRole("button", { name: "Send message" }).isDisabled(),

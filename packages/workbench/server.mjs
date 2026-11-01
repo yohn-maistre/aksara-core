@@ -18,7 +18,6 @@ import { fileURLToPath } from "node:url";
 import {
   generateReply,
   modelConfig,
-  FREE_MODELS,
   localEndpoint,
 } from "@aksara/runtime-mastra";
 
@@ -396,7 +395,13 @@ export async function createWorkbench({
         return;
       }
       if (req.method === "GET" && url.pathname === "/api/providers/codex") {
-        const result = await codex.status(await custodyFor());
+        const result = await codex.discover(await custodyFor(), {
+          assertCurrent: async () => {
+            assertScope();
+            await kernel(snapshot, "me");
+            assertScope();
+          },
+        });
         assertScope();
         reply(res, result);
         return;
@@ -521,11 +526,12 @@ export async function createWorkbench({
           local: { available, can_pull: canPull, models: local },
           opencode: {
             experimental: true,
-            models: FREE_MODELS,
+            models: [],
+            requires_runtime: true,
             verified_here: false,
             probe_status: "not_tested_this_session",
             notice:
-              "Hosted experimental models. Availability and data-use terms can change. No paid fallback.",
+              "OpenCode's current free chat offering requires its runtime. Direct keyless access is unavailable here. Choose another connection; no paid fallback is used.",
           },
           codex: codexStatus,
           voice: {
@@ -613,6 +619,11 @@ export async function createWorkbench({
       }
       if (req.method === "POST" && url.pathname === "/api/chat") {
         const b = await body(req);
+        if (b.provider === "opencode-free")
+          throw fail(
+            "OpenCode free chat requires a supported OpenCode runtime. Direct keyless access is unavailable on this host. Choose ChatGPT or another connection.",
+            503,
+          );
         const kind = b.kind === "background" ? "background" : "interactive";
         if (b.kind && !["interactive", "background"].includes(b.kind))
           throw fail("Unknown task kind");

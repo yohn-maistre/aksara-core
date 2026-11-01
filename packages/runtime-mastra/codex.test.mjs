@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { createCodexBridge } from "./codex.mjs";
 import { generateReply } from "./index.mjs";
+import { providerFailure } from "./hosted.mjs";
 const credentials = {
   access: "ACCESS_SECRET_SENTINEL",
   refresh: "REFRESH_SECRET_SENTINEL",
@@ -89,6 +90,8 @@ test("Mastra Agent consumes the donor Codex Responses transport with no tools or
         const body = await request.json();
         assert.equal(body.stream, true);
         assert.equal(body.store, false);
+        // Subscription transport rejects a field accepted by the platform API.
+        assert.equal(Object.hasOwn(body, "max_output_tokens"), false);
         assert.ok(!body.tools?.length);
         assert.ok(JSON.stringify(body).includes("Synthetic Codex turn"));
         const response = {
@@ -192,6 +195,33 @@ test("unfinished SSE cannot be committed as a completed model reply", async () =
   }
 });
 
+test("Codex auth rejection retains a safe failure category without provider echoes", async () => {
+  const f = await fixture();
+  try {
+    await connect(f.bridge);
+    const port = await f.bridge.model("personal", "gpt-5.4", {
+      fetchImpl: async () =>
+        new Response("PRIVATE_PROVIDER_ECHO", { status: 401 }),
+    });
+    await assert.rejects(
+      generateReply({
+        provider: "codex-chatgpt",
+        model: "gpt-5.4",
+        modelPort: port.model,
+        messages: [{ role: "user", content: "Synthetic test" }],
+        signal: AbortSignal.timeout(5000),
+      }),
+      (error) => {
+        assert.match(providerFailure(error), /sign-in or access was rejected/);
+        assert.ok(!providerFailure(error).includes("PRIVATE_PROVIDER_ECHO"));
+        return true;
+      },
+    );
+  } finally {
+    await f.close();
+  }
+});
+
 test("authorization lost while committing sign-in rolls back provisional credentials", async () => {
   const f = await fixture();
   try {
@@ -204,6 +234,132 @@ test("authorization lost while committing sign-in rolls back provisional credent
             throw Error("Membership revoked during promotion");
         },
       }),
+    );
+    assert.equal((await f.bridge.status("personal")).connected, false);
+  } finally {
+    await f.close();
+  }
+});
+
+test("Codex discovers current account models, keeps only display metadata, and invalidates the catalog on logout", async () => {
+  const f = await fixture();
+  let calls = 0;
+  try {
+    const fetchImpl = async (url, options) => {
+      calls++;
+      assert.equal(
+        url,
+        "https://chatgpt.com/backend-api/codex/models?client_version=0.162.1",
+      );
+      assert.equal(options.redirect, "error");
+      assert.equal(
+        options.headers.authorization,
+        `Bearer ${credentials.access}`,
+      );
+      assert.equal(
+        options.headers["ChatGPT-Account-ID"],
+        credentials.accountId,
+      );
+      return Response.json({
+        models: [
+          {
+            slug: "new-text-model",
+            display_name: "New text model",
+            visibility: "list",
+            input_modalities: ["text", "image"],
+            context_window: 128000,
+            instructions: "REMOTE_AUTHORITY_SENTINEL",
+            guardian: { anything: "allow" },
+          },
+          { slug: "hidden-model", display_name: "Hidden", visibility: "hide" },
+          {
+            slug: "image-only",
+            visibility: "list",
+            input_modalities: ["image"],
+          },
+          { visibility: "list" },
+          { slug: "new-text-model", visibility: "list" },
+        ],
+      });
+    };
+    assert.equal(
+      (await f.bridge.discover("personal", { fetchImpl })).connected,
+      false,
+    );
+    assert.equal(calls, 0);
+    await connect(f.bridge);
+    const result = await f.bridge.discover("personal", { fetchImpl });
+    assert.equal(result.model_catalog.source, "provider");
+    assert.deepEqual(
+      result.models.map((m) => m.id),
+      ["new-text-model"],
+    );
+    assert.deepEqual(result.models[0].input_modalities, ["text", "image"]);
+    assert.equal(result.models[0].verified_here, false);
+    assert.ok(!JSON.stringify(result).includes("REMOTE_AUTHORITY_SENTINEL"));
+    assert.ok(!JSON.stringify(result).includes(credentials.access));
+    assert.equal((await f.bridge.status("community")).models.length, 0);
+    await f.bridge.discover("personal", { fetchImpl });
+    assert.equal(calls, 1);
+    assert.ok((await f.bridge.model("personal", "new-text-model")).model);
+    await f.bridge.logout("personal");
+    await connect(f.bridge);
+    assert.equal(
+      (await f.bridge.status("personal")).model_catalog.source,
+      "bundled_candidates",
+    );
+  } finally {
+    await f.close();
+  }
+});
+
+test("failed catalog lookup preserves sign-in and labels candidate fallback without provider bodies", async () => {
+  const f = await fixture();
+  try {
+    await connect(f.bridge);
+    const result = await f.bridge.discover("personal", {
+      fetchImpl: async () =>
+        new Response("PRIVATE_PROVIDER_ECHO", { status: 503 }),
+    });
+    assert.equal(result.connected, true);
+    assert.equal(result.model_catalog.source, "bundled_candidates");
+    assert.equal(result.verified_here, false);
+    assert.ok(!JSON.stringify(result).includes("PRIVATE_PROVIDER_ECHO"));
+    assert.match(result.catalog_notice, /not verified/);
+  } finally {
+    await f.close();
+  }
+});
+
+test("an oversized account catalog cannot enter cached choices or discard sign-in", async () => {
+  const f = await fixture();
+  try {
+    await connect(f.bridge);
+    const result = await f.bridge.discover("personal", {
+      fetchImpl: async () => new Response(" ".repeat(1048577)),
+    });
+    assert.equal(result.connected, true);
+    assert.equal(result.model_catalog.source, "bundled_candidates");
+    assert.match(result.catalog_notice, /not verified/);
+  } finally {
+    await f.close();
+  }
+});
+
+test("logout during discovery fences the arriving account catalog", async () => {
+  const f = await fixture();
+  try {
+    await connect(f.bridge);
+    await assert.rejects(
+      f.bridge.discover("personal", {
+        fetchImpl: async () => {
+          await f.bridge.logout("personal");
+          return Response.json({
+            models: [{ slug: "stale-account-model", visibility: "list" }],
+          });
+        },
+      }),
+      { status: 503 },
     );
     assert.equal((await f.bridge.status("personal")).connected, false);
   } finally {

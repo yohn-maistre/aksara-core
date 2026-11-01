@@ -4,6 +4,7 @@ import { createOpenAI } from '@ai-sdk/openai';
 import { wrapLanguageModel } from 'ai';
 import { AKSARA_VOICE } from '../../personality.mjs';
 class ProviderAuthRequiredError extends Error {
+    status = 401;
     static notSignedIn() { return new this('Codex sign-in required'); }
     static signInExpired() { return new this('Codex sign-in expired'); }
 }
@@ -19,6 +20,9 @@ export function createCodexMiddleware(reasoningEffort) {
     return {
         specificationVersion: 'v3',
         transformParams: async ({ params }) => {
+            // ChatGPT subscription inference rejects this platform-API field.
+            // The host still enforces its deadline and response byte budget.
+            delete params.maxOutputTokens;
             // Remove topP if temperature is set (OpenAI doesn't like both)
             if (params.temperature !== undefined && params.temperature !== null) {
                 delete params.topP;
@@ -251,6 +255,8 @@ export function buildCodexStagehandFetch(authStorage, fetchImpl) {
         try {
             const parsed = JSON.parse(body);
             parsed.stream = true;
+            parsed.store = false;
+            delete parsed.max_output_tokens;
             body = JSON.stringify(parsed);
             if (!headers.has('content-type'))
                 headers.set('content-type', 'application/json');

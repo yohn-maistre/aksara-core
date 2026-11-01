@@ -229,6 +229,28 @@ function useWorkspaceState() {
       if (current === scope.current) setError((e as Error).message);
     }
   }, [api]);
+  // One account-catalog check when selecting ChatGPT, not an inference call or
+  // another background poll. The API and cleanup fence stale custody results.
+  useEffect(() => {
+    if (PREVIEW || provider !== "codex-chatgpt" || !providers.codex?.connected)
+      return;
+    let current = true;
+    void api("providers/codex")
+      .then((connection) => {
+        if (!current) return;
+        setProviders((p: Data) => ({ ...p, codex: connection }));
+        setModel((id) =>
+          connection.models?.some((m: Data) => m.id === id)
+            ? id
+            : connection.models?.[0]?.id || "",
+        );
+        setConsent(false);
+      })
+      .catch(() => {});
+    return () => {
+      current = false;
+    };
+  }, [api, session?.scope, provider, !!providers.codex?.connected]);
   useEffect(() => {
     if (!session) return;
     void refresh();

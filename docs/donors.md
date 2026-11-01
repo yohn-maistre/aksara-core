@@ -1,5 +1,33 @@
 # Pinned donor ledger
 
+## Provider compatibility and onboarding study — 1 November 2026
+
+- **OpenAI Codex**, Apache-2.0, studied at
+  `23934d31b15b1127c83535f84854e5009f7cd51d`:
+  `codex-rs/codex-api/src/endpoint/models.rs`,
+  `codex-rs/protocol/src/openai_models.rs`, and the model manager. Original
+  Aksara code reads the device-OAuth model catalog, preserving only bounded
+  display/capability metadata. No upstream instructions, guardian policies,
+  tools, credentials, or authority are imported. Catalog calls identify as
+  Aksara, reject redirects and retain scoped credential fences.
+- [OpenAI SIWC inference documentation](https://developers.openai.com/siwc/token-sharing-open-source/models-and-inference)
+  and [preview limitations](https://developers.openai.com/siwc/token-sharing-open-source/preview-limitations)
+  describe a distinct public-API token-sharing flow. They are not authorization
+  to move existing Codex device tokens to another endpoint.
+- [OpenCode model documentation](https://opencode.ai/v2/docs/console/models/)
+  now states that free chat models require OpenCode. The workbench disables its
+  former direct keyless route. No impersonation headers or paid fallback added;
+  supported OpenCode runtime integration remains pending.
+- [OpenCode PR 39197](https://github.com/anomalyco/opencode/pull/39197)
+  reports the Codex output-token incompatibility. It was closed/unmerged when
+  studied; Aksara reproduced the offending request in its own transport fixture
+  and made a focused fix rather than importing that patch.
+
+Exa supplied useful source discovery; Firecrawl supplied targeted documentation
+reads. Parallel returned a free-tier limit, so this run does not support a search
+quality ranking. Design references and proposed reuse are recorded in
+[the onboarding review](platform/onboarding-review-2026-11-01.md).
+
 31 October resident reassessment: [review](platform/resident-agent-reassessment-2026-10-31.md)
 and [computer/device delivery plan](platform/resident-computer-device-plan-2026-10-31.md)
 record current runtime alternatives and source activity separately from selections.

@@ -1,4 +1,4 @@
-import { FREE_MODELS, CODEX_MODELS } from "./catalogue.mjs";
+import { FREE_MODELS } from "./catalogue.mjs";
 import { hostedConfig } from "./hosted.mjs";
 import { AKSARA_VOICE } from "./personality.mjs";
 export { FREE_MODELS } from "./catalogue.mjs";
@@ -11,7 +11,7 @@ export function localEndpoint() {
 export function modelConfig(provider, model) {
   if (typeof model !== "string" || !/^[a-zA-Z0-9_.:/-]{1,100}$/.test(model))
     throw new Error("Invalid model ID");
-  if (provider === "codex-chatgpt" && CODEX_MODELS.includes(model))
+  if (provider === "codex-chatgpt")
     return { name: "codex-chatgpt", transport: "mastra-codex-oauth" };
   const hosted = hostedConfig(provider, model);
   if (hosted) return hosted;

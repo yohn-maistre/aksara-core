@@ -45,6 +45,9 @@ export function Composer({
   if (!session) return null;
   return (
     <div className="composer-wrap" data-presentation={presentation}>
+      {!PREVIEW && provider === "opencode-free" && (
+        <p className="composer-note">{providers.opencode?.notice}</p>
+      )}
       {provider !== "local" && !PREVIEW ? (
         <label className="consent">
           <input
@@ -182,7 +185,7 @@ export function Composer({
                     )}
                     {!PREVIEW && (
                       <option value="opencode-free">
-                        OpenCode free · experimental
+                        OpenCode · runtime needed
                       </option>
                     )}
                     {!PREVIEW && (
@@ -215,6 +218,13 @@ export function Composer({
                       ))}
                   </select>
                 </div>
+                {!PREVIEW &&
+                  provider === "codex-chatgpt" &&
+                  providers.codex?.connected && (
+                    <p className="composer-note">
+                      {providers.codex.catalog_notice || providers.codex.notice}
+                    </p>
+                  )}
                 {!PREVIEW && (
                   <label className="background-choice">
                     <input

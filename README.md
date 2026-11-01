@@ -35,7 +35,7 @@ Choose a development identity, then follow model setup. The identity chooser is 
 - **Native computer use:** explicitly connect one private desktop window for a limited time through Vercel agent-desktop. Observation, clicks, field edits, and physical typing have separate bounds. Currently available to local models. This controls your signed-in desktop; it is **not an OS sandbox**.
 - **Shared interfaces:** the CLI and scoped MCP gateway read the same canonical workspace. Optional local Pocket TTS supports read-aloud.
 
-Model setup supports a local compatible server, ChatGPT/Codex device sign-in, Google AI Studio, Groq, and OpenRouter API keys. Keyless OpenCode is experimental and can be unavailable or rate-limited. Account eligibility, provider terms, and quotas still apply. Aksara does not silently switch to a paid provider.
+Model setup supports a local compatible server, ChatGPT/Codex device sign-in, Google AI Studio, Groq, and OpenRouter API keys. OpenCode free chat currently requires its runtime; direct keyless access is unavailable here. Account eligibility, provider terms, and quotas still apply. Aksara does not silently switch to a paid provider.
 
 ## Develop from source
 

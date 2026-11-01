@@ -85,7 +85,7 @@ Use a separate `--state` directory when comparing the two launchers.
 | --- | --- | --- |
 | Local | Install/start Ollama or compatible loopback server, then choose an installed model | Offline after installation; model quality/resource use needs hardware qualification |
 | ChatGPT / Codex | Sign in with ChatGPT; enter the displayed device code at OpenAI; polling completes in setup | Account/workspace eligibility, device-auth setting and model entitlement still apply; subscription is not a general OpenAI API key |
-| OpenCode | Choose public experimental provider and send a consented test turn | Keyless availability/quotas are not guaranteed; prior live tests failed; no paid fallback |
+| OpenCode | Not available through the direct keyless adapter | Current free chat requires the OpenCode runtime, which is not integrated here; no client impersonation or paid fallback |
 | Google AI Studio | Save a project API key on the local host, acknowledge project billing/data terms, then test | Account free tier is not enforced by Aksara; free-tier content can be used for product improvement |
 | Groq | Save an account API key, review account plan/limits, then test | Limits and billing follow the account; no automatic provider/account rotation |
 | OpenRouter free | Save an OpenRouter key, then select its free router | Fixed `openrouter/free`, zero-price routing constraints, no paid plugins or paid-model fallback; availability and provider data terms can change |
@@ -93,6 +93,14 @@ Use a separate `--state` directory when comparing the two launchers.
 These are actual Mastra provider paths, qualified with synthetic HTTP responses.
 The test suite does not claim a successful live call on the user's account.
 Default model IDs are candidates, not proof of current free entitlement.
+
+Selecting a connected ChatGPT account or checking its connection fetches its
+current Codex model catalog. Results are cached in host memory for five minutes,
+scoped to this custody and invalidated on sign-out/reconnection. If discovery
+fails, setup labels the bundled candidates explicitly and preserves the saved
+sign-in. Installed local models are also queried; the other API providers still
+use the documented fixed candidates above. Catalog discovery is metadata, not
+proof of inference access: only a completed test turn confirms a response.
 
 Keys never return in provider status responses, never enter prompts and are
 scoped by the current Rust institution/principal. Replacement/disconnection

@@ -15,3 +15,15 @@ account authority is enabled.
 31 October voice update: the required Codex API instruction envelope imports the
 same Aksara voice as the main Mastra prompt. Provider selection does not introduce
 a separate personality; consent and tool limits remain supplied by the host.
+
+1 November compatibility update: omit `maxOutputTokens` before SDK serialization
+and `max_output_tokens` at the wire boundary; force `stream: true` and
+`store: false`. The subscription Responses route rejects the platform API's
+output-token field. A regression fixture rejects that field before returning a
+synthetic completed SSE response. Host deadlines and the 1 MiB response bound
+remain. Auth rejection retains a safe HTTP status for failure categorization.
+This qualifies request construction, not the user's live account entitlement.
+
+Account model discovery is original host code in `model-catalog.mjs`, based on
+the pinned Codex model protocol recorded in `docs/donors.md`. It does not import
+the donor's instructions, tool policies, client identity or credential storage.

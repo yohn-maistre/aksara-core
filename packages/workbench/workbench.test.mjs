@@ -240,10 +240,37 @@ test("real hosts: one provider execution, canonical reply, consent checks, and n
     return "SYNTHETIC_REPLY";
   });
   try {
+    assert.equal(
+      (
+        await f.request("chat", {
+          text: "synthetic",
+          provider: "opencode-free",
+          model: "big-pickle",
+          cloud_consent: true,
+          idempotency_key: "unsupported",
+        })
+      ).status,
+      503,
+    );
+    assert.equal(calls, 0);
+    assert.equal(
+      (await f.request("providers")).value.opencode.requires_runtime,
+      true,
+    );
+    assert.equal(
+      (
+        await f.request("providers/key", {
+          provider: "gemini",
+          key: "SYNTHETIC_PROVIDER_KEY",
+          terms_acknowledged: true,
+        })
+      ).status,
+      200,
+    );
     const q = {
       text: "synthetic",
-      provider: "opencode-free",
-      model: "big-pickle",
+      provider: "gemini",
+      model: "gemini-2.5-flash",
       cloud_consent: false,
       idempotency_key: "one",
     };

@@ -24,6 +24,7 @@ import {
 import { CODEX_MODELS } from "./catalogue.mjs";
 export { CODEX_MODELS } from "./catalogue.mjs";
 import { openaiCodexProvider } from "./vendor/mastra-codex/provider.mjs";
+import { fetchCodexModels } from "./model-catalog.mjs";
 const unavailable = () =>
   Object.assign(
     new Error(
@@ -57,7 +58,8 @@ export function createCodexBridge({
 } = {}) {
   const pending = new Map(),
     epochs = new Map(),
-    locks = new Map();
+    locks = new Map(),
+    catalogues = new Map();
   const epoch = (profile) => epochs.get(profile) || 0;
   const directory = (profile) =>
     path.join(root, createHash("sha256").update(profile).digest("hex"));
@@ -140,15 +142,27 @@ export function createCodexBridge({
   async function status(profile) {
     try {
       const value = await serialized(profile, () => load(profile));
+      const cached = catalogues.get(profile);
+      const current =
+        value && cached?.epoch === epoch(profile) && cached.expires > Date.now()
+          ? cached
+          : null;
       return {
         available: true,
         connected: !!value,
         expired: !!value && value.expires <= Date.now(),
         transport: "mastra-codex-oauth",
-        models: value ? CODEX_MODELS.map((id) => ({ id, name: id })) : [],
+        models: value
+          ? current?.models || CODEX_MODELS.map((id) => ({ id, name: id }))
+          : [],
+        model_catalog: {
+          source: current ? "provider" : "bundled_candidates",
+          fetched_at: current?.fetched_at || null,
+        },
         verified_here: false,
-        notice:
-          "Candidate model catalog; a test turn checks your current entitlement.",
+        notice: current
+          ? "Discovered from this account. A completed test turn verifies inference access."
+          : "Bundled candidates; catalog discovery is unavailable until checked. A completed test turn verifies access.",
       };
     } catch {
       return {
@@ -263,6 +277,7 @@ export function createCodexBridge({
   async function logout(profile) {
     cancelPending(profile);
     epochs.set(profile, epoch(profile) + 1);
+    catalogues.delete(profile);
     await serialized(profile, () =>
       unlink(path.join(directory(profile), "credential.enc")).catch((e) => {
         if (e.code !== "ENOENT") throw e;
@@ -270,8 +285,7 @@ export function createCodexBridge({
     );
     return { disconnected: true };
   }
-  async function model(profile, modelId, { fetchImpl } = {}) {
-    if (!CODEX_MODELS.includes(modelId)) throw unavailable();
+  async function credentialPort(profile) {
     const generation = epoch(profile);
     let credential = await load(profile);
     if (!credential) throw unavailable();
@@ -306,6 +320,52 @@ export function createCodexBridge({
         });
       },
     };
+    return { storage, assertCurrent };
+  }
+  async function discover(
+    profile,
+    { fetchImpl, assertCurrent = () => {} } = {},
+  ) {
+    await assertCurrent();
+    const initial = await status(profile);
+    await assertCurrent();
+    if (!initial.connected || initial.model_catalog?.source === "provider")
+      return initial;
+    const generation = epoch(profile);
+    try {
+      await assertCurrent();
+      const port = await credentialPort(profile);
+      const credential = await port.storage.getOAuthCredential("openai-codex");
+      const models = await fetchCodexModels(credential, fetchImpl);
+      await assertCurrent();
+      port.assertCurrent();
+      const fetched_at = Date.now();
+      if (catalogues.size >= 64)
+        catalogues.delete(catalogues.keys().next().value);
+      catalogues.set(profile, {
+        epoch: generation,
+        models,
+        fetched_at,
+        expires: fetched_at + 300000,
+      });
+      return status(profile);
+    } catch {
+      await assertCurrent();
+      if (epoch(profile) !== generation) throw unavailable();
+      return {
+        ...(await status(profile)),
+        catalog_notice:
+          "Could not refresh this account's model list. Showing bundled candidates, not verified access.",
+      };
+    }
+  }
+  async function model(profile, modelId, { fetchImpl } = {}) {
+    if (
+      typeof modelId !== "string" ||
+      !/^[a-zA-Z0-9_.:/-]{1,100}$/.test(modelId)
+    )
+      throw unavailable();
+    const { storage, assertCurrent } = await credentialPort(profile);
     return {
       model: provider(modelId, { authStorage: storage, fetchImpl }),
       assertCurrent,
@@ -313,6 +373,7 @@ export function createCodexBridge({
   }
   return {
     status,
+    discover,
     login,
     poll,
     cancel,

@@ -30,6 +30,7 @@ export function SetupView() {
     run,
     busy,
     works,
+    messages,
   } = useWorkspace();
   const [step, setStep] = useState<string | null>("space"),
     [login, setLogin] = useState<Data | null>(null),
@@ -86,6 +87,9 @@ export function SetupView() {
   if (!session) return null;
   const selectedModel = modelsFor(providers, PREVIEW ? "preview" : provider);
   const test = works.find((w) => w.id === testId);
+  const testReply = messages.find(
+    (m) => m.role === "assistant" && m.run?.work_id === testId,
+  );
   const inspectCodex = async () => {
     if (login) await api("providers/codex/poll", { login_id: login.login_id });
     const result = await api("providers/codex");
@@ -204,8 +208,8 @@ export function SetupView() {
                     [
                       "opencode-free",
                       Globe,
-                      "OpenCode free",
-                      "Keyless hosted models. Quotas and terms can change.",
+                      "OpenCode",
+                      "Free chat requires its runtime; unavailable on this host.",
                     ],
                     [
                       "codex-chatgpt",
@@ -240,6 +244,14 @@ export function SetupView() {
                 </div>
                 {KEY_PROVIDERS.includes(choice) && (
                   <ProviderKeyConnection id={choice} />
+                )}
+                {choice === "opencode-free" && (
+                  <p role="status">{providers.opencode?.notice}</p>
+                )}
+                {choice === "codex-chatgpt" && providers.codex?.connected && (
+                  <p role="status">
+                    {providers.codex.catalog_notice || providers.codex.notice}
+                  </p>
                 )}
                 {choice === "codex-chatgpt" && (
                   <section className="connection-controls">
@@ -408,7 +420,8 @@ export function SetupView() {
                     {test.state === "COMPLETED"
                       ? "The host accepted a model response. Your connection works."
                       : test.state === "FAILED"
-                        ? "The test did not complete. Check sign-in, provider quota, or the local server."
+                        ? testReply?.text ||
+                          "The test did not complete. No response details were recorded. Check the local server, then retry."
                         : `Test status: ${test.state.toLowerCase()}`}
                   </p>
                 )}

@@ -48,5 +48,7 @@ export function providerFailure(error, signal) {
     return "The selected model is unavailable. Check the provider's current model access.";
   if (status === 402)
     return "Provider credits or billing access are unavailable. No paid fallback was used.";
+  if (status === 400 || status === 422)
+    return "The provider rejected this request. Sign-in may still be valid; check model compatibility or update Aksara. No paid fallback was used.";
   return "Provider unavailable or turn interrupted. No action was performed.";
 }

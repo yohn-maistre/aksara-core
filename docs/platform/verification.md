@@ -1,5 +1,30 @@
 # Platform foundation verification
 
+## Provider compatibility checkpoint — 1 November 2026
+
+The user's device authorization completed, but neither provider produced a reply.
+No private account credentials or live error body were available for this work.
+The Codex HTTP fixture reproduced an unsupported `max_output_tokens` field before
+the fix, then passed with that field absent, `store: false`, `stream: true`, and a
+required completed SSE result. Auth rejection retains a safe failure category.
+
+Current account-model discovery is bounded, cached per custody, fenced on
+logout/scope change, and imports display metadata only. Tests cover hidden and
+image-only entries, deduplication, secret/policy exclusion, catalog outage,
+oversized responses and stale arrival after logout. Candidate fallback preserves
+sign-in and is explicitly unverified. The workbench rejects direct keyless
+OpenCode before invoking a provider; its current free offering requires the
+OpenCode runtime, which is not integrated here.
+
+Local results: Pi tests **3 passed**; runtime/platform tests **42 passed**, one
+optional Docker fixture skipped; production TypeScript/Vite build passed;
+product browser **24 checks passed**; preserved privacy/approval browser
+**8 checks passed**. Fixtures use synthetic provider replies with real Rust hosts
+and the actual Mastra/React paths. The build retains its existing large lazy
+Office chunks; no Surface Pro memory or frame-rate improvement is claimed.
+No live account inference or full onboarding redesign is claimed. See the
+[design review](onboarding-review-2026-11-01.md) for the proposed next UI pass.
+
 29 October 2026, Asia/Bangkok. Actual execution in this Linux x86-64 workspace; no physical Samsung A12, Lapis/Muse device, community LAN installation or native mobile app was available.
 
 | Suite                           |  Passed | What it exercises                                                                                                                                                                                                                                                                           |
