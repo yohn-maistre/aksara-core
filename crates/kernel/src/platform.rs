@@ -64,6 +64,28 @@ impl Kernel {
         tx.commit()?;
         Ok(())
     }
+    pub fn interrupt_model_attempt(
+        &mut self,
+        ctx: &AccessContext,
+        work_id: &str,
+        expected: i64,
+    ) -> Result<()> {
+        self.work_authorized(ctx, work_id)?;
+        let data: String = self
+            .db
+            .query_row(
+                "SELECT data FROM model_runs WHERE json_extract(data,'$.work_id')=?1",
+                [work_id],
+                |r| r.get(0),
+            )
+            .optional()?
+            .ok_or(Error::NotFound)?;
+        let run: ModelRun = serde_json::from_str(&data)?;
+        if run.execution_epoch.max(i64::from(run.execution_claimed)) != expected {
+            return Err(Error::Conflict("execution attempt changed".into()));
+        }
+        self.interrupt_model(ctx, work_id)
+    }
     pub fn init_personal(&mut self, name: &str) -> Result<Value> {
         bounded(name, 128)?;
         if self.initialized()? {
@@ -387,6 +409,7 @@ impl Kernel {
             model: req.model.clone(),
             cloud_consent: req.cloud_consent,
             execution_claimed: false,
+            execution_epoch: 0,
             state: "running".into(),
             created_ms: millis(),
         };
@@ -434,7 +457,25 @@ impl Kernel {
         id: &str,
         task: &str,
     ) -> Result<ModelRun> {
+        self.delegate_model_using(ctx, id, task, None)
+    }
+    pub fn delegate_model_using(
+        &mut self,
+        ctx: &AccessContext,
+        id: &str,
+        task: &str,
+        model: Option<&str>,
+    ) -> Result<ModelRun> {
         bounded(task, 12000)?;
+        if let Some(model) = model {
+            bounded(model, 100)?;
+            if !model
+                .bytes()
+                .all(|c| c.is_ascii_alphanumeric() || b"_.:/-".contains(&c))
+            {
+                return Err(Error::Denied);
+            }
+        }
         let checked = self.model_input(ctx, id)?;
         let parent: ModelRun = serde_json::from_value(checked["run"].clone())?;
         if !parent.execution_claimed || parent.kind != ModelKind::Interactive {
@@ -455,7 +496,7 @@ impl Kernel {
             source_ids: parent.authorized_source_ids.clone(),
             text: task.into(),
             provider: parent.provider.clone(),
-            model: parent.model.clone(),
+            model: model.unwrap_or(&parent.model).to_owned(),
             cloud_consent: parent.cloud_consent,
             source_consent: true,
             idempotency_key: format!("worker:{}", parent.id),
@@ -530,6 +571,14 @@ impl Kernel {
             .ok_or(Error::NotFound)?;
         let run: ModelRun = serde_json::from_str(&s)?;
         let work = self.work(ctx, &run.work_id)?;
+        let epoch = run.execution_epoch.max(i64::from(run.execution_claimed));
+        if let Some((bound, attempt)) = &ctx.model_execution {
+            if bound != id || *attempt != epoch {
+                return Err(Error::Denied);
+            }
+        } else if epoch > 1 {
+            return Err(Error::Denied);
+        }
         if !run_visible(ctx, &run)
             || run.owner != ctx.actor.id
             || run.state != "running"
@@ -564,6 +613,7 @@ impl Kernel {
             ));
         }
         run.execution_claimed = true;
+        run.execution_epoch = 1;
         let mut work = self.work(ctx, &run.work_id)?;
         work.state = WorkState::Working;
         work.runtime_ref = Some(format!("mastra:{}", run.id));
@@ -579,6 +629,60 @@ impl Kernel {
             params![work.id, json(&work)?],
         )?;
         event(&tx, "model.claimed", id, Some(&run.lane_id), &ctx.actor.id)?;
+        tx.commit()?;
+        Ok(run)
+    }
+    /// Recoverable identifiers for this current actor/lane only. No frozen
+    /// context is returned until model_input revalidates its full dependencies.
+    pub fn pending_models(&self, ctx: &AccessContext) -> Result<Vec<ModelRun>> {
+        self.check_context(ctx)?;
+        let mut statement = self.db.prepare("SELECT data FROM model_runs WHERE owner=?1 AND lane_id=?2 AND json_extract(data,'$.state')='running' ORDER BY rowid LIMIT 100")?;
+        let rows = statement.query_map(params![ctx.actor.id, ctx.lane.id], |r| {
+            r.get::<_, String>(0)
+        })?;
+        let mut result = Vec::new();
+        for row in rows {
+            let run: ModelRun = serde_json::from_str(&row?)?;
+            if self.model_work_eligible(ctx, &run.work_id)? {
+                result.push(run);
+            }
+        }
+        Ok(result)
+    }
+    /// Compare-and-swap recovery fences the old executor. The caller must bind
+    /// the prior attempt and revalidate all current context before replay.
+    pub fn recover_model(
+        &mut self,
+        ctx: &AccessContext,
+        id: &str,
+        expected: i64,
+    ) -> Result<ModelRun> {
+        let input = self.model_input(ctx, id)?;
+        let mut run: ModelRun = serde_json::from_value(input["run"].clone())?;
+        if !run.execution_claimed || run.execution_epoch.max(1) != expected {
+            return Err(Error::Conflict("stale recovery attempt".into()));
+        }
+        let budget = if run.kind == ModelKind::Background {
+            600_000
+        } else {
+            180_000
+        };
+        if millis() - run.created_ms > budget {
+            return Err(Error::Denied);
+        }
+        run.execution_epoch = expected.checked_add(1).ok_or(Error::Denied)?;
+        let tx = self.db.transaction()?;
+        tx.execute(
+            "UPDATE model_runs SET data=?2 WHERE id=?1",
+            params![id, json(&run)?],
+        )?;
+        event(
+            &tx,
+            "model.recovered",
+            id,
+            Some(&run.lane_id),
+            &ctx.actor.id,
+        )?;
         tx.commit()?;
         Ok(run)
     }
@@ -846,7 +950,7 @@ impl Kernel {
             WorkState::Completed
         };
         work.display_safe_summary = if failed {
-            "Model turn interrupted"
+            text
         } else {
             "Reply ready — model draft"
         }

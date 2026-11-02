@@ -37,7 +37,7 @@ export function hostedConfig(provider, model) {
 }
 export function providerFailure(error, signal) {
   if (signal?.aborted)
-    return "Model turn interrupted or timed out. No action was performed.";
+    return "Model turn stopped or timed out. Check saved work and receipts before retrying.";
   // Never include provider body/message: it can echo private prompts or keys.
   const status = error?.statusCode ?? error?.status;
   if (status === 429)
@@ -50,5 +50,5 @@ export function providerFailure(error, signal) {
     return "Provider credits or billing access are unavailable. No paid fallback was used.";
   if (status === 400 || status === 422)
     return "The provider rejected this request. Sign-in may still be valid; check model compatibility or update Aksara. No paid fallback was used.";
-  return "Provider unavailable or turn interrupted. No action was performed.";
+  return "Provider unavailable or turn interrupted. Check saved work and receipts before retrying.";
 }

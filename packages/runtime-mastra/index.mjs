@@ -2,6 +2,11 @@ import { FREE_MODELS } from "./catalogue.mjs";
 import { hostedConfig } from "./hosted.mjs";
 import { AKSARA_VOICE } from "./personality.mjs";
 export { FREE_MODELS } from "./catalogue.mjs";
+export {
+  createDecisionPort,
+  assessMemoryReview,
+  DECISION_USES,
+} from "./decisions.mjs";
 export function localEndpoint() {
   const port = Number(process.env.AKSARA_LOCAL_MODEL_PORT || 11434);
   if (!Number.isInteger(port) || port < 1024 || port > 65535)
@@ -41,8 +46,9 @@ root = MetricCard("Label", "Value", "Qualification")
 Read-only resource components are also registered: WorkList(title, [work IDs]), SourceList(title, [source IDs]), DocumentPreview(title, [one source ID]), ProgressStatus(title, [work IDs]). Use these only with IDs explicitly present in the supplied eligible context; never invent IDs. The current host resolves their data for display and can refuse it. Rendered data is not automatically available to you. Unknown work duration has no percentage.
 All arguments must be JSON literals. No Query, Mutation, HTML, URL, imports, nested expressions or action callbacks. Generated UI cannot approve or execute effects, change an audience, or grant access. Do not put private information into generated UI beyond this turn's supplied context.`;
 
-/** Actual Mastra Agent, one bounded provider turn. Rust owns the conversation and run fence.
- * No vendor persistence/automatic crash replay: retry requires a new explicit user turn.
+/** Actual Mastra Agent with an optional host-owned durable workflow store.
+ * Recovery requires a fresh Rust execution fence and reconstructed tool ports.
+ * Uncertain tool delivery is blocked by the host journal, never blindly replayed.
  */
 export async function generateReply({
   provider,
@@ -53,6 +59,7 @@ export async function generateReply({
   modelPort,
   apiKey,
   toolPort,
+  durability,
 }) {
   const config = modelConfig(provider, model);
   if (hostedConfig(provider, model) && !apiKey)
@@ -84,14 +91,49 @@ export async function generateReply({
       )
     : INSTRUCTIONS;
   const agent = new Agent({
-    id: "aksara-conversation",
+    id: durability ? `aksara-${durability.runId}` : "aksara-conversation",
     name: "Aksara",
     instructions,
     model: modelPort || factory.chatModel(model),
     ...(tools ? { tools } : {}),
+    defaultOptions: {
+      maxRetries: 0,
+      ...(toolPort
+        ? {
+            prepareStep: async () => {
+              await toolPort.assertCurrent();
+            },
+          }
+        : {}),
+    },
   });
   agent.__setLogger(noopLogger);
-  const output = await agent.generate(messages, {
+  let runner = agent,
+    mastra,
+    getRegistry,
+    settlement;
+  const captureSettlement = () => {
+    if (getRegistry)
+      settlement = getRegistry(durability.runId, mastra)?.workflowExecution;
+  };
+  if (durability) {
+    const [{ createDurableAgent, getRunRegistryEntry }, { Mastra }] =
+      await Promise.all([
+        import("@mastra/core/agent/durable"),
+        import("@mastra/core/mastra"),
+      ]);
+    getRegistry = getRunRegistryEntry;
+    runner = createDurableAgent({
+      agent,
+      shouldPersistSnapshot: () => true,
+      cleanupTimeoutMs: 1000,
+    });
+    mastra =
+      durability.mastra ||
+      new Mastra({ storage: durability.storage, logger: noopLogger });
+    mastra.addAgent(runner);
+  }
+  const options = {
     abortSignal: signal,
     maxSteps: tools ? 8 : 1,
     ...(toolPort
@@ -120,7 +162,35 @@ export async function generateReply({
           },
         }
       : {}),
-  });
+    ...(durability
+      ? {
+          runId: durability.runId,
+          onFinish: captureSettlement,
+          onError: captureSettlement,
+        }
+      : {}),
+  };
+  let output;
+  try {
+    await toolPort?.assertCurrent();
+    if (durability?.recover) {
+      const recovered = await runner.recover(durability.runId, {
+        abortSignal: signal,
+        force: true,
+        onFinish: captureSettlement,
+        onError: captureSettlement,
+      });
+      captureSettlement();
+      output = await recovered.output.getFullOutput();
+      recovered.cleanup();
+    } else output = await runner.generate(messages, options);
+  } finally {
+    await settlement;
+    if (durability?.mastra) mastra.removeAgent(agent.id);
+    else await mastra?.shutdown({ drainTimeout: 1000 });
+  }
+  if (output.finishReason === "error" || output.error)
+    throw Error("Model execution failed");
   if (typeof output.text !== "string" || !output.text.trim())
     throw new Error("Provider returned no text");
   if (Buffer.byteLength(output.text) > 65536)

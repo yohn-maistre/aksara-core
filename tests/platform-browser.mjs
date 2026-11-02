@@ -1,3 +1,4 @@
+import { streamingCompletionFixture } from "./completion-fixture.mjs";
 import { navigateSurface } from "./surface-navigation.mjs";
 /** Real product browser conformance. Synthetic inference uses the actual Mastra
  * adapter over a local OpenAI-compatible fixture; no hosted provider is contacted. */
@@ -12,6 +13,7 @@ const dir = await mkdtemp(path.join(tmpdir(), "aksara-product-browser-"));
 const base = "http://127.0.0.1:17841";
 const checks = [];
 const model = http.createServer(async (req, res) => {
+  streamingCompletionFixture(res);
   if (req.url === "/api/tags") {
     res.setHeader("content-type", "application/json");
     res.end(
@@ -119,13 +121,26 @@ try {
   page.setDefaultTimeout(12000);
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
+  const previews = process.env.AKSARA_PREVIEW_DIR || path.join(dir, "previews");
+  await mkdir(previews, { recursive: true });
   await page.goto(base);
   await page
     .getByRole("button", { name: "Operator Community workspace" })
     .click();
+  await page.getByRole("dialog").waitFor();
+  await page.screenshot({
+    path: path.join(previews, "setup-dialog-desktop.png"),
+    animations: "disabled",
+  });
+  assert.equal(
+    await page.getByRole("heading", { name: "Make yourself at home." }).count(),
+    1,
+  );
+  await page
+    .getByRole("button", { name: "Explore first", exact: true })
+    .click();
   await page.getByRole("heading", { name: /Room for/ }).waitFor();
-  const previews = process.env.AKSARA_PREVIEW_DIR || path.join(dir, "previews");
-  await mkdir(previews, { recursive: true });
+
   await page.screenshot({
     animations: "disabled",
     path: path.join(previews, "today-desktop.png"),
@@ -490,14 +505,7 @@ try {
       .count(),
     0,
   );
-  await page
-    .getByLabel("Message Aksara")
-    .fill("Do not send before private admission");
-  assert.ok(
-    await page
-      .getByRole("button", { name: "Send message", exact: true })
-      .isDisabled(),
-  );
+  assert.equal(await page.getByLabel("Message Aksara").count(), 0);
   releaseScope();
   await page
     .getByRole("heading", { name: "Private thread", exact: true })
@@ -554,9 +562,20 @@ try {
     "Hosted model use requires explicit per-turn consent, including keyboard submission",
   );
   await page.setViewportSize({ width: 360, height: 800 });
-  await page.getByRole("button", { name: "Open navigation" }).click();
+  await page.screenshot({
+    path: path.join(previews, "chat-mobile.png"),
+    animations: "disabled",
+  });
+  const pendingDraft = await page.getByLabel("Message Aksara").inputValue();
+  await page.getByRole("button", { name: "Spaces" }).click();
+  await page.keyboard.press("Escape");
+  assert.equal(
+    await page.getByLabel("Message Aksara").inputValue(),
+    pendingDraft,
+  );
+  await page.getByRole("button", { name: "Spaces" }).click();
   await page.getByRole("button", { name: "Home", exact: true }).click();
-  await page.waitForFunction(() => !document.querySelector(".menu-sheet"));
+  await page.locator(".spaces-menu").waitFor({ state: "hidden" });
   await page.screenshot({
     animations: "disabled",
     path: path.join(previews, "today-mobile.png"),

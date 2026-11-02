@@ -134,7 +134,7 @@ try {
   );
   assert.equal(
     await page.getByLabel("Message Aksara", { exact: true }).count(),
-    1,
+    0,
   );
   await navigateSurface(page, "Home");
   assert.equal(await page.locator(".home-library-panel").count(), 0);
@@ -239,24 +239,22 @@ try {
     "A literal OpenUI resource card resolves current data and opens the trusted document view",
   );
 
-  const menu = page.getByRole("button", {
-    name: "Open navigation",
-    exact: true,
-  });
+  const menu = page.getByRole("button", { name: "Spaces", exact: true });
   await page.setViewportSize({ width: 360, height: 800 });
   await menu.focus();
   await page.keyboard.press("Enter");
-  await page.getByRole("dialog").waitFor();
-  for (let i = 0; i < 18; i++) {
-    await page.keyboard.press("Tab");
-    await page.waitForFunction(
-      () => !!document.activeElement.closest('[role="dialog"]'),
-    );
-  }
+  await page.locator(".spaces-menu").waitFor();
+  assert.equal(
+    await page
+      .locator(".spaces-menu")
+      .getByRole("button", { name: "Home", exact: true })
+      .count(),
+    1,
+  );
   await page.keyboard.press("Escape");
-  await page.getByRole("dialog").waitFor({ state: "hidden" });
+  await page.locator(".spaces-menu").waitFor({ state: "hidden" });
   assert.ok(await menu.evaluate((el) => el === document.activeElement));
-  mark("Menu traps keyboard focus and Escape returns to its opener");
+  mark("Phone spaces menu is keyboard operable and Escape restores its opener");
   await page.setViewportSize({ width: 1440, height: 1000 });
   await navigateSurface(page, "Home");
   await page.getByRole("button", { name: /Review.*welcome note/ }).click();
@@ -381,17 +379,17 @@ try {
   );
   await navigateSurface(page, "Settings");
   await page.getByRole("button", { name: /Set up Aksara/ }).click();
-  await page.getByRole("button", { name: "Next", exact: true }).click();
-  await page
-    .getByRole("group", { name: "Model connection" })
-    .getByRole("button", { name: /ChatGPT subscription/ })
-    .click();
+  await page.getByRole("radio", { name: /ChatGPT subscription/ }).check();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
   assert.ok(
     await page
       .getByRole("button", { name: "Sign in with ChatGPT", exact: true })
       .isDisabled(),
   );
-  await page.getByRole("button", { name: "Set up later", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Explore first", exact: true })
+    .click();
+  await navigateSurface(page, "Home");
   await page
     .getByLabel("Message Aksara")
     .fill("The setup preview kept the guided transport");
@@ -469,13 +467,9 @@ try {
       animations: "disabled",
     });
   mark("Hosted preview is usable at a 360 px viewport");
-  // The responsive dock mounts on the media-query update after resize.
-  await page
-    .getByRole("navigation", { name: "Main navigation", exact: true })
-    .waitFor({ state: "visible" });
+  await page.getByRole("button", { name: "Spaces", exact: true }).waitFor();
   assert.equal(
     await page
-      .getByRole("navigation", { name: "Main navigation", exact: true })
       .getByRole("button", { name: "Ask PRIVATE", exact: true })
       .count(),
     1,
@@ -500,10 +494,17 @@ try {
     .getByRole("button", { name: "Send message", exact: true })
     .boundingBox();
   assert.ok(sendBounds.x >= 0 && sendBounds.x + sendBounds.width <= 360);
-  const dockBounds = await page.locator(".mobile-dock").boundingBox();
+  assert.equal(await page.locator(".mobile-dock").count(), 0);
+  const spacesBounds = await page
+    .getByRole("button", { name: "Spaces", exact: true })
+    .boundingBox();
   assert.ok(
-    sendBounds.y + sendBounds.height < dockBounds.y,
-    "private composer must sit above the floating navigation",
+    Math.abs(
+      spacesBounds.y +
+        spacesBounds.height / 2 -
+        (sendBounds.y + sendBounds.height / 2),
+    ) < 8,
+    "navigation and Send share the composer row",
   );
   await page.keyboard.press("Escape");
   await page.getByRole("heading", { name: /Room for/ }).waitFor();

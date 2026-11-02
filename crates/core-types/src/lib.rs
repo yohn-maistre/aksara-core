@@ -34,6 +34,8 @@ pub struct ConversationLane {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AccessContext {
+    #[serde(default)]
+    pub model_execution: Option<(String, i64)>,
     pub institution_id: String,
     pub actor: Principal,
     pub initiator: String,
@@ -248,6 +250,8 @@ pub struct ModelRun {
     pub model: String,
     pub cloud_consent: bool,
     pub execution_claimed: bool,
+    #[serde(default)]
+    pub execution_epoch: i64,
     pub state: String,
     pub created_ms: i64,
 }

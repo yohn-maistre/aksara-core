@@ -1,75 +1,48 @@
-import { useEffect, useRef, useState } from "react";
-/** Small, non-interactive depth cues. No retained screenshot of private content. */
+import { useEffect, useRef } from "react";
+/** Fade clipped content into the actual live canvas. Keep controls outside. */
 export function ScrollEdges({ selector }: { selector: string }) {
   const anchor = useRef<HTMLSpanElement>(null);
-  const [edge, setEdge] = useState({
-    top: false,
-    bottom: false,
-    left: 0,
-    width: 0,
-    y: 0,
-    height: 0,
-  });
   useEffect(() => {
-    const parent = anchor.current?.parentElement;
-    const target = parent?.querySelector<HTMLElement>(selector);
-    if (!target || !parent) return;
+    const target =
+      anchor.current?.parentElement?.querySelector<HTMLElement>(selector);
+    if (!target) return;
     let frame = 0;
     const update = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
-        const p = parent.getBoundingClientRect(),
-          r = target.getBoundingClientRect();
-        const next = {
-          top: target.scrollTop > 8,
-          bottom:
-            target.scrollHeight - target.clientHeight - target.scrollTop > 8,
-          left: r.left - p.left,
-          width: target.clientWidth,
-          y: r.top - p.top,
-          height: target.clientHeight,
-        };
-        setEdge((old) =>
-          Object.keys(next).every(
-            (k) => old[k as keyof typeof old] === next[k as keyof typeof next],
-          )
-            ? old
-            : next,
-        );
+        const focused =
+          target.contains(document.activeElement) &&
+          document.activeElement?.matches(":focus-visible");
+        const top = !focused && target.scrollTop > 8 ? 18 : 0;
+        const bottom =
+          !focused &&
+          target.scrollHeight - target.clientHeight - target.scrollTop > 8
+            ? 18
+            : 0;
+        target.style.maskImage =
+          top || bottom
+            ? `linear-gradient(to bottom, transparent 0, black ${top}px, black calc(100% - ${bottom}px), transparent 100%)`
+            : "none";
+        target.style.webkitMaskImage = target.style.maskImage;
       });
     };
-    const resize = new ResizeObserver(update);
+    const resize = new ResizeObserver(update),
+      mutation = new MutationObserver(update);
     resize.observe(target);
-    const mutation = new MutationObserver(update);
     mutation.observe(target, { childList: true, subtree: true });
     target.addEventListener("scroll", update, { passive: true });
+    target.addEventListener("focusin", update);
+    target.addEventListener("focusout", update);
     update();
     return () => {
       cancelAnimationFrame(frame);
       resize.disconnect();
       mutation.disconnect();
       target.removeEventListener("scroll", update);
+      target.removeEventListener("focusin", update);
+      target.removeEventListener("focusout", update);
+      target.style.maskImage = "none";
     };
   }, [selector]);
-  return (
-    <>
-      <span
-        ref={anchor}
-        aria-hidden
-        className="scroll-depth scroll-depth-top"
-        data-visible={edge.top}
-        style={{ left: edge.left, width: edge.width, top: edge.y }}
-      />
-      <span
-        aria-hidden
-        className="scroll-depth scroll-depth-bottom"
-        data-visible={edge.bottom}
-        style={{
-          left: edge.left,
-          width: edge.width,
-          top: edge.y + Math.max(0, edge.height - 28),
-        }}
-      />
-    </>
-  );
+  return <span ref={anchor} aria-hidden hidden />;
 }

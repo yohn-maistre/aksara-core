@@ -207,6 +207,21 @@ async fn api(
         .and_then(|v| v.to_str().ok())
         .unwrap_or("")
         .to_owned();
+    let model_execution = match (
+        headers.get("x-aksara-model-run"),
+        headers.get("x-aksara-model-epoch"),
+    ) {
+        (None, None) => None,
+        (Some(id), Some(epoch)) => Some((
+            id.to_str().map_err(|_| Error::Denied)?.to_owned(),
+            epoch
+                .to_str()
+                .map_err(|_| Error::Denied)?
+                .parse::<i64>()
+                .map_err(|_| Error::Denied)?,
+        )),
+        _ => return Err(Error::Denied.into()),
+    };
     // External invocation is outside the authority lock. Intent was committed first.
     if method == Method::POST
         && matches!(
@@ -315,13 +330,15 @@ async fn api(
         if method==Method::GET && operation=="me" {return Ok(json!(actor));}
         if method==Method::GET && operation=="lane-names" {return k.lane_names(&actor);}
         if method==Method::GET && operation=="lanes" {return Ok(json!(k.lanes(&actor)?));}
-        let ctx=k.context(&bearer,&lane,&purpose)?;
+        let mut ctx=k.context(&bearer,&lane,&purpose)?;
+        ctx.model_execution=model_execution;
         let get=|key:&str|query.get(key).map(|v|v.as_str()).ok_or_else(||Error::Invalid(format!("missing query parameter: {key}")));
         let count=|key:&str,default:usize|query.get(key).map(|v|v.parse::<usize>().map_err(|_|Error::Invalid("invalid page size".into()))).unwrap_or(Ok(default));
         match (method.as_str(),operation.as_str()) {
             ("GET","library")=>Ok(json!(k.library_items(&ctx)?)),
             ("GET","messages")=>Ok(json!(k.messages(&ctx,count("after",0)? as i64)?)),
             ("GET","today")=>{let at=query.get("at").map(|s|s.parse::<i64>().map_err(|_|Error::Invalid("invalid timestamp".into()))).transpose()?;Ok(k.today(&ctx,at)?)},
+            ("GET","model-pending")=>Ok(json!(k.pending_models(&ctx)?)),
             ("GET","model-input")=>Ok(k.model_input(&ctx,get("id")?)?),
             ("GET","computer-current")=>k.computer_current(&ctx),
             ("POST","computer-connect")=>k.computer_connect(&ctx,&serde_json::from_value(input)?),
@@ -333,11 +350,12 @@ async fn api(
             ("POST","model-retrieve")=>k.model_retrieve(&ctx,field(&input,"id")?,input["query"].as_str(),input["source_id"].as_str()),
             ("POST","model-procedure")=>Ok(json!(k.model_procedure(&ctx,field(&input,"id")?,field(&input,"title")?,field(&input,"content")?)?)),
             ("POST","model-document")=>Ok(json!(k.model_document(&ctx,field(&input,"id")?,field(&input,"title")?,field(&input,"content")?)?)),
-            ("POST","model-delegate")=>Ok(json!(k.delegate_model(&ctx,field(&input,"id")?,field(&input,"task")?)?)),
+            ("POST","model-delegate")=>Ok(json!(k.delegate_model_using(&ctx,field(&input,"id")?,field(&input,"task")?,input["model"].as_str())?)),
             ("POST","model-tasks")=>Ok(k.model_tasks(&ctx,field(&input,"id")?)?),
             ("POST","channel-create")=>Ok(json!(k.create_channel(&ctx,field(&input,"name")?)?)),
+            ("POST","model-recover")=>Ok(json!(k.recover_model(&ctx,field(&input,"id")?,input["expected_epoch"].as_i64().ok_or(Error::Denied)?)?)),
             ("POST","model-claim")=>Ok(json!(k.claim_model(&ctx,field(&input,"id")?)?)),
-            ("POST","model-interrupt")=>{k.interrupt_model(&ctx,field(&input,"work_id")?)?;Ok(json!({"interrupted":true}))},
+            ("POST","model-interrupt")=>{if let Some(epoch)=input["expected_epoch"].as_i64(){k.interrupt_model_attempt(&ctx,field(&input,"work_id")?,epoch)?;}else{k.interrupt_model(&ctx,field(&input,"work_id")?)?;}Ok(json!({"interrupted":true}))},
             ("POST","model-begin")=>Ok(json!(k.begin_model(&ctx,&serde_json::from_value(input)?)?)),
             ("POST","model-finish")=>Ok(json!(k.finish_model(&ctx,field(&input,"id")?,field(&input,"text")?,input["failed"].as_bool().unwrap_or(false))?)),
             ("GET","search")=>Ok(json!(k.search(&ctx,get("query")?,count("limit",10)?)?)),

@@ -283,6 +283,7 @@ impl Kernel {
             .parse()
             .map_err(|_| Error::Invalid("invalid policy epoch".into()))?;
         Ok(AccessContext {
+            model_execution: None,
             institution_id: actor.institution_id.clone(),
             initiator: actor.id.clone(),
             actor,

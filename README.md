@@ -29,7 +29,7 @@ Choose a development identity, then follow model setup. The identity chooser is 
 ## What you can test
 
 - **A continuing workspace:** Home, private conversation, shared channels, a searchable Library, and source-linked working knowledge. Personal and community profiles use separate databases.
-- **Interactive and background work:** a Mastra agent can use bounded tools, delegate a worker, check its progress, and save a draft document while the main conversation remains available.
+- **Interactive and background work:** a durable Mastra agent can delegate to a configured task model, check progress, and save drafts while the main conversation remains available. Local workflow checkpoints support fenced crash recovery; uncertain tool delivery pauses for inspection.
 - **Files and documents:** preserve uploaded originals, read supported formats, create document drafts, and edit a CSV worktree with the lazy-loaded Univer spreadsheet editor.
 - **Memory with provenance:** reviewed facts and working wiki, people, and procedure drafts stay linked to their sources. Current access and withdrawal checks apply when retrieving them or using derived results.
 - **Native computer use:** explicitly connect one private desktop window for a limited time through Vercel agent-desktop. Observation, clicks, field edits, and physical typing have separate bounds. Currently available to local models. This controls your signed-in desktop; it is **not an OS sandbox**.
@@ -60,7 +60,7 @@ npm run test:platform
 
 ## How it fits together
 
-React renders the workspace. The Node workbench connects providers and tools. Mastra runs the agent loop; Rust and SQLite hold identity, scope, source custody, work, approvals, and effect receipts. UI state and agent output cannot grant authority.
+React renders the workspace. The Node workbench connects providers and tools. Mastra runs and checkpoints the agent loop; Rust and SQLite hold identity, scope, source custody, work, approvals, and effect receipts. UI state and agent output cannot grant authority.
 
 Original bytes are retained. Search, wiki, memory, and other indexes are projections over authorized sources. Local effects and receipts commit together; external actions record an intent before delivery, and uncertain outcomes remain uncertain until reconciled. Interrupted model and computer actions are not automatically replayed.
 

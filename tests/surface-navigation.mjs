@@ -1,4 +1,4 @@
-/** Desktop rail or the focus-trapped phone drawer; wait through dialog dismissal. */
+/** Responsive navigation preserves the active surface and unsent draft. */
 export async function navigateSurface(page, name) {
   const direct = page.getByRole("button", { name, exact: true });
   if (
@@ -6,10 +6,13 @@ export async function navigateSurface(page, name) {
     (await direct.isVisible())
   )
     return direct.click();
-  await page
-    .getByRole("button", { name: "Open navigation", exact: true })
+  await page.getByRole("button", { name: "Spaces", exact: true }).click();
+  const menu = page.locator(".spaces-menu");
+  await menu
+    .getByRole("button", {
+      name: name === "Tools" ? "Capabilities" : name,
+      exact: true,
+    })
     .click();
-  const dialog = page.getByRole("dialog");
-  await dialog.getByRole("button", { name, exact: true }).click();
-  await dialog.waitFor({ state: "hidden" });
+  await menu.waitFor({ state: "hidden" });
 }

@@ -8,6 +8,7 @@
     "@ai-sdk/openai": "3.0.131",
     "@ai-sdk/openai-compatible": "2.0.29",
     "@mastra/core": "1.80.0",
+    "@mastra/libsql": "1.27.1",
     "ai": "6.0.315",
     "zod": "4.3.6"
   },

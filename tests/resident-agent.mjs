@@ -1,3 +1,4 @@
+import { streamingCompletionFixture } from "./completion-fixture.mjs";
 /** Real native host + Mastra tools + canonical custody, using a scripted model.
  * Verifies mechanics and restart/withdrawal, not reasoning quality or live OAuth. */
 import assert from "node:assert/strict";
@@ -32,6 +33,12 @@ let child,
   note,
   requests = 0,
   round = 0;
+let recoveryWaiting = false,
+  recoveryRestarted = false,
+  releaseRecovery;
+const recoveryGate = new Promise((r) => {
+  releaseRecovery = r;
+});
 let fixtureError,
   releaseWorker,
   workerStarted = false;
@@ -39,6 +46,7 @@ const workerGate = new Promise((resolve) => {
   releaseWorker = resolve;
 });
 const model = http.createServer(async (req, res) => {
+  streamingCompletionFixture(res);
   try {
     res.setHeader("content-type", "application/json");
     if (req.url === "/api/tags") {
@@ -51,7 +59,21 @@ const model = http.createServer(async (req, res) => {
     const tools = input.messages.filter((m) => m.role === "tool");
     const step = tools.length;
     let call, finalText;
-    if (round === 0) {
+    if (round === 3) {
+      if (step === 0)
+        call = [
+          "save_document",
+          {
+            title: "Recovered office note",
+            content: "A single saved draft survives process death.",
+          },
+        ];
+      else {
+        recoveryWaiting = true;
+        if (!recoveryRestarted) await recoveryGate;
+      }
+      finalText = "The office note is saved once.";
+    } else if (round === 0) {
       if (step === 0) call = ["library_search", { query: "water" }];
       if (step === 1) {
         const hits = JSON.parse(tools[0].content).hits;
@@ -96,6 +118,7 @@ const model = http.createServer(async (req, res) => {
           !input.tools.some((t) => t.function.name === "delegate_task"),
         );
         if (step === 0) {
+          assert.equal(input.model, "fixture-worker");
           workerStarted = true;
           await workerGate;
           call = [
@@ -223,7 +246,10 @@ async function settled(run) {
     if (reply) return reply;
     await wait(100);
   }
-  throw new Error("Resident run did not settle");
+  const work = await api(`kernel/thread?id=${run.work_id}`);
+  throw new Error(
+    `Resident run did not settle: ${work.state} ${work.display_safe_summary}`,
+  );
 }
 try {
   await new Promise((r) => model.listen(19060, "127.0.0.1", r));
@@ -269,6 +295,7 @@ try {
   console.log(
     "PASS restart retains procedure; duplicate request makes no new model call; later task retrieves it",
   );
+  await api("providers/worker", { provider: "local", model: "fixture-worker" });
   round = 2;
   const delegated = await api("chat", {
     ...request,
@@ -311,7 +338,50 @@ try {
   console.log(
     "PASS original withdrawal hides derived procedure and both dependent replies",
   );
+  if (process.platform !== "win32") {
+    round = 3;
+    const crashed = await api("chat", {
+      ...request,
+      kind: "background",
+      text: "Save the recovery fixture office note.",
+      idempotency_key: "recovery-crash",
+    });
+    for (let i = 0; i < 100 && !recoveryWaiting; i++) await wait(100);
+    assert.equal(recoveryWaiting, true);
+    const descendants = (
+      await exec("ps", ["-o", "pid=", "--ppid", String(child.pid)])
+    ).stdout
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .map(Number);
+    const exit = new Promise((r) => child.once("exit", r));
+    child.kill("SIGKILL");
+    await exit;
+    for (const pid of descendants) {
+      try {
+        process.kill(pid, "SIGKILL");
+      } catch {}
+    }
+    recoveryRestarted = true;
+    releaseRecovery();
+    await wait(100);
+    await start();
+    const finished = await settled(crashed.run);
+    assert.match(finished.text, /saved once/);
+    assert.equal(finished.run.execution_epoch, 2);
+    assert.equal(
+      (await api("kernel/library")).filter(
+        (a) => a.title === "Recovered office note",
+      ).length,
+      1,
+    );
+    console.log(
+      "PASS killed native host resumes the checkpointed Mastra job with one saved artifact and a fenced new attempt",
+    );
+  }
 } finally {
+  releaseRecovery();
   releaseWorker();
   await stop().catch(() => child?.kill());
   await new Promise((r) => model.close(r));

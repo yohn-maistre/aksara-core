@@ -366,3 +366,108 @@ test("logout during discovery fences the arriving account catalog", async () => 
     await f.close();
   }
 });
+
+test("Codex subscription streams through the actual durable Mastra wrapper and rejects incomplete SSE", async () => {
+  const { openResident } = await import("./resident.mjs");
+  const f = await fixture();
+  const host = await openResident(path.join(f.root, "workflow"));
+  let complete = true;
+  try {
+    await connect(f.bridge);
+    const port = await f.bridge.model("personal", "gpt-5.4", {
+      fetchImpl: async (request) => {
+        const body = await request.json();
+        assert.equal(body.stream, true);
+        assert.equal(Object.hasOwn(body, "max_output_tokens"), false);
+        const item = {
+          id: "msg_fixture",
+          type: "message",
+          role: "assistant",
+          status: "completed",
+          content: [
+            {
+              type: "output_text",
+              text: "Durable Codex reply.",
+              annotations: [],
+            },
+          ],
+        };
+        const response = {
+          id: "resp_fixture",
+          object: "response",
+          created_at: 1,
+          status: "completed",
+          model: "gpt-5.4",
+          output: [item],
+          usage: {
+            input_tokens: 5,
+            output_tokens: 5,
+            total_tokens: 10,
+            input_tokens_details: { cached_tokens: 0 },
+            output_tokens_details: { reasoning_tokens: 0 },
+          },
+        };
+        const events = [
+          {
+            type: "response.created",
+            response: { ...response, status: "in_progress", output: [] },
+          },
+          {
+            type: "response.output_item.added",
+            output_index: 0,
+            item: { ...item, status: "in_progress", content: [] },
+          },
+          {
+            type: "response.content_part.added",
+            item_id: item.id,
+            output_index: 0,
+            content_index: 0,
+            part: { type: "output_text", text: "", annotations: [] },
+          },
+          {
+            type: "response.output_text.delta",
+            item_id: item.id,
+            output_index: 0,
+            content_index: 0,
+            delta: "Durable Codex reply.",
+          },
+          ...(complete
+            ? [
+                { type: "response.output_item.done", output_index: 0, item },
+                { type: "response.completed", response },
+              ]
+            : []),
+        ];
+        return new Response(
+          events
+            .map((e) => `event: ${e.type}\ndata: ${JSON.stringify(e)}\n\n`)
+            .join(""),
+          { headers: { "content-type": "text/event-stream" } },
+        );
+      },
+    });
+    const options = {
+      provider: "codex-chatgpt",
+      model: "gpt-5.4",
+      modelPort: port.model,
+      messages: [{ role: "user", content: "Synthetic test" }],
+      signal: AbortSignal.timeout(10000),
+      durability: {
+        storage: host.storage,
+        mastra: host.mastra,
+        runId: "codex-durable",
+      },
+    };
+    assert.equal(await generateReply(options), "Durable Codex reply.");
+    complete = false;
+    await assert.rejects(
+      generateReply({
+        ...options,
+        durability: { ...options.durability, runId: "codex-incomplete" },
+      }),
+    );
+  } finally {
+    await host.close();
+    await f.close();
+  }
+});

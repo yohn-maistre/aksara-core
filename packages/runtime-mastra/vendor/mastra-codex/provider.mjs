@@ -252,8 +252,10 @@ export function buildCodexStagehandFetch(authStorage, fetchImpl) {
         headers.set('Accept', 'text/event-stream');
         // Stagehand sends JSON; force stream: true while preserving Request bodies.
         let body = await request.clone().text();
+        let callerStreaming = false;
         try {
             const parsed = JSON.parse(body);
+            callerStreaming = parsed.stream === true;
             parsed.stream = true;
             parsed.store = false;
             delete parsed.max_output_tokens;
@@ -270,6 +272,7 @@ export function buildCodexStagehandFetch(authStorage, fetchImpl) {
         }));
         if (!upstream.ok)
             return upstream;
+        if (callerStreaming) return boundedCodexStream(upstream);
         // Aggregate SSE -> synthesized non-streaming Response
         const aggregated = await aggregateCodexStream(upstream);
         return new Response(aggregated, {
@@ -292,6 +295,36 @@ export function buildCodexStagehandFetch(authStorage, fetchImpl) {
  * Reasoning events (`response.reasoning_summary.*`) are intentionally ignored
  * for the non-streaming text response.
  */
+function boundedCodexStream(response) {
+    if (!response.body) throw new Error('Codex streaming response had no body');
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let size = 0, text = '';
+    const body = new ReadableStream({
+        async start(controller) {
+            try {
+                for (;;) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    size += value.byteLength;
+                    if (size > 1048576) throw new Error('Codex response exceeded the bound');
+                    text += decoder.decode(value, { stream: true });
+                    controller.enqueue(value);
+                }
+                text += decoder.decode();
+                const completed = text.split('\n').some(line => {
+                    if (!line.startsWith('data:')) return false;
+                    try { const event = JSON.parse(line.slice(5).trim()); return event.type === 'response.completed' && event.response?.status === 'completed'; }
+                    catch { return false; }
+                });
+                if (!completed) throw new Error('Incomplete Codex response');
+                controller.close();
+            } catch { await reader.cancel().catch(() => {}); controller.error(new Error('Codex stream incomplete or exceeded its bound')); }
+        },
+        cancel() { return reader.cancel(); },
+    });
+    return new Response(body, { status: response.status, headers: response.headers });
+}
 async function aggregateCodexStream(response) {
     if (!response.body) {
         throw new Error('Codex streaming response had no body');

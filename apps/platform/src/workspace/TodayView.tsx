@@ -158,7 +158,9 @@ export function TodayView({
         <span className="home-label">Home</span>
         <p className="home-date">{shortDate(new Date())}</p>
         <Heading>
-          {at ? (
+          {compact ? (
+            "Today"
+          ) : at ? (
             "A look back."
           ) : (
             <>
@@ -242,7 +244,12 @@ export function TodayView({
             ) : null;
           })}
 
-        {panels.includes("activity") && <ActivityCalendar />}
+        {panels.includes("activity") && (
+          <details className="calendar-glance">
+            <summary>Calendar</summary>
+            <ActivityCalendar />
+          </details>
+        )}
         {(panels.includes("work") || at) && (
           <section className="home-work-panel" aria-label="Your work">
             <div className="home-panel-heading">

@@ -612,3 +612,32 @@ fn private_procedure_drafts_preserve_lineage_without_becoming_approved_memory() 
         .model_procedure(&c, &run.id, "Late", "Denied after withdrawal")
         .is_err());
 }
+
+#[test]
+fn recovered_model_attempt_fences_old_calls_and_cannot_revive_cancelled_work() {
+    let mut f = F::new();
+    let mut ctx = f.ctx(0, 1);
+    let run =
+        f.k.begin_model(&ctx, &f.req("local", "recovery-fence"))
+            .unwrap();
+    f.k.claim_model(&ctx, &run.id).unwrap();
+    ctx.model_execution = Some((run.id.clone(), 1));
+    let resumed = f.k.recover_model(&ctx, &run.id, 1).unwrap();
+    assert_eq!(resumed.execution_epoch, 2);
+    assert!(f.k.model_input(&ctx, &run.id).is_err());
+    assert!(f
+        .k
+        .finish_model(&ctx, &run.id, "late old executor", false)
+        .is_err());
+    ctx.model_execution = Some((run.id.clone(), 2));
+    assert!(f.k.model_input(&ctx, &run.id).is_ok());
+    assert!(f.k.recover_model(&ctx, &run.id, 1).is_err());
+    assert!(f.k.interrupt_model_attempt(&ctx, &run.work_id, 1).is_err());
+    assert!(f.k.model_input(&ctx, &run.id).is_ok());
+    f.k.cancel(&ctx, &run.work_id).unwrap();
+    assert!(f.k.recover_model(&ctx, &run.id, 2).is_err());
+    assert!(f
+        .k
+        .finish_model(&ctx, &run.id, "late cancelled output", false)
+        .is_err());
+}

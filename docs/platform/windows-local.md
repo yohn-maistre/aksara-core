@@ -2,7 +2,8 @@
 
 31 October 2026, Asia/Bangkok. This increment keeps Rust authority, the PWA and
 Mastra together. It adds a native-process launcher, provider alternatives and a
-real first file/editor workflow. This is a **development distribution**, not
+real first file/editor workflow. Current durable execution and UI updates are in the
+[3 November checkpoint](resident-harness-implementation-2026-11-02.md). This is a **development distribution**, not
 production enrollment. The [resident checkpoint](resident-agent-implementation.md)
 adds background tools, working knowledge and bounded private native computer use.
 
@@ -152,10 +153,10 @@ do not rename those files to pretend they are CSV.
 
 ## Persistent assistant and appearance
 
-The blob now lives near the top of desktop navigation and in the phone dock.
+The persistent blob lives in desktop navigation and the phone floating controls.
 Expansion moved to the sidebar footer; the brand is an open triangle. Static/
-reduced-effects fallbacks retain a blob. The phone dock keeps Home, Library,
-Aksara, Channels and More; capabilities are still available through More.
+reduced-effects fallbacks retain a blob. On phones, Spaces opens Home, Library, Channels and capabilities. In chat it
+shares the composer row rather than occupying another bottom bar.
 
 Closing private conversation restores its origin route. When it changed from a
 shared channel to private, the host reauthorizes the previous channel before
@@ -163,10 +164,9 @@ rebuilding that route. Ineligible old content is not retained as a blur texture.
 Simultaneous independently scoped private/shared panes remain a later protocol
 increment. Browser drafts are not persisted as a workaround.
 
-Auto appearance uses local clock phases (07:00–18:00 light, otherwise dark), with
-explicit Light/Dark overrides. Simulation drives theme and procedural atmosphere
-together, without changing canonical/security time. This is a local clock, not
-measured weather or astronomical sunrise. The composer uses Base UI anchored
+Auto appearance now uses continuous solar height at a chosen approximate location,
+with a local-clock fallback and explicit Light/Dark overrides. Simulation drives theme and procedural atmosphere
+together, without changing canonical/security time. Chosen-location solar times are computed offline; optional weather is separate. The composer uses Base UI anchored
 popover semantics on desktop and a bounded modal sheet presentation on phones.
 
 ## Hermes, channels and integration brokers

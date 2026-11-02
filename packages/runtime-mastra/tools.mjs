@@ -5,11 +5,17 @@ import { z } from "zod";
  * tools cannot approve an effect, change scope or execute a host command. */
 export function residentTools(port, { local = false } = {}) {
   let calls = 0;
-  const execute = (fn) => async (args) => {
+  const execute = (fn) => async (args, context) => {
     if (++calls > 12) throw new Error("This run reached its tool budget.");
     try {
       await port.assertCurrent();
-      const result = await fn(args);
+      const result = port.journal
+        ? await port.journal(
+            context?.agent?.toolCallId,
+            { operation: fn.toString(), args },
+            () => fn(args),
+          )
+        : await fn(args);
       await port.assertCurrent();
       return result;
     } catch {
@@ -73,7 +79,7 @@ export function residentTools(port, { local = false } = {}) {
           delegate_task: createTool({
             id: "delegate_task",
             description:
-              "Start one background task with a self-contained brief in this exact workspace, using this same model connection and inherited source dependencies. Use for substantial work so you can keep talking with the person. Return promptly with its real work reference; do not claim it finished. One worker per turn and host; workers cannot spawn workers.",
+              "Start one background task with a self-contained brief in this exact workspace, using the host-configured task model on this same connection and inherited source dependencies. Use for substantial work so you can keep talking with the person. Return promptly with its real work reference; do not claim it finished. One worker per turn and host; workers cannot spawn workers.",
             inputSchema: z
               .object({ task: z.string().min(1).max(12000) })
               .strict(),

@@ -8,7 +8,9 @@ import {
   Sprout,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import WizardExpandable from "../components/ui/wizard-expandable";
+import { Dialog } from "@base-ui/react/dialog";
+import { X } from "lucide-react";
+import { Onboarding, ChoiceGroup } from "../components/ui/onboarding";
 import { PREVIEW } from "../transport";
 import { key, type Data } from "./shared";
 import { useWorkspace } from "./state";
@@ -17,6 +19,10 @@ import { ProviderKeyConnection } from "./ProviderKeyConnection";
 export function SetupView() {
   const {
     session,
+    privateLane,
+    lane,
+    setupOpen,
+    setSetupOpen,
     providers,
     setProviders,
     provider,
@@ -32,16 +38,16 @@ export function SetupView() {
     works,
     messages,
   } = useWorkspace();
-  const [step, setStep] = useState<string | null>("space"),
+  const [step, setStep] = useState<number>(1),
     [login, setLogin] = useState<Data | null>(null),
     [status, setStatus] = useState(""),
     [testId, setTestId] = useState("");
-  const [previewChoice, setPreviewChoice] = useState("local");
+  const [previewChoice, setPreviewChoice] = useState("codex-chatgpt");
   const choice = PREVIEW ? previewChoice : provider;
   const pending = useRef<Data | null>(null);
   pending.current = login;
   useEffect(() => {
-    if (!login || PREVIEW) return;
+    if (!login || PREVIEW || !setupOpen) return;
     let stopped = false;
     const timer = setInterval(
       async () => {
@@ -49,7 +55,15 @@ export function SetupView() {
           const result = await api("providers/codex/poll", {
             login_id: login.login_id,
           });
-          if (stopped || result.status !== "complete") return;
+          if (stopped) return;
+          if (result.status === "failed") {
+            setLogin(null);
+            setStatus(
+              "Sign-in did not complete. Try again or choose another connection.",
+            );
+            return;
+          }
+          if (result.status !== "complete") return;
           const connection = await api("providers/codex");
           if (stopped) return;
           setProviders((p: Data) => ({ ...p, codex: connection }));
@@ -73,7 +87,7 @@ export function SetupView() {
       stopped = true;
       clearInterval(timer);
     };
-  }, [login, api, session?.scope]);
+  }, [login, api, session?.scope, setupOpen]);
   useEffect(
     () => () => {
       const current = pending.current;
@@ -112,180 +126,164 @@ export function SetupView() {
     setProvider(value);
     setConsent(false);
     setStatus("");
+    setTestId("");
     setModel(modelsFor(providers, value)[0]?.id || "");
   };
+  const close = () => {
+    localStorage.setItem("aksara-onboarding-v2", "seen");
+    setSetupOpen(false);
+    if (login && !PREVIEW)
+      void api("providers/codex/cancel", { login_id: login.login_id }).catch(
+        () => {},
+      );
+    setLogin(null);
+  };
+  const connected =
+    choice === "local"
+      ? selectedModel.length > 0
+      : choice === "codex-chatgpt"
+        ? providers.codex?.connected
+        : providers.hosted?.[choice]?.connected;
   return (
-    <div className="setup-page">
-      <div className="page-heading">
-        <div>
-          <p className="eyebrow">Make yourself at home</p>
-          <h1>A place to think, together.</h1>
-          <p>
-            Choose your space and how Aksara answers. You can change these
-            choices later.
-          </p>
-        </div>
-        <button className="text-button" onClick={() => navigate("Today")}>
-          Set up later <ArrowUpRight size={15} />
-        </button>
-      </div>
-      {PREVIEW && (
-        <p className="notice">
-          This is a tour of setup. Sign-in, downloads and model calls are
-          disconnected in the hosted preview.
-        </p>
-      )}
-      <WizardExpandable
-        expanded
-        activeStep={step}
-        onActiveStepChange={setStep}
-        badgeText="Aksara setup"
-        className="setup-wizard"
-        canGoNext={step !== "model" || !!model}
-        onComplete={() => {
-          localStorage.setItem(
-            `aksara-setup:${session.profile.id}`,
-            "complete",
-          );
-          navigate("Today");
-        }}
-        completeLabel="Open my workspace"
-        steps={[
-          {
-            id: "space",
-            title: "Your space",
-            description: "A clear place to begin",
-            icon: Sprout,
-            content: (
-              <div className="setup-content">
-                <h2>This space belongs to you.</h2>
-                <p>
-                  {session.profile.mode === "personal"
-                    ? "Your personal database is separate from the community."
-                    : "Your private thread lives inside the community workspace. Shared channels have their own audience."}
+    <Dialog.Root
+      open={setupOpen}
+      onOpenChange={(open) => {
+        if (!open) close();
+      }}
+    >
+      <Dialog.Portal>
+        <Dialog.Backdrop className="setup-backdrop" />
+        <Dialog.Popup className="setup-dialog">
+          <header className="setup-dialog-header">
+            <span>
+              ∧ <span>Aksara</span>
+            </span>
+            <button
+              className="icon-button"
+              aria-label="Close model setup"
+              onClick={close}
+            >
+              <X size={19} />
+            </button>
+          </header>
+          <Onboarding
+            totalSteps={2}
+            value={step}
+            onValueChange={setStep}
+            onComplete={close}
+            className="setup-flow"
+          >
+            <div className="setup-dialog-body">
+              <Dialog.Title>
+                {step === 1
+                  ? "Make yourself at home."
+                  : "Let’s get your first reply."}
+              </Dialog.Title>
+              <Dialog.Description>
+                {step === 1
+                  ? "Connect a model, then start a conversation."
+                  : "Your connection stays on this host. Choose what to send."}
+              </Dialog.Description>
+              {PREVIEW && (
+                <p className="notice">
+                  Setup preview · Sign-in and model calls are disconnected.
                 </p>
-                <div className="setup-facts">
-                  <p>
-                    <LockKeyhole size={18} />
-                    Private means the current eligible audience, checked by the
-                    host.
-                  </p>
-                  <p>
-                    <Check size={18} />
-                    Aksara proposes changes. You review exact effects before
-                    execution.
-                  </p>
-                </div>
-                <button
-                  className="text-button"
-                  onClick={() => navigate("Settings")}
-                >
-                  Change personal or community space <ArrowUpRight size={14} />
-                </button>
-              </div>
-            ),
-          },
-          {
-            id: "model",
-            title: "How Aksara thinks",
-            description: "Local, keyless, or your subscription",
-            icon: Cpu,
-            content: (
-              <div className="setup-content">
-                <h2>Choose a model connection.</h2>
-                <div
-                  className="provider-choices"
-                  role="group"
-                  aria-label="Model connection"
+              )}
+              <p className="setup-context">
+                {privateLane
+                  ? "Only you"
+                  : `Shared reply in #${lane?.name || "this channel"}`}
+              </p>
+              <Onboarding.Step step={1}>
+                <ChoiceGroup
+                  name="Model connection"
+                  orientation="vertical"
+                  value={KEY_PROVIDERS.includes(choice) ? "other" : choice}
+                  onValueChange={(id) => choose(id === "other" ? "gemini" : id)}
+                  className="setup-choices"
                 >
                   {[
                     [
-                      "local",
-                      Cpu,
-                      "On this computer",
-                      "Offline after the model is installed.",
-                    ],
-                    [
-                      "opencode-free",
-                      Globe,
-                      "OpenCode",
-                      "Free chat requires its runtime; unavailable on this host.",
-                    ],
-                    [
                       "codex-chatgpt",
-                      KeyRound,
                       "ChatGPT subscription",
-                      "Connect your subscription through Mastra.",
+                      "Sign in with your account.",
                     ],
-                    ...KEY_PROVIDERS.map((id) => [
-                      id,
-                      KeyRound,
-                      providerName(id),
-                      "Bring your own key · account free tier or billing applies.",
-                    ]),
-                  ].map(([value, Icon, label, detail]) => {
-                    const Glyph = Icon as typeof Cpu;
-                    return (
-                      <button
-                        key={value as string}
-                        disabled={busy}
-                        aria-pressed={choice === value}
-                        onClick={() => choose(value as string)}
-                      >
-                        <Glyph size={20} />
-                        <span>
-                          <strong>{label as string}</strong>
-                          <small>{detail as string}</small>
-                        </span>
-                        {choice === value && <Check size={16} />}
-                      </button>
-                    );
-                  })}
-                </div>
+                    [
+                      "other",
+                      "Another connection",
+                      "Google AI Studio, Groq or OpenRouter.",
+                    ],
+                    [
+                      "local",
+                      "On this computer",
+                      "Use an installed local model.",
+                    ],
+                  ].map(([id, title, detail]) => (
+                    <ChoiceGroup.Item value={id} key={id}>
+                      <span className="setup-radio" />
+                      <span>
+                        <strong>{title}</strong>
+                        <small>{detail}</small>
+                      </span>
+                      <ArrowUpRight size={17} />
+                    </ChoiceGroup.Item>
+                  ))}
+                </ChoiceGroup>
+              </Onboarding.Step>
+              <Onboarding.Step step={2}>
                 {KEY_PROVIDERS.includes(choice) && (
-                  <ProviderKeyConnection id={choice} />
-                )}
-                {choice === "opencode-free" && (
-                  <p role="status">{providers.opencode?.notice}</p>
-                )}
-                {choice === "codex-chatgpt" && providers.codex?.connected && (
-                  <p role="status">
-                    {providers.codex.catalog_notice || providers.codex.notice}
-                  </p>
+                  <>
+                    <label className="setup-field">
+                      Connection
+                      <select
+                        aria-label="Setup provider"
+                        value={choice}
+                        disabled={PREVIEW}
+                        onChange={(e) => choose(e.target.value)}
+                      >
+                        {KEY_PROVIDERS.map((id) => (
+                          <option value={id} key={id}>
+                            {providerName(id)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <ProviderKeyConnection id={choice} />
+                  </>
                 )}
                 {choice === "codex-chatgpt" && (
-                  <section className="connection-controls">
-                    <h3>Connect this space to Codex via Mastra</h3>
+                  <section className="setup-connection">
+                    <h3>ChatGPT subscription</h3>
                     <p>
-                      OAuth and refresh tokens stay in this space’s encrypted
-                      host-side credential store. Aksara never asks you to paste
-                      a subscription token.
+                      {providers.codex?.connected
+                        ? "Sign-in saved. A completed reply confirms model access."
+                        : "Sign in on OpenAI’s page. You won’t need to copy a token."}
                     </p>
-                    <div className="actions">
+                    <div className="setup-actions">
+                      {!providers.codex?.connected && (
+                        <button
+                          className="primary"
+                          disabled={busy || PREVIEW || !!login}
+                          onClick={() =>
+                            void run(async () => {
+                              const result = await api(
+                                "providers/codex/login",
+                                {},
+                              );
+                              setLogin(result);
+                              setStatus("Finish sign-in on OpenAI’s page.");
+                            })
+                          }
+                        >
+                          Sign in with ChatGPT
+                        </button>
+                      )}
                       <button
-                        className="secondary"
+                        className="text-button"
                         disabled={busy || PREVIEW}
                         onClick={() => void run(inspectCodex)}
                       >
-                        Check Codex connection
-                      </button>
-                      <button
-                        className="primary"
-                        disabled={busy || PREVIEW || !!login}
-                        onClick={() =>
-                          void run(async () => {
-                            const result = await api(
-                              "providers/codex/login",
-                              {},
-                            );
-                            setLogin(result);
-                            setStatus(
-                              "Finish sign-in on OpenAI’s page, then check the connection.",
-                            );
-                          })
-                        }
-                      >
-                        Sign in with ChatGPT
+                        Refresh connection
                       </button>
                       {providers.codex?.connected && (
                         <button
@@ -299,7 +297,6 @@ export function SetupView() {
                                 codex: { connected: false, models: [] },
                               }));
                               setModel("");
-                              setStatus("Disconnected this space.");
                             })
                           }
                         >
@@ -309,80 +306,106 @@ export function SetupView() {
                     </div>
                     {login && (
                       <div className="device-code">
-                        <p>
-                          Enter this one-time code on OpenAI’s sign-in page:
-                        </p>
+                        <span>One-time device code</span>
                         <strong>{login.user_code}</strong>
                         <a
-                          className="text-button"
                           href={login.verification_url}
                           target="_blank"
                           rel="noreferrer"
                         >
-                          Open OpenAI sign-in <ArrowUpRight size={15} />
+                          Open OpenAI sign-in <ArrowUpRight size={14} />
                         </a>
-                        <p>
-                          If OpenAI asks, enable device-code sign-in in your
-                          ChatGPT security settings. A subscription is not an
-                          unrestricted API key.
-                        </p>
-                        <button
-                          className="text-button"
-                          onClick={() =>
-                            void run(async () => {
-                              await api("providers/codex/cancel", {
-                                login_id: login.login_id,
-                              });
-                              setLogin(null);
-                              setStatus("Sign-in cancelled.");
-                            })
-                          }
-                        >
-                          Cancel sign-in
-                        </button>
                       </div>
+                    )}
+                    {providers.codex?.connected && (
+                      <p className="setup-meta">
+                        {providers.codex.catalog_notice ||
+                          providers.codex.notice}
+                      </p>
                     )}
                   </section>
                 )}
-                {!PREVIEW &&
-                  choice === "local" &&
-                  !providers.local?.models?.length && (
-                    <p className="notice">
-                      No local model found.{" "}
-                      <button onClick={() => navigate("Settings")}>
-                        Download a model or connect your local server in
-                        Settings.
-                      </button>
-                    </p>
-                  )}
-                <label className="field-label">
+                {choice === "local" && !selectedModel.length && (
+                  <p>
+                    No installed model found.{" "}
+                    <button
+                      className="text-button"
+                      onClick={() => {
+                        close();
+                        navigate("Settings");
+                      }}
+                    >
+                      Open local model settings
+                    </button>
+                  </p>
+                )}
+                <label className="setup-field">
                   Model
                   <select
                     aria-label="Setup model"
                     value={model}
                     disabled={PREVIEW}
-                    onChange={(e) => setModel(e.target.value)}
+                    onChange={(e) => {
+                      setModel(e.target.value);
+                      setConsent(false);
+                      setTestId("");
+                    }}
                   >
                     <option value="">Choose a model</option>
-                    {(selectedModel || []).map((m: Data) => (
+                    {selectedModel.map((m: Data) => (
                       <option key={m.id} value={m.id}>
                         {m.name || m.id}
                       </option>
                     ))}
                   </select>
                 </label>
+                <details className="setup-advanced">
+                  <summary>Task model</summary>
+                  <p>
+                    For substantial delegated work, use another model on this
+                    same connection. Its account limits and costs apply.
+                  </p>
+                  <label className="setup-field">
+                    Background model
+                    <select
+                      aria-label="Background model"
+                      disabled={PREVIEW || busy}
+                      value={providers.worker_models?.[choice] || ""}
+                      onChange={(e) =>
+                        void run(async () => {
+                          const result = await api("providers/worker", {
+                            provider: choice,
+                            model: e.target.value,
+                          });
+                          setProviders((p: Data) => ({ ...p, ...result }));
+                        })
+                      }
+                    >
+                      <option value="">Same as the conversation</option>
+                      {selectedModel.map((m: Data) => (
+                        <option key={m.id} value={m.id}>
+                          {m.name || m.id}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </details>
                 {choice !== "local" && (
-                  <label className="consent">
+                  <label className="consent setup-consent">
                     <input
                       type="checkbox"
-                      disabled={PREVIEW}
                       checked={consent}
+                      disabled={PREVIEW}
                       onChange={(e) => setConsent(e.target.checked)}
                     />
-                    Allow this setup test prompt and earlier consented turns for
-                    this provider in this conversation to go to{" "}
-                    {providerName(choice)}. Subscription limits or hosted data
-                    terms apply. Library and local-only turns are excluded.
+                    <span>
+                      Send this test prompt and eligible earlier consented turns
+                      to {providerName(choice)}.
+                      <small>
+                        No Library sources or local-only turns. Provider terms
+                        and account limits apply.
+                      </small>
+                    </span>
                   </label>
                 )}
                 <button
@@ -391,8 +414,7 @@ export function SetupView() {
                     busy ||
                     PREVIEW ||
                     !model ||
-                    (KEY_PROVIDERS.includes(choice) &&
-                      !providers.hosted?.[choice]?.connected) ||
+                    !connected ||
                     (choice !== "local" && !consent)
                   }
                   onClick={() =>
@@ -407,58 +429,41 @@ export function SetupView() {
                       });
                       setTestId(result.run.work_id);
                       setConsent(false);
-                      setStatus(
-                        "Test turn admitted. Waiting for a canonical result…",
-                      );
+                      setStatus("Test sent. Waiting for a reply…");
                     })
                   }
                 >
                   Send a test message
                 </button>
-                {test && (
-                  <p role="status">
-                    {test.state === "COMPLETED"
-                      ? "The host accepted a model response. Your connection works."
-                      : test.state === "FAILED"
-                        ? testReply?.text ||
-                          "The test did not complete. No response details were recorded. Check the local server, then retry."
-                        : `Test status: ${test.state.toLowerCase()}`}
+                {(test || status) && (
+                  <p className="setup-status" role="status">
+                    {test?.state === "COMPLETED"
+                      ? "Reply received. Your connection works."
+                      : test?.state === "FAILED"
+                        ? test.display_safe_summary ||
+                          testReply?.text ||
+                          "No reply received. Retry when the host is available."
+                        : status}
                   </p>
                 )}
-                {status &&
-                  (!test ||
-                    !["COMPLETED", "FAILED", "CANCELLED"].includes(
-                      test.state,
-                    )) && (
-                    <p className="connection-status" role="status">
-                      {status}
-                    </p>
-                  )}
+              </Onboarding.Step>
+            </div>
+            <footer className="setup-dialog-footer">
+              <div>
+                <Onboarding.StepIndicator variant="dots" />
+                <small>{step === 1 ? "Connect" : "First reply"}</small>
               </div>
-            ),
-          },
-          {
-            id: "ready",
-            title: "Ready when you are",
-            description: "Start small; keep control",
-            icon: Check,
-            content: (
-              <div className="setup-content">
-                <h2>Your next thought can start on Today.</h2>
-                <p>
-                  Add a source, ask a question, or turn a reply into a document.
-                  Models answer as drafts. Tools, computers and public sharing
-                  each need their own authorized contracts.
-                </p>
-                <p>
-                  You can explore without a model connection and return to this
-                  setup any time.
-                </p>
-              </div>
-            ),
-          },
-        ]}
-      />
-    </div>
+              <button className="text-button" onClick={close}>
+                Explore first
+              </button>
+              <Onboarding.Navigation
+                completeLabel="Open workspace"
+                nextLabel="Continue"
+              />
+            </footer>
+          </Onboarding>
+        </Dialog.Popup>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }

@@ -18,9 +18,9 @@ an embedded Today composer and a scoped read-only resource-surface port. See the
 | Rust stays authoritative; evolve the existing alpha          | Schema 3 and new APIs; original effect, lineage and Pi regressions retained                                               |
 | One current product monorepo                                 | Core, first-party PWA, broker and adapters change together; independent social/hardware release boundaries retained       |
 | React/PWA first; fluid workspace direction                       | Implemented fluid workspace; core OpenDuet primitives retained where useful; no donor backend authority                                                     |
-| Mastra qualification, Pi preservation                        | Actual bounded Mastra model turn works; Pi durable retrieval remains tested; Mastra durable tool/recovery gate still open |
+| Mastra qualification, Pi preservation                        | Mastra durable agent with local checkpoints and fenced recovery; Pi retrieval remains tested |
 | Actual-read dependencies, eligibility before context         | Frozen input digest, conservative read union, source withdrawal tests across reply/follow-up                              |
-| Canonical work/messages outlive vendor cache                 | Rust persistence; at-most-one automatic provider invocation per claimed run; no automatic crash replay                    |
+| Canonical work/messages outlive vendor cache                 | Rust persistence; fenced crash recovery; completed tool replay; uncertain outcomes stop                    |
 | Personal custody differs from a private institutional thread | Separate one-person databases; explicit host/context switching                                                            |
 | Offline host differs from disconnected client                | Local host/model path works; shell-only PWA cache; no disconnected intent queue                                           |
 | Reviewed effects and public release are distinct             | Exact alpha approvals preserved; real SharingGrant/custodian policy and Ruara publication not enabled                     |
@@ -77,3 +77,9 @@ Aksara's voice is one shared prompt module across Mastra provider routes and the
 Codex API envelope: concise, warm, language-adaptive, willing to disagree, with
 context-sensitive wit. Conversational style remains separate from host authority
 and actual task status. [Voice and live evaluation cases](aksara-voice.md).
+
+3 November checkpoint: [durable Mastra and compact workspace](resident-harness-implementation-2026-11-02.md).
+One live Mastra workflow owner; no nested Pi/Mastra loop. Same-connection task
+model choice, fresh execution epochs, private snapshot projection and conservative
+tool uncertainty journal. First-run connection dialog and native-feeling phone
+chat are implemented. Decision-model port is advisory only; no Jev deployment.

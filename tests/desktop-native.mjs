@@ -1,3 +1,4 @@
+import { streamingCompletionFixture } from "./completion-fixture.mjs";
 /** Optional actual Vercel driver → native Aksara → Mastra → GUI fixture.
  * Run within a disposable signed-in desktop, with AKSARA_DESKTOP_BINARY set.
  * Model decisions are scripted; the native actions, journal and readback are real. */
@@ -33,6 +34,7 @@ const fixture = http.createServer((req, res) =>
   ),
 );
 const model = http.createServer(async (req, res) => {
+  streamingCompletionFixture(res);
   try {
     res.setHeader("content-type", "application/json");
     if (req.url === "/api/tags") {

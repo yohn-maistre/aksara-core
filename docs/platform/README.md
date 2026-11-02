@@ -1,6 +1,6 @@
-Current implementation: [resident tool loop and private procedure drafts](resident-agent-implementation.md),
+Current implementation: [durable Mastra harness and compact workspace](resident-harness-implementation-2026-11-02.md), plus [resident tool loop and private procedure drafts](resident-agent-implementation.md),
 plus [native local package, persistent assistant, providers and files](windows-local.md).
-Next direction: [2 November resident-colleague and compact-workspace assessment](resident-superagent-review-2026-11-02.md)
+Preceding research: [2 November resident-colleague and compact-workspace assessment](resident-superagent-review-2026-11-02.md)
 compares dsh-superagent, durable Mastra and Pi, and records the selected onboarding
 direction separately from implemented behavior.
 Earlier [expressive dock workspace](expressive-workspace-implementation.md) and
@@ -76,9 +76,9 @@ flowchart TD
   UI[React PWA · OpenDuet primitives] --> BFF[Workbench · HttpOnly session · context fence]
   BFF --> K[Rust authority · one writer per database]
   K --> DB[SQLite sources · work · messages · read sets · receipts]
-  BFF --> M[Mastra · bounded model turn · no computer tools]
+  BFF --> M[Mastra durable agent · task worker · scoped tools]
   M --> L[Local Ollama or llama.cpp]
-  M --> Z[Experimental OpenCode free · explicit prompt consent]
+  M --> Z[Codex or API-key connection · explicit consent]
   K --> D[Durable intent · approval · controller generation]
   D --> SIM[Independent Python device simulator]
   BFF --> T[Optional local Pocket TTS]
@@ -93,7 +93,11 @@ Keep Strata/Ruara's social system separate. Its membership and publication decis
 
 Schema 4 migrates existing schema 1/2/3 databases; it adds separate interactive/background admission and native computer journals. The earlier schema 3 increment It adds conversation runs/messages, frozen model inputs, lane labels, and WorkObject history. Existing source bytes, effect/receipt behavior and source lineage remain canonical.
 
-Each model run binds the current owner, lane revision, audience snapshot, purpose, policy epoch and WorkObject. A durable execution claim prevents duplicate delivery and host restart from automatically invoking the provider again. Interrupted work requires explicit interruption and a new user turn. This adapter does **not** claim Mastra crash recovery, live stream resumption or durable tool loops. Pi's existing checkpoint/replay qualification remains separate.
+Each model run binds the current owner, lane revision, audience, purpose, policy
+and WorkObject. Mastra checkpoints now support fenced crash recovery with fresh
+context checks and a tool journal. Uncertain delivery stops for inspection;
+provider requests may recur after a crash. See the [current recovery limits](resident-harness-implementation-2026-11-02.md).
+Pi's existing qualification remains separate.
 
 For local turns, the user selects up to eight eligible sources. Rust materializes the bounded conversational history and selected source bytes once, stores the exact input with its SHA-256, and records the conservative union of source dependencies of every included turn. Follow-ups inherit actual dependencies, independent of model-written citations. Before input delivery and before output commit, the kernel rechecks current context, active work and transitive source eligibility. Message reads apply current audience and source eligibility too. Withdrawal therefore blocks dependent replies before any later projection cleanup.
 
@@ -161,8 +165,8 @@ See [the full component coverage map](component-coverage.csv). Immediate next wo
 
 The fluid UI has a separate [current audit](fluid-ui-audit.md), including source
 attribution, keyboard/scoping checks and sample screenshots. Reopen provider
-setup from Settings → Set up Aksara. Local, OpenCode free and Codex subscription
-turns all use the Mastra Agent; see the integration review for the supported
+setup from Settings → Set up Aksara. Local, API-key and Codex subscription
+turns use the Mastra durable agent; direct keyless OpenCode is unavailable; see the integration review for the supported
 provider/workspace boundaries.
 
 ## Living workspace discussion

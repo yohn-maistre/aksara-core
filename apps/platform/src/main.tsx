@@ -20,6 +20,7 @@ import "./workspace.css";
 import "./atmosphere.css";
 import "./expressive.css";
 import "./open-workspace.css";
+import "./resident-workspace.css";
 import { motion, useReducedMotion } from "motion/react";
 import { Composer } from "./workspace/Composer";
 import { ConversationView } from "./workspace/ConversationView";
@@ -193,11 +194,10 @@ function App() {
                   {page === "Library" && <LibraryView />}
                   {page === "Tools" && <ToolsView />}
                   {page === "Settings" && <SettingsView />}
-                  {page === "Setup" && <SetupView />}
                 </Suspense>
               </div>
               <ScrollEdges selector=".surface-body" />
-              {!["Settings", "Setup"].includes(page) && (
+              {["Ask", "Conversation"].includes(page) && (
                 <div className="surface-composer">
                   <Composer />
                 </div>
@@ -217,6 +217,9 @@ function App() {
           />
         </main>
       </WorkspaceShell>
+      <Suspense fallback={null}>
+        <SetupView />
+      </Suspense>
       <WorkspaceOverlays />
     </SurfacePortProvider>
   );

@@ -91,8 +91,18 @@ export function ConversationView() {
                     : "Ask a question or work through an idea. Choose your model below."}
                 </Empty>
               )}
-              {messages.map((m) => (
-                <article key={m.seq} className={`message ${m.role}`}>
+              {messages.map((m, index) => (
+                <article
+                  key={m.seq}
+                  className={`message ${m.role}`}
+                  data-grouped={
+                    messages[index - 1]?.role === m.role &&
+                    messages[index - 1]?.run.kind === m.run.kind
+                  }
+                  aria-label={
+                    m.role === "assistant" ? "Aksara message" : "Member message"
+                  }
+                >
                   <span className="avatar">
                     {m.role === "assistant" ? (
                       <Sprout size={18} />
@@ -207,14 +217,14 @@ export function ConversationView() {
                       })
                     }
                   >
-                    Interrupt / recover
+                    Stop task
                   </button>
                 </div>
               )}
               {works[0]?.state === "FAILED" && (
                 <div className="notice" role="status">
-                  This turn was interrupted. Check your connection, then send a
-                  new turn.
+                  {works[0].display_safe_summary ||
+                    "This turn stopped. Check saved work and receipts before a new attempt."}
                 </div>
               )}
             </div>

@@ -32,6 +32,7 @@ function useWorkspaceState() {
   const [profiles, setProfiles] = useState<Profile[]>([]),
     [session, setSession] = useState<Session | null>(null),
     [page, setPage] = useState("Today"),
+    [setupOpen, setSetupOpen] = useState(false),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
     [mobile, setMobile] = useState(false),
@@ -160,6 +161,7 @@ function useWorkspaceState() {
     stopAudio();
     scope.current = s.scope;
     setSession(s);
+    setSetupOpen(!PREVIEW && !localStorage.getItem("aksara-onboarding-v2"));
     setWorks([]);
     setMessages([]);
     setTimeline([]);
@@ -481,6 +483,10 @@ function useWorkspaceState() {
     } else finish();
   };
   const navigate = (p: string) => {
+    if (p === "Setup") {
+      setSetupOpen(true);
+      return;
+    }
     if (p === "Ask" && page === "Ask") {
       closeAssistant();
       return;
@@ -544,6 +550,8 @@ function useWorkspaceState() {
     works,
     setWorks,
     messages,
+    setupOpen,
+    setSetupOpen,
     setMessages,
     timeline,
     pinnedReplies,

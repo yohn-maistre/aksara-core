@@ -5,6 +5,7 @@ import { ArrowUp, Plus } from "lucide-react";
 import { PREVIEW } from "../transport";
 
 import { type Data } from "./shared";
+import { MobileSpaces } from "./NavigationDock";
 import { useWorkspace } from "./state";
 import { KEY_PROVIDERS, modelsFor, providerName } from "./provider-options";
 
@@ -17,6 +18,7 @@ export function Composer({
 }) {
   const {
     composerInput,
+    page,
     session,
     busy,
     artifacts,
@@ -99,6 +101,7 @@ export function Composer({
           void send(e);
         }}
       >
+        {["Ask", "Conversation"].includes(page) && <MobileSpaces />}
         <Popover.Root
           open={optionsOpen}
           onOpenChange={setOptionsOpen}

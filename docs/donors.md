@@ -324,3 +324,20 @@ server or independent identity/ACL database is started.
 The requested sky, translucent objects and lilac identity override Taste v2's
 flat-fill/neutral-palette preferences. Its browser probes remain useful for
 layout and readability. See [current audit](platform/open-workspace-audit.md).
+
+## Durable resident and onboarding — 3 November 2026
+
+- Mastra source `d42a194c29b6ce75787a86e3b3bfdf51d976d2f3`, Apache-2.0:
+  installed core 1.80.0 durable-agent declarations/implementation and the actual
+  `stores/libsql` package, storage entry and workflow domain were inspected.
+  Exact dependency `@mastra/libsql` 1.27.1 supplies the local workflow store;
+  transitive LibSQL client retains its package license in release inventories.
+  Aksara supplies its own execution journal, credential reconstruction and Rust
+  attempt fences. No Mastra memory/identity store becomes authoritative.
+- Cult UI `d71b1428b811c2779d46ea41b7ef8c9f9c9991c2`, MIT:
+  `apps/www/registry/default/ui/onboarding.tsx` copied into platform UI with its
+  license header and `third_party/cult-ui/LICENSE`. Actual choice/step primitives
+  are used inside Base UI Dialog; demo timing and fake connection results omitted.
+- Muse/Grok Bot/Jev research references and transfer limits are recorded in the
+  [implementation checkpoint](platform/resident-harness-implementation-2026-11-02.md).
+  No commercial product source, Jev weights or additional agent harness installed.

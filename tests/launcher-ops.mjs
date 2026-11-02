@@ -1,3 +1,4 @@
+import { streamingCompletionFixture } from "./completion-fixture.mjs";
 /** Real native child startup/restart, custody, stop and CLI inference fixture. */
 import assert from "node:assert/strict";
 import { mkdtemp, rm } from "node:fs/promises";
@@ -25,6 +26,7 @@ const common = [
 ];
 let child;
 const model = http.createServer(async (req, res) => {
+  streamingCompletionFixture(res);
   if (req.url === "/api/tags") {
     res.setHeader("content-type", "application/json");
     res.end(JSON.stringify({ models: [{ name: "fixture" }] }));

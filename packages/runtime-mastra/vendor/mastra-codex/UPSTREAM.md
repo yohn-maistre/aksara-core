@@ -27,3 +27,10 @@ This qualifies request construction, not the user's live account entitlement.
 Account model discovery is original host code in `model-catalog.mjs`, based on
 the pinned Codex model protocol recorded in `docs/donors.md`. It does not import
 the donor's instructions, tool policies, client identity or credential storage.
+
+2 November durable-agent update: streaming callers retain bounded Responses SSE
+rather than receiving an aggregated JSON body. The transport requires an actual
+completed response; an incomplete stream fails. Ordinary non-streaming callers
+keep aggregation. Both paths preserve the 1 MiB bound, scoped credential port,
+no redirects and unsupported-field removal. Synthetic durable-stream tests do
+not establish live account access.
