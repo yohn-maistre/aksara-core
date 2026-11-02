@@ -1,5 +1,30 @@
 # Pinned donor ledger
 
+## Resident colleague study — 2 November 2026
+
+[Research and delivery recommendation](platform/resident-superagent-review-2026-11-02.md)
+records the comparison against the actual current product.
+
+- **dsh-superagent-prototype**, MIT, pinned
+  `6337fc823ce20251c8de8085948165c81aaa701e` (31 October): README, license,
+  philosophy/authorization/execution/deployment/architecture docs, intake,
+  executor restart/worker lifecycle, SQLite effects/store/outbox, main-session
+  settings tools, prompts and admission context inspected. Adopted as a design
+  reference for resident routing, scoped workers and quiet delivery; no source or
+  DeepSeek Harness dependency copied or installed. Its operator-user shell and
+  prompt-only human-request requirement on settings are not Aksara authority.
+- **Mastra 1.80.0**, existing dependency: installed durable-agent and storage
+  interfaces inspected alongside current official recovery docs. A new in-memory
+  wrapper probe completed two scripted model calls and one tool call. No disk,
+  crash recovery, live account inference or product-runtime migration qualified.
+- **Pi Durable** remains installed at 1.0.2. npm reports 1.5.0 published
+  2 November at 10:58:39 UTC; default-branch SHA checked:
+  `7b991fd96aee530b2ecfb5327f6c82d197f36395`. New release not installed or qualified.
+- **Cult UI**, existing reference checkout
+  `d71b1428b811c2779d46ea41b7ef8c9f9c9991c2`: headless onboarding, intro-disclosure
+  and wizard-expandable sources studied. Proposed reuse: step state/choice rows
+  inside Aksara's existing Base UI dialog, not a bulk import of tour dependencies.
+
 ## Provider compatibility and onboarding study — 1 November 2026
 
 - **OpenAI Codex**, Apache-2.0, studied at

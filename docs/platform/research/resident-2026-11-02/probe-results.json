@@ -1,0 +1,26 @@
+{
+  "scope": "Scripted model compatibility probe, not a crash-recovery, live-model, agent-capability or performance benchmark",
+  "mastra": {
+    "installed": "1.80.0",
+    "wrapper": "createDurableAgent",
+    "storage": "InMemoryStore",
+    "modelCalls": 2,
+    "toolCalls": 1,
+    "completed": true,
+    "crashRecoveryTested": false,
+    "hostedInference": false
+  },
+  "pi": {
+    "installed": "1.0.2",
+    "npmLatestChecked": "1.5.0",
+    "latestPublishedAt": "2026-11-02T10:58:39.550Z",
+    "upgraded": false
+  },
+  "dsh": {
+    "repository": "deepseek-ai/dsh-superagent-prototype",
+    "commit": "6337fc823ce20251c8de8085948165c81aaa701e",
+    "committedAt": "2026-10-31T20:05:39+08:00",
+    "license": "MIT",
+    "installed": false
+  }
+}

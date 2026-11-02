@@ -1,5 +1,8 @@
 Current implementation: [resident tool loop and private procedure drafts](resident-agent-implementation.md),
 plus [native local package, persistent assistant, providers and files](windows-local.md).
+Next direction: [2 November resident-colleague and compact-workspace assessment](resident-superagent-review-2026-11-02.md)
+compares dsh-superagent, durable Mastra and Pi, and records the selected onboarding
+direction separately from implemented behavior.
 Earlier [expressive dock workspace](expressive-workspace-implementation.md) and
 [Mastra integration review](mastra-integration-review.md) remain historical evidence.
 

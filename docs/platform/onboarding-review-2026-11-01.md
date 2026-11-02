@@ -1,5 +1,12 @@
 # Onboarding and workspace review
 
+2 November update: the user selected the first dialog direction and requested a
+more compact open Home plus a mobile alternative to the full bottom dock. The
+[resident colleague review](resident-superagent-review-2026-11-02.md#ui-direction-accepted-for-the-next-pass)
+specifies headless Cult onboarding inside Base UI, a sentence-like Home input,
+and labeled circular mobile navigation sharing the composer row. This selection
+does not claim those layout changes have shipped.
+
 Evidence: the user's four current desktop screenshots and the current React/BFF
 implementation. The local user server was closed; no connected live browser
 inspection or Surface Pro performance measurement was available. Generated design
