@@ -1,3 +1,5 @@
+Latest optional integration: [agentgateway, existing computers and S.Space shared-room study](gateway-and-shared-rooms-2026-11-03.md).
+
 Current implementation: [durable Mastra harness and compact workspace](resident-harness-implementation-2026-11-02.md), plus [resident tool loop and private procedure drafts](resident-agent-implementation.md),
 plus [native local package, persistent assistant, providers and files](windows-local.md).
 Preceding research: [2 November resident-colleague and compact-workspace assessment](resident-superagent-review-2026-11-02.md)

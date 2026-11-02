@@ -341,3 +341,20 @@ layout and readability. See [current audit](platform/open-workspace-audit.md).
 - Muse/Grok Bot/Jev research references and transfer limits are recorded in the
   [implementation checkpoint](platform/resident-harness-implementation-2026-11-02.md).
   No commercial product source, Jev weights or additional agent harness installed.
+
+## Optional gateway and S.Space study — 3 November 2026
+
+Agentgateway 1.7.0, Apache-2.0, commit
+`26f5aebe99a36a037fe54f8080a608aca5547e15`: actual `LICENSE`,
+`crates/agentgateway/src/types/local.rs` (gateway bind and normalization),
+`schema/config.md`, HTTP/unified/LLM/MCP examples and standalone auth docs read.
+Aksara's configuration is original; no upstream source is vendored. Optional
+Linux binary qualification verifies release SHA-256
+`1b2fc01a2de29ca113bbb6258b5cae7b1eb3c724071c09d687a449132f2f42f8`.
+The binary is temporary test tooling, not a bundled mandatory dependency.
+Bifrost and LiteLLM are compared candidates, not installed dependencies.
+
+S.Space public launch video was downloaded and sampled for interface research.
+Commercial video frames stay outside source/product assets. Visible Commons,
+owner attribution and task patterns inform a proposal, not an inferred backend.
+[Findings and deployment boundaries](platform/gateway-and-shared-rooms-2026-11-03.md).

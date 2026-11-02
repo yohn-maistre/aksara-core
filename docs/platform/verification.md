@@ -138,3 +138,20 @@ host/Mastra resident fixture covering tools, restart, a responsive front agent,
 delegated background work, saved artifacts and source withdrawal. Scripted
 model fixtures qualify mechanics; live conversational tone remains for human
 assessment on the chosen model. See [voice evaluation cases](aksara-voice.md).
+
+## 3 November 2026 checkpoint
+
+Durable Mastra and compact onboarding are qualified by 47 Node platform tests
+(46 pass; one optional real-Docker skip), three Pi tests, 24 real-host product
+browser checks, 27 disconnected-preview checks, eight preserved privacy/approval
+browser checks and 22 process-stress checks with 200 documents. Rust workspace
+tests, formatting and all-target Clippy pass. A real native-host kill/restart
+fixture resumes delegated work under epoch two and saves one artifact. Distinct
+worker-model routing and API-key exclusion from workflow SQLite are exercised.
+Inference is synthetic; no successful user-account ChatGPT call is asserted.
+
+An actual checksum-pinned agentgateway 1.7.0 binary passes local discovery,
+durable Mastra streaming, route/method and oversized-body rejection, private
+header removal, no retry on 503 and aggregate rate limiting. This qualifies a
+local-model relay, not remote MCP/A2A identity, production enrollment or fleet
+management. [Current behavior and limits](resident-harness-implementation-2026-11-02.md).

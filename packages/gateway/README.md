@@ -80,3 +80,10 @@ ACP and executable skills remain separate runtime ports. The Mastra Code ACP
 implementation is a source reference; its session IDs do not create Aksara
 rights. Bundled Pack manifests are descriptive, not executable skill installation
 or permission grants.
+
+## Optional network gateway
+
+An opt-in [agentgateway standalone profile](../../deploy/agentgateway/README.md)
+qualifies local model traffic through the same Mastra path. It does not turn the
+subject-bound stdio MCP server into a shared anonymous endpoint. Remote identity,
+per-call membership mapping, consent and safe delivery remain promotion gates.

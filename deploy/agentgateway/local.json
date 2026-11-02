@@ -1,0 +1,80 @@
+{
+  "config": {
+    "adminAddr": "off",
+    "statsAddr": "off",
+    "readinessAddr": "off",
+    "logging": {
+      "filter": "false",
+      "level": "warn"
+    }
+  },
+  "frontendPolicies": {
+    "http": {
+      "maxBufferSize": 65536
+    }
+  },
+  "gateways": {
+    "default": {
+      "port": 11435,
+      "bindAddress": "127.0.0.1",
+      "protocol": "HTTP"
+    }
+  },
+  "routes": [
+    {
+      "name": "local-model",
+      "matches": [
+        {
+          "path": {
+            "exact": "/v1/chat/completions"
+          },
+          "method": "POST"
+        },
+        {
+          "path": {
+            "exact": "/v1/models"
+          },
+          "method": "GET"
+        },
+        {
+          "path": {
+            "exact": "/api/tags"
+          },
+          "method": "GET"
+        }
+      ],
+      "policies": {
+        "requestHeaderModifier": {
+          "remove": [
+            "cookie",
+            "x-aksara-scope",
+            "x-aksara-model-run",
+            "x-aksara-model-epoch"
+          ]
+        },
+        "timeout": {
+          "requestTimeout": "180s",
+          "responseIdleTimeout": "60s"
+        },
+        "localRateLimit": [
+          {
+            "maxTokens": 60,
+            "tokensPerFill": 60,
+            "fillInterval": "60s"
+          }
+        ],
+        "buffer": {
+          "request": {
+            "maxBytes": 65536,
+            "failureMode": "failClosed"
+          }
+        }
+      },
+      "backends": [
+        {
+          "host": "127.0.0.1:11434"
+        }
+      ]
+    }
+  ]
+}

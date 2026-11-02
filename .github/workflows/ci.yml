@@ -68,6 +68,9 @@ jobs:
         run: |
           sudo apt-get install -y xvfb openbox at-spi2-core dbus-x11
           bash scripts/qualify_desktop.sh
+      - name: Optional agentgateway local-model transport
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: bash scripts/qualify_gateway.sh
       - name: Real-process stress on native architecture
         run: python3 scripts/stress.py --binary target/${{ matrix.target }}/release/aksarad --documents 200
       - name: Protected backend operational checks

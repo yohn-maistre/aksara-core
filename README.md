@@ -2,7 +2,7 @@
 
 A local-first AI workspace for people and teams. Talk with Aksara, send work to a background agent, and keep the resulting documents and knowledge in one place.
 
-**Development alpha.** [Try the interactive UI preview](https://aksara-core-preview.pages.dev) · [Run locally](docs/platform/windows-local.md) · [Implementation status](docs/platform/resident-agent-implementation.md)
+**Development alpha.** [Try the interactive UI preview](https://aksara-core-preview.pages.dev) · [Run locally](docs/platform/windows-local.md) · [Implementation status](docs/platform/resident-harness-implementation-2026-11-02.md)
 
 The hosted preview uses disposable sample data. Models, files on your computer, and the Rust backend are disconnected there. Run the local app to test the working platform.
 
@@ -62,8 +62,11 @@ npm run test:platform
 
 React renders the workspace. The Node workbench connects providers and tools. Mastra runs and checkpoints the agent loop; Rust and SQLite hold identity, scope, source custody, work, approvals, and effect receipts. UI state and agent output cannot grant authority.
 
-Original bytes are retained. Search, wiki, memory, and other indexes are projections over authorized sources. Local effects and receipts commit together; external actions record an intent before delivery, and uncertain outcomes remain uncertain until reconciled. Interrupted model and computer actions are not automatically replayed.
+Original bytes are retained. Search, wiki, memory, and other indexes are projections over authorized sources. Local effects and receipts commit together; external actions record an intent before delivery, and uncertain outcomes remain uncertain until reconciled. Recovery revalidates current authority; uncertain tool and computer delivery is never blindly repeated.
 
 This is a working foundation, with substantial seams still open: production identity and enrollment, isolated shared-channel computers, live Telegram/WhatsApp and Strata federation, fuller memory indexing, and physical hardware. The device SDK currently includes behavior simulators. Local data is not encrypted at rest against the host OS account. See the [component coverage](docs/platform/component-coverage.csv) and [decisions](docs/platform/decisions.md) for the full boundary.
+
+Optional [agentgateway deployment](deploy/agentgateway/README.md) provides a local-model
+relay without making a gateway or fleet agent a default dependency.
 
 Apache-2.0. Third-party components retain their own terms: [donor ledger](docs/donors.md), [NOTICE](NOTICE), and bundled licenses.
