@@ -104,17 +104,18 @@ jobs:
           $p = Start-Process $uninstaller.FullName -ArgumentList '/S' -PassThru -Wait
           if ($p.ExitCode -ne 0) { throw 'Desktop uninstall failed' }
           if (!(Test-Path "$env:AKSARA_DESKTOP_STATE/personal/state.sqlite")) { throw 'Uninstall removed user data' }
-      - name: Desktop installer checksum
+      - name: Stage desktop download and checksum
         shell: pwsh
         run: |
           $installer = Get-ChildItem apps/desktop/src-tauri/target/release/bundle/nsis/*-setup.exe | Select-Object -First 1
+          $downloadDir = 'dist/desktop-windows-x64'
+          New-Item -ItemType Directory -Path $downloadDir -Force | Out-Null
+          Copy-Item $installer.FullName $downloadDir
+          Copy-Item dist/windows-package-metrics.json $downloadDir
           $hash = (Get-FileHash $installer.FullName -Algorithm SHA256).Hash.ToLower()
-          "$hash  $($installer.Name)" | Out-File dist/SHA256SUMS-desktop.txt -Encoding ascii
+          "$hash  $($installer.Name)" | Out-File "$downloadDir/SHA256SUMS-desktop.txt" -Encoding ascii
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: aksara-desktop-windows-x64
-          path: |
-            apps/desktop/src-tauri/target/release/bundle/nsis/*-setup.exe
-            dist/SHA256SUMS-desktop.txt
-            dist/windows-package-metrics.json
+          path: dist/desktop-windows-x64/*
           retention-days: 30

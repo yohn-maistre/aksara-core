@@ -69,11 +69,13 @@ It does not install/copy the monorepo's frontend `node_modules`. CLI control
 commands also lazy-load the workbench only when starting it.
 
 The build writes `windows-package-metrics.json` with real file count, installed
-bytes and compressed archive bytes. The first Windows build measured **575 files / 135,360,932 installed bytes**
-(about 129 MiB), with a **48,992,133-byte portable ZIP** (about 47 MiB). Its NSIS
-installer was **33.38 MiB**; installation-path qualification was still being
-completed at that checkpoint. These are build measurements, not a Surface timing
-claim. A Linux compact-host probe measured 202
+bytes and compressed archive bytes. The [qualified Windows build](https://github.com/yohn-maistre/aksara-core/actions/runs/41652770430)
+measured **575 runtime files / 135,360,932 installed runtime bytes** (about 129 MiB),
+with a **48,992,135-byte portable ZIP** (about 47 MiB). Its NSIS installer was
+**33.38 MiB** and passed installed-host startup, authenticated shutdown and
+uninstall/data-retention checks. The desktop executable and its notices add to
+the installed runtime. These are build measurements, not a Surface timing claim.
+A Linux compact-host probe measured 202
 backend files / 29,915,903 bytes before PWA/Node/Windows binaries. That is not the
 final Windows installer size or a Surface installation-time measurement. Use the
 successful Windows artifact's metrics for the actual complete bundle.
