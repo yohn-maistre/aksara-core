@@ -25,12 +25,19 @@ fn desktop() {
             let window =
                 WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
                     .title("Aksara")
+                    .center()
                     .inner_size(1200.0, 820.0)
                     .min_inner_size(360.0, 520.0)
                     .on_navigation(move |url| {
-                        if matches!(url.scheme(), "tauri" | "asset")
-                            || (url.host_str() == Some("tauri.localhost")
-                                && url.path() == "/index.html")
+                        let bootstrap_origin = (url.scheme() == "tauri"
+                            && url.host_str() == Some("localhost"))
+                            || url.origin().ascii_serialization() == "http://tauri.localhost";
+                        if bootstrap_origin
+                            && url.port().is_none()
+                            && url.username().is_empty()
+                            && url.password().is_none()
+                            && url.query().is_none()
+                            && matches!(url.path(), "" | "/" | "/index.html")
                         {
                             return true;
                         }
@@ -115,6 +122,14 @@ fn start_workspace(
                 Ok(origin) => {
                     if let Ok(mut target) = allowed.lock() {
                         *target = Some(origin.clone());
+                    }
+                    // Restoring a hidden window must preserve its draft and scroll.
+                    if window
+                        .url()
+                        .ok()
+                        .is_some_and(|url| url.origin().ascii_serialization() == origin)
+                    {
+                        return;
                     }
                     if let Ok(url) = origin.parse() {
                         let _ = window.navigate(url);

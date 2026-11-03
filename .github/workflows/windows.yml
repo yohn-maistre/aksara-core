@@ -19,6 +19,13 @@ jobs:
           node-version: '24.19.0'
       - name: Rust toolchain
         run: rustup toolchain install 1.99.0 --profile minimal
+      - name: Cache Rust build dependencies
+        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          workspaces: |
+            . -> target
+            apps/desktop/src-tauri -> target
+          cache-on-failure: true
       - name: Build and qualify authority
         run: |
           cargo test --locked --workspace
@@ -56,6 +63,14 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           & "$bundle/bin/node.exe" tests/resident-agent.mjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: aksara-windows-x64
+          path: |
+            dist/aksara-windows-x64.zip
+            dist/SHA256SUMS-windows.txt
+            dist/windows-package-metrics.json
+          retention-days: 30
       - name: Build Tauri 2 desktop installer
         shell: pwsh
         run: |
@@ -71,11 +86,18 @@ jobs:
         shell: pwsh
         run: |
           $installer = Get-ChildItem apps/desktop/src-tauri/target/release/bundle/nsis/*-setup.exe | Select-Object -First 1
-          $installDir = "$env:RUNNER_TEMP/Aksara Desktop ü"
-          $p = Start-Process $installer.FullName -ArgumentList '/S', "/D=$installDir" -PassThru -Wait
+          $installDir = Join-Path $env:RUNNER_TEMP 'Aksara Desktop ü'
+          $p = Start-Process -FilePath $installer.FullName -ArgumentList "/S /D=$installDir" -PassThru -Wait
           if ($p.ExitCode -ne 0) { throw 'Desktop install failed' }
           $env:AKSARA_DESKTOP_STATE = "$env:RUNNER_TEMP/Aksara Desktop State ü"
-          $p = Start-Process "$installDir/aksara-desktop.exe" -ArgumentList '--smoke-test' -PassThru -Wait
+          $installedExe = Join-Path $installDir 'aksara-desktop.exe'
+          if (!(Test-Path $installedExe)) {
+            foreach ($candidate in @($installDir, "$env:LOCALAPPDATA/Aksara", "$env:LOCALAPPDATA/Programs/Aksara")) {
+              if (Test-Path $candidate) { Get-ChildItem $candidate | Select-Object Name, FullName }
+            }
+            throw 'Installer did not write its executable to the requested directory'
+          }
+          $p = Start-Process $installedExe -ArgumentList '--smoke-test' -PassThru -Wait
           if ($p.ExitCode -ne 0) { throw 'Installed native host lifecycle failed' }
           if (!(Test-Path "$env:AKSARA_DESKTOP_STATE/personal/state.sqlite")) { throw 'Desktop did not initialize separate user data' }
           $uninstaller = Get-ChildItem "$installDir/*uninstall*.exe" | Select-Object -First 1
@@ -94,13 +116,5 @@ jobs:
           path: |
             apps/desktop/src-tauri/target/release/bundle/nsis/*-setup.exe
             dist/SHA256SUMS-desktop.txt
-            dist/windows-package-metrics.json
-          retention-days: 30
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: aksara-windows-x64
-          path: |
-            dist/aksara-windows-x64.zip
-            dist/SHA256SUMS-windows.txt
             dist/windows-package-metrics.json
           retention-days: 30

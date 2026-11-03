@@ -12,6 +12,7 @@ and download `aksara-desktop-windows-x64`. GitHub wraps artifacts in a ZIP, but
 this one contains a setup EXE, checksum and small size report. Extract those few
 files, then run `Aksara_0.2.0_x64-setup.exe` (the exact name is shown in the artifact).
 The installer writes the compact runtime itself and creates a Start Menu entry.
+Its default app directory is `%LOCALAPPDATA%\Programs\Aksara`, separate from data.
 You do not need to extract a tree of frontend source dependencies.
 
 The installer is per-user. Its default WebView2 mode uses an existing system
@@ -68,10 +69,25 @@ It does not install/copy the monorepo's frontend `node_modules`. CLI control
 commands also lazy-load the workbench only when starting it.
 
 The build writes `windows-package-metrics.json` with real file count, installed
-bytes and compressed archive bytes. A Linux compact-host probe measured 202
+bytes and compressed archive bytes. The first Windows build measured **575 files / 135,360,932 installed bytes**
+(about 129 MiB), with a **48,992,133-byte portable ZIP** (about 47 MiB). Its NSIS
+installer was **33.38 MiB**; installation-path qualification was still being
+completed at that checkpoint. These are build measurements, not a Surface timing
+claim. A Linux compact-host probe measured 202
 backend files / 29,915,903 bytes before PWA/Node/Windows binaries. That is not the
 final Windows installer size or a Surface installation-time measurement. Use the
 successful Windows artifact's metrics for the actual complete bundle.
+
+## Android and future shells
+
+Tauri 2 supports Android as well as desktop, so a thin Android client can reuse
+the web UI and potentially the same shell tooling. The Windows Node host and tray
+are not an Android port. First qualify connection/enrollment, keyboard, files,
+OAuth return, lifecycle and memory on a phone. Capacitor remains a practical
+web-first fallback with mobile plugins; adding it is not automatically necessary.
+Expo supports DOM/WebView reuse too, but a further native runtime is justified
+only by concrete capture, notification or native-screen needs. No Android APK or
+Expo rewrite is claimed in this desktop increment.
 
 ## Hosted preview and connectors
 
