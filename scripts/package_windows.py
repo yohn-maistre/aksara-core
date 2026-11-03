@@ -10,7 +10,6 @@ import tempfile
 import zipfile
 import tarfile
 import urllib.request
-from collect_npm_notices import collect
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -20,6 +19,7 @@ def main():
     parser.add_argument('--binary', type=Path, required=True)
     parser.add_argument('--node', type=Path, required=True)
     parser.add_argument('--output', type=Path, default=ROOT / 'dist')
+    parser.add_argument('--keep-directory', action='store_true', help='Keep the compact runtime directory for the desktop installer')
     args = parser.parse_args()
     for file in [args.binary, args.node, args.node.parent / 'LICENSE', ROOT / 'apps/platform/dist/index.html']:
         if not file.is_file():
@@ -28,24 +28,14 @@ def main():
         parser.error('the bundled Node runtime must be 24.19.0')
     args.output.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='aksara-windows-') as temporary:
-        stage = Path(temporary) / 'install'
         bundle = Path(temporary) / 'aksara-windows-x64'
-        stage.mkdir()
-        for name in ['package.json', 'package-lock.json']:
-            shutil.copy2(ROOT / name, stage / name)
-        # npm creates workspace junctions. Populate their targets before they
-        # are materialized into the ZIP; manifest-only targets omit runtime code.
-        shutil.copytree(ROOT / 'packages', stage / 'packages', ignore=shutil.ignore_patterns('node_modules', '*.test.mjs', '__pycache__'))
-        (stage / 'apps/platform').mkdir(parents=True)
-        shutil.copy2(ROOT / 'apps/platform/package.json', stage / 'apps/platform/package.json')
-        npm = shutil.which('npm.cmd')
-        if not npm:
-            parser.error('assemble this bundle on Windows with npm installed')
-        subprocess.run([npm, 'ci', '--omit=dev', '--no-audit', '--no-fund'], cwd=stage, check=True)
-        bundle.mkdir()
-        for name in ['packages', 'packs', 'python', 'third_party']:
-            shutil.copytree(ROOT / name, bundle / name, ignore=shutil.ignore_patterns('node_modules', '*.test.mjs', '__pycache__'))
-        collect(bundle / 'third_party/npm')
+        # Bundle only reachable backend code. The PWA is already compiled;
+        # copying frontend node_modules made the old archive needlessly large.
+        subprocess.run([str(args.node), str(ROOT / 'scripts/build_host.mjs'), str(bundle)],
+                       cwd=ROOT, check=True)
+        for name in ['packs', 'python', 'third_party']:
+            shutil.copytree(ROOT / name, bundle / name, dirs_exist_ok=True,
+                            ignore=shutil.ignore_patterns('node_modules', '*.test.mjs', '__pycache__'))
         metadata = json.loads(subprocess.check_output(['cargo', 'metadata', '--locked', '--format-version', '1', '--filter-platform', 'x86_64-pc-windows-msvc'], cwd=ROOT))
         licenses = bundle / 'third_party/rust'
         licenses.mkdir()
@@ -65,12 +55,8 @@ def main():
                     shutil.copy2(file, destination / file.name)
             records.append({'name': package['name'], 'version': package['version'], 'license': package['license'], 'repository': package.get('repository')})
         (licenses / 'inventory.json').write_text(json.dumps(records, indent=2))
-        # Workspace links are materialized: Windows ZIP extraction needs no symlink privilege.
-        shutil.copytree(stage / 'node_modules', bundle / 'node_modules', symlinks=False)
         shutil.copytree(ROOT / 'apps/platform/dist', bundle / 'apps/platform/dist')
-        (bundle / 'scripts').mkdir()
-        for name in ['aksara.mjs', 'device_simulator.py']:
-            shutil.copy2(ROOT / 'scripts' / name, bundle / 'scripts' / name)
+        shutil.copy2(ROOT / 'scripts/device_simulator.py', bundle / 'scripts/device_simulator.py')
         for name in ['LICENSE', 'NOTICE', 'package.json']:
             shutil.copy2(ROOT / name, bundle / name)
         (bundle / 'bin').mkdir()
@@ -93,7 +79,7 @@ def main():
             parser.error('native desktop binary version mismatch')
         (bundle / 'aksara.cmd').write_text('@echo off\r\n"%~dp0bin\\node.exe" --use-env-proxy "%~dp0scripts\\aksara.mjs" %*\r\n', newline='')
         (bundle / 'README-WINDOWS.txt').write_text(
-            'Aksara native Windows development bundle\n\n'
+            'Aksara compact Windows development bundle\n\n'
             'Extract the entire ZIP. In PowerShell: .\\aksara.cmd setup\n'
             'Keep that terminal open. The browser uses http://127.0.0.1:7341.\n'
             'Diagnostics: .\\aksara.cmd doctor --json\n'
@@ -116,9 +102,18 @@ def main():
             for file in sorted(bundle.rglob('*')):
                 if file.is_file():
                     archive.write(file, file.relative_to(bundle.parent))
+        files = [p for p in bundle.rglob('*') if p.is_file()]
+        metrics = {'files': len(files), 'uncompressed_bytes': sum(p.stat().st_size for p in files),
+                   'archive_bytes': target.stat().st_size}
+        (args.output / 'windows-package-metrics.json').write_text(json.dumps(metrics, indent=2) + '\n')
+        if args.keep_directory:
+            destination = args.output / bundle.name
+            if destination.exists():
+                shutil.rmtree(destination)
+            shutil.copytree(bundle, destination)
         digest = hashlib.sha256(target.read_bytes()).hexdigest()
         (args.output / 'SHA256SUMS-windows.txt').write_text(f'{digest}  {target.name}\n')
-        print(json.dumps({'archive': str(target), 'sha256': digest}))
+        print(json.dumps({'archive': str(target), 'sha256': digest, **metrics}))
 
 
 if __name__ == '__main__':

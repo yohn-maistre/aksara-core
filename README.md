@@ -8,23 +8,15 @@ The hosted preview uses disposable sample data. Models, files on your computer, 
 
 ## Run on Windows
 
-Download `aksara-windows-x64` from a **successful** [Windows build](https://github.com/yohn-maistre/aksara-core/actions/workflows/windows.yml), extract the complete ZIP, and run this in PowerShell from its folder:
+Download `aksara-desktop-windows-x64` from a **successful** [Windows build](https://github.com/yohn-maistre/aksara-core/actions/workflows/windows.yml). Extract its setup EXE and run it, then open **Aksara** from Start. The Tauri 2 app uses the system WebView2 runtime and keeps working from the tray.
+
+[Desktop installation and data](docs/platform/desktop-installation.md). The smaller `aksara-windows-x64` portable bundle remains available for terminal/browser use:
 
 ```powershell
 .\aksara.cmd setup
 ```
 
-Keep the terminal open and visit **http://127.0.0.1:7341**. The bundle includes Node and the Rust host; the baseline needs no Docker, WSL, Python, or compiler. Models and optional voice services are separate downloads. The unsigned bundle is tested on Windows CI; performance on older Surface hardware still needs testing.
-
-Choose a development identity, then follow model setup. The identity chooser is a local testing aid, not production authentication.
-
-```powershell
-.\aksara.cmd doctor --json
-.\aksara.cmd chat "Hello"
-.\aksara.cmd stop
-```
-
-[Setup, data locations, backups, and troubleshooting](docs/platform/windows-local.md)
+User data stays in `%LOCALAPPDATA%\Aksara`, separate from app files. This is a development distribution with a local identity chooser, not production enrollment. Connect a model in onboarding before chatting.
 
 ## What you can test
 

@@ -1,0 +1,24 @@
+[package]
+name = "aksara-desktop"
+version = "0.2.0"
+edition = "2021"
+rust-version = "1.99"
+license = "Apache-2.0"
+
+# A desktop toolchain must not become a requirement for kernel/ARM builds.
+[workspace]
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[target.'cfg(windows)'.dependencies]
+tauri = { version = "=2.12.5", default-features = false, features = ["wry", "compression", "tray-icon", "common-controls-v6", "custom-protocol"] }
+
+[build-dependencies]
+tauri-build = "=2.7.4"
+
+[profile.release]
+strip = true
+lto = "thin"
+codegen-units = 1

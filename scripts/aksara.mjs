@@ -18,7 +18,6 @@ import { execFile, spawn } from "node:child_process";
 import { promisify } from "node:util";
 import { randomBytes, timingSafeEqual } from "node:crypto";
 import http from "node:http";
-import { createWorkbench } from "../packages/workbench/server.mjs";
 const exec = promisify(execFile);
 const root = path.resolve(fileURLToPath(new URL("..", import.meta.url)));
 const { values, positionals } = parseArgs({
@@ -298,6 +297,7 @@ async function start() {
     }
     if (stopping) throw new Error("Startup interrupted");
     startupStage = "workbench";
+    const { createWorkbench } = await import("../packages/workbench/server.mjs");
     app = await createWorkbench({
       profiles,
       port,

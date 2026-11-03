@@ -358,3 +358,25 @@ S.Space public launch video was downloaded and sampled for interface research.
 Commercial video frames stay outside source/product assets. Visible Commons,
 owner attribution and task patterns inform a proposal, not an inferred backend.
 [Findings and deployment boundaries](platform/gateway-and-shared-rooms-2026-11-03.md).
+
+## Compact Windows distribution and Tauri 2 — 3 November 2026
+
+- Tauri core **2.12.5**, tauri-build **2.7.4**, CLI **2.12.4**, MIT OR Apache-2.0.
+  Published crate sources `src/webview/{mod,webview_window}.rs` navigation/new-window
+  and close APIs, native menu/tray declarations, manifest and license texts inspected.
+  Current official Windows installer, configuration and capability docs read.
+  Used as a native wrapper, NSIS bundler and system WebView2 host; no remote-source
+  capabilities or generic shell/filesystem IPC enabled. A separate Cargo lockfile
+  pins the desktop dependency tree; complete available Rust license texts and
+  inventory are aggregated into the installed runtime's third_party/desktop.
+- **esbuild 0.28.2**, MIT, Evan Wallace: installed package API, build/metafile/plugin
+  interfaces and LICENSE.md inspected. Existing Vite dependency now explicitly
+  pinned as build tooling for compact backend bundles. Source-relative URLs are
+  rebased for relocatable assets; native LibSQL/WASM package closures stay external.
+  Reachable npm package license texts and inventory are retained in compact files.
+- Node **24.19.0** remains the bundled runtime, with its original license and
+  signature. Current Node 24 SEA documentation was checked: no Node 26 VFS/SEA
+  feature is assumed available and no executable is patched into a SEA.
+
+The native icon reuses Aksara's own existing PWA icon through Tauri's build-time
+icon converter. No new third-party product assets or desktop source blocks copied.

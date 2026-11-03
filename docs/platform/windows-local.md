@@ -1,5 +1,9 @@
 # Native local development and Surface package
 
+**Latest packaging:** [Tauri 2 installer and compact portable runtime](desktop-installation.md).
+The desktop setup EXE is the easier Windows path; the CLI instructions below
+remain available.
+
 31 October 2026, Asia/Bangkok. This increment keeps Rust authority, the PWA and
 Mastra together. It adds a native-process launcher, provider alternatives and a
 real first file/editor workflow. Current durable execution and UI updates are in the

@@ -1,3 +1,5 @@
+Windows packaging update: [Tauri 2 installer and compact local host](desktop-installation.md).
+
 Latest optional integration: [agentgateway, existing computers and S.Space shared-room study](gateway-and-shared-rooms-2026-11-03.md).
 
 Current implementation: [durable Mastra harness and compact workspace](resident-harness-implementation-2026-11-02.md), plus [resident tool loop and private procedure drafts](resident-agent-implementation.md),

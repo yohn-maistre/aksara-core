@@ -83,3 +83,10 @@ One live Mastra workflow owner; no nested Pi/Mastra loop. Same-connection task
 model choice, fresh execution epochs, private snapshot projection and conservative
 tool uncertainty journal. First-run connection dialog and native-feeling phone
 chat are implemented. Decision-model port is advisory only; no Jev deployment.
+
+3 November packaging increment: [Tauri 2 desktop](desktop-installation.md) wraps
+one local host without moving authority into native IPC. Bundle reachable backend
+code instead of shipping frontend dependency sources; keep native SQLite outside
+the JS bundle. Per-user installation and tray controls do not imply PC/fleet
+management. The static preview stays disconnected pending explicit pairing or a
+qualified remote host. Desktop build dependencies remain outside the kernel workspace.

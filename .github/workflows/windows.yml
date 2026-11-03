@@ -11,7 +11,7 @@ concurrency:
 jobs:
   portable:
     runs-on: windows-2022
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
@@ -43,7 +43,7 @@ jobs:
         shell: pwsh
         run: |
           $nodeExe = (Get-Command node).Source
-          python scripts/package_windows.py --binary target/release/aksarad.exe --node "$nodeExe"
+          python scripts/package_windows.py --binary target/release/aksarad.exe --node "$nodeExe" --keep-directory
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Verify extracted bundle without source dependencies
         shell: pwsh
@@ -56,10 +56,51 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           & "$bundle/bin/node.exe" tests/resident-agent.mjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Build Tauri 2 desktop installer
+        shell: pwsh
+        run: |
+          cargo test --locked --manifest-path apps/desktop/src-tauri/Cargo.toml
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cargo clippy --locked --manifest-path apps/desktop/src-tauri/Cargo.toml --all-targets -- -D warnings
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python scripts/collect_desktop_notices.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm run desktop:build
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify installed desktop host and retain user data on uninstall
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem apps/desktop/src-tauri/target/release/bundle/nsis/*-setup.exe | Select-Object -First 1
+          $installDir = "$env:RUNNER_TEMP/Aksara Desktop ü"
+          $p = Start-Process $installer.FullName -ArgumentList '/S', "/D=$installDir" -PassThru -Wait
+          if ($p.ExitCode -ne 0) { throw 'Desktop install failed' }
+          $env:AKSARA_DESKTOP_STATE = "$env:RUNNER_TEMP/Aksara Desktop State ü"
+          $p = Start-Process "$installDir/aksara-desktop.exe" -ArgumentList '--smoke-test' -PassThru -Wait
+          if ($p.ExitCode -ne 0) { throw 'Installed native host lifecycle failed' }
+          if (!(Test-Path "$env:AKSARA_DESKTOP_STATE/personal/state.sqlite")) { throw 'Desktop did not initialize separate user data' }
+          $uninstaller = Get-ChildItem "$installDir/*uninstall*.exe" | Select-Object -First 1
+          $p = Start-Process $uninstaller.FullName -ArgumentList '/S' -PassThru -Wait
+          if ($p.ExitCode -ne 0) { throw 'Desktop uninstall failed' }
+          if (!(Test-Path "$env:AKSARA_DESKTOP_STATE/personal/state.sqlite")) { throw 'Uninstall removed user data' }
+      - name: Desktop installer checksum
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem apps/desktop/src-tauri/target/release/bundle/nsis/*-setup.exe | Select-Object -First 1
+          $hash = (Get-FileHash $installer.FullName -Algorithm SHA256).Hash.ToLower()
+          "$hash  $($installer.Name)" | Out-File dist/SHA256SUMS-desktop.txt -Encoding ascii
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: aksara-desktop-windows-x64
+          path: |
+            apps/desktop/src-tauri/target/release/bundle/nsis/*-setup.exe
+            dist/SHA256SUMS-desktop.txt
+            dist/windows-package-metrics.json
+          retention-days: 30
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: aksara-windows-x64
           path: |
             dist/aksara-windows-x64.zip
             dist/SHA256SUMS-windows.txt
+            dist/windows-package-metrics.json
           retention-days: 30
