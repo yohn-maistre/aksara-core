@@ -380,3 +380,20 @@ owner attribution and task patterns inform a proposal, not an inferred backend.
 
 The native icon reuses Aksara's own existing PWA icon through Tauri's build-time
 icon converter. No new third-party product assets or desktop source blocks copied.
+
+## Impeccable review and editor research — 4 November 2026
+
+Impeccable **4.8.0**, Apache-2.0, `pbakaus/impeccable`
+`f864521bbb1c9350e8f6cf7742c139a04a1020af`: upstream Hermes-native SKILL,
+launcher/checksum verification, critique, init, Operate and craft-floor guidance
+read. The verified engine **0.1.18** ran outside the product. Two isolated design
+and detector assessments were used; no live overlay or Surface performance claim.
+No Impeccable source/runtime is added to the application package.
+
+The [editor and workspace review](design/editor-workspace-review-2026-11-04.md)
+records GitHub star snapshots, actual license boundaries, proposed reusable
+components and excluded projects. Plate OSS, Tiptap core, Lexical, Editor.js,
+Milkdown, Excalidraw and complete-app alternatives are research candidates only;
+no editor dependency or donor implementation is installed/copied by this pass.
+Generated concept images are fictional UI proposals, not reference-product assets
+or screenshots of implemented behavior.
