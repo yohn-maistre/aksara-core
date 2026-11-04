@@ -31,6 +31,7 @@ const { values, positionals } = parseArgs({
     background: { type: "boolean", default: false },
     open: { type: "boolean", default: false },
     json: { type: "boolean", default: false },
+    "startup-diagnostics": { type: "boolean", default: false },
     profile: { type: "string", default: "personal" },
     provider: { type: "string", default: "local" },
     model: { type: "string" },
@@ -66,13 +67,25 @@ const problem = (message) =>
   Object.assign(new Error(message), { publicMessage: message });
 const childEnv = { ...process.env };
 let startupStage = "command";
+// The desktop consumes only this bounded, non-sensitive stage/code protocol.
+// Its window can close while the host keeps running; a closed diagnostic pipe
+// must not terminate the resident host on a later stderr write.
+if (values["startup-diagnostics"]) process.stderr.on("error", () => {});
+function stage(name, code) {
+  startupStage = name;
+  if (values["startup-diagnostics"])
+    console.error(
+      "AKSARA_STARTUP " +
+        JSON.stringify({ stage: name, ...(code ? { code } : {}) }),
+    );
+}
 delete childEnv.AKSARA_FAULT;
 delete childEnv.AKSARA_PI_FAULT;
 async function secureDirectory() {
-  startupStage = "state directory";
+  stage("state directory");
   await mkdir(state, { recursive: true, mode: 0o700 });
   if (process.platform === "win32") {
-    startupStage = "Windows owner identity";
+    stage("Windows owner identity");
     const { stdout } = await exec(
       "powershell.exe",
       [
@@ -86,7 +99,7 @@ async function secureDirectory() {
     const sid = stdout.trim();
     if (!/^S-1-\d+(?:-\d+)+$/.test(sid))
       throw new Error("Cannot establish Windows owner ACL");
-    startupStage = "Windows owner ACL";
+    stage("Windows owner ACL");
     await exec(
       "icacls.exe",
       [state, "/inheritance:r", "/grant:r", `*${sid}:(OI)(CI)F`],
@@ -119,7 +132,7 @@ async function control(action) {
   return r.json();
 }
 async function init(folder, args) {
-  startupStage = `initialize ${path.basename(folder)} custody`;
+  stage(`initialize ${path.basename(folder)} custody`);
   await mkdir(folder, { recursive: true, mode: 0o700 });
   const db = path.join(folder, "state.sqlite"),
     identity = path.join(folder, "identity.json");
@@ -147,16 +160,22 @@ async function start() {
     [base, base + 1, base + 3].includes(port)
   )
     throw new Error("Choose non-overlapping valid loopback ports");
+  stage("authority binary");
   await access(binary);
-  startupStage = "PWA bundle";
+  stage("PWA bundle");
   await access(path.join(root, "apps/platform/dist/index.html"));
   await secureDirectory();
-  startupStage = "instance ownership";
+  stage("instance ownership");
   try {
     const lock = JSON.parse(await readFile(lockPath, "utf8"));
     try {
       process.kill(lock.pid, 0);
-      throw new Error("An Aksara instance owns this state directory");
+      throw Object.assign(
+        problem(
+          "An Aksara instance owns this state directory. Stop the existing host before starting another.",
+        ),
+        { code: "INSTANCE_OWNED" },
+      );
     } catch (e) {
       if (e.code !== "ESRCH") throw e;
     }
@@ -251,7 +270,7 @@ async function start() {
             l.lane.audience[0] === person.principal.id,
         ).lane.id;
       const kernel = `http://127.0.0.1:${servicePort}`;
-      startupStage = `start ${mode} authority`;
+      stage(`start ${mode} authority`);
       launch(
         binary,
         [
@@ -296,13 +315,15 @@ async function start() {
       });
     }
     if (stopping) throw new Error("Startup interrupted");
-    startupStage = "workbench";
-    const { createWorkbench } = await import("../packages/workbench/server.mjs");
+    stage("workbench");
+    const { createWorkbench } =
+      await import("../packages/workbench/server.mjs");
     app = await createWorkbench({
       profiles,
       port,
       providerStateDir: path.join(state, "providers"),
     });
+    stage("workbench listener");
     await new Promise((resolve, reject) => {
       app.server.once("error", reject);
       app.server.listen(port, "127.0.0.1", resolve);
@@ -341,6 +362,7 @@ async function start() {
         res.end();
       }
     });
+    stage("local controller");
     await new Promise((resolve, reject) => {
       controller.once("error", reject);
       controller.listen(0, "127.0.0.1", resolve);
@@ -353,6 +375,7 @@ async function start() {
       control: controller.address().port,
       port,
     });
+    stage("ready");
     console.log(`Aksara development host: http://127.0.0.1:${port}`);
     console.log(
       "Personal and community databases are separate. Ctrl-C or aksara stop closes the host.",
@@ -534,5 +557,6 @@ try {
   console.error(
     `Stage: ${startupStage}; error code: ${/^[A-Za-z0-9_]+$/.test(code) ? code : "unavailable"}`,
   );
+  stage(startupStage, /^[A-Za-z0-9_]{1,48}$/.test(code) ? code : "unknown");
   process.exitCode = 1;
 }

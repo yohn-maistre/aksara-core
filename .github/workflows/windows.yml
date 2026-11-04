@@ -97,9 +97,23 @@ jobs:
             }
             throw 'Installer did not write its executable to the requested directory'
           }
+          # Qualify a cold launch through Tauri/WebView2, not just its controller.
+          $p = Start-Process $installedExe -ArgumentList '--ui-smoke-test' -PassThru
+          if (!$p.WaitForExit(210000)) { $p.Kill(); throw 'Installed WebView startup timed out' }
+          if ($p.ExitCode -ne 0) { throw 'Installed WebView did not render the React identity chooser' }
           $p = Start-Process $installedExe -ArgumentList '--smoke-test' -PassThru -Wait
           if ($p.ExitCode -ne 0) { throw 'Installed native host lifecycle failed' }
           if (!(Test-Path "$env:AKSARA_DESKTOP_STATE/personal/state.sqlite")) { throw 'Desktop did not initialize separate user data' }
+          $workingState = $env:AKSARA_DESKTOP_STATE
+          $env:AKSARA_DESKTOP_STATE = Join-Path $env:RUNNER_TEMP 'Aksara Owned State ü'
+          New-Item -ItemType Directory -Path $env:AKSARA_DESKTOP_STATE -Force | Out-Null
+          $lock = Join-Path $env:AKSARA_DESKTOP_STATE 'instance.lock'
+          @{pid=$PID} | ConvertTo-Json -Compress | Set-Content $lock
+          $p = Start-Process $installedExe -ArgumentList '--ui-failure-test' -PassThru
+          if (!$p.WaitForExit(210000)) { $p.Kill(); throw 'Installed WebView failure diagnostic timed out' }
+          if ($p.ExitCode -ne 0) { throw 'Installed WebView did not display the safe startup failure' }
+          if (!(Test-Path $lock)) { throw 'Failed startup removed another process ownership record' }
+          $env:AKSARA_DESKTOP_STATE = $workingState
           $uninstaller = Get-ChildItem "$installDir/*uninstall*.exe" | Select-Object -First 1
           $p = Start-Process $uninstaller.FullName -ArgumentList '/S' -PassThru -Wait
           if ($p.ExitCode -ne 0) { throw 'Desktop uninstall failed' }

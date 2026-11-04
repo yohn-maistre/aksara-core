@@ -10,7 +10,7 @@ compiler to be installed separately.
 Open a **successful** [Windows build](https://github.com/yohn-maistre/aksara-core/actions/workflows/windows.yml)
 and download `aksara-desktop-windows-x64`. GitHub wraps artifacts in a ZIP, but
 this one contains a setup EXE, checksum and small size report. Extract those few
-files, then run `Aksara_0.2.0_x64-setup.exe` (the exact name is shown in the artifact).
+files, then run the versioned setup EXE (the exact name is shown in the artifact).
 The installer writes the compact runtime itself and creates a Start Menu entry.
 Its default app directory is `%LOCALAPPDATA%\Programs\Aksara`, separate from data.
 You do not need to extract a tree of frontend source dependencies.
@@ -55,10 +55,26 @@ IPC capability and cannot navigate to another web origin. Explicit HTTPS links,
 including provider sign-in, open in the normal system browser. No remote-source
 Tauri capabilities, broad CORS or hosted-page access to local credentials is added.
 
-If startup fails, use the tray Open action after a short wait. For diagnostics,
+Version 0.2.1 uses one executable-relative runtime locator for GUI and headless
+startup; it avoids passing Tauri's canonical Windows namespace path into Node
+and its child tools. Startup shows the current stage, and failures display a
+safe stage/error code with a **Try again** action. Raw stderr, tokens and provider
+responses are not displayed or saved. Concurrent retries do not spawn competing
+launchers; restoring a minimized window also restores it from the taskbar.
+
+If startup fails, use **Try again** or the tray Open action. For diagnostics,
 open the installed app's `runtime` directory and run `aksara.cmd doctor --json`
 or `aksara.cmd start` in PowerShell. The CLI retains its safe startup-stage errors.
 Do not delete identity files beside existing databases to work around an error.
+
+With the default installation, PowerShell can start the same installed host:
+
+```powershell
+& "$env:LOCALAPPDATA\Programs\Aksara\runtime\aksara.cmd" start
+```
+
+If that reports a running host, keep the terminal open and choose **Open Aksara**
+from the tray. This is a workaround for diagnosis, not an additional installation.
 
 ## Smaller portable alternative
 
@@ -119,8 +135,21 @@ The desktop has a separate locked Cargo workspace so Linux/ARM kernel builds do
 not acquire GTK/WebView requirements. Windows CI checks the extracted compact
 bundle's actual model/tool/delegation path, builds the NSIS installer, installs it
 in a path containing spaces/Unicode, exercises the native controller against the
-installed host, uninstalls, and verifies user data remains. That lifecycle check
-is not a manual WebView interaction or real Windows computer-use qualification.
+installed host, uninstalls, and verifies user data remains. The 0.2.1 workflow also
+opens the actual WebView2 window and waits for React to render the identity chooser
+with profiles from the real host. A separate owned-state fixture checks that the
+window displays its safe startup error and preserves the other ownership record.
+These automated checks are not manual interaction or Windows computer-use qualification.
 The Linux isolated-package test also exercises hard-kill Mastra recovery. Live
 ChatGPT entitlement and actual Surface memory, GPU and startup behavior remain
 separate tests.
+
+## Update direction
+
+Keep the UI, host and migrations in a compatible, versioned application release.
+The next distribution step is a stable release channel and Tauri's signed updater,
+with signature verification, visible version/release notes, background downloads
+and an explicit restart after active work is safely stopped. Keep a manual installer
+fallback. Signing-key custody, update endpoints and upgrade/rollback qualification
+must be in place before enabling it. A remote hot-swapped UI or an unsigned update
+manifest would weaken the current boundary; no automatic update endpoint is enabled.

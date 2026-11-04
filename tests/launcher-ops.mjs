@@ -1,7 +1,7 @@
 import { streamingCompletionFixture } from "./completion-fixture.mjs";
 /** Real native child startup/restart, custody, stop and CLI inference fixture. */
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, writeFile, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { spawn, execFile } from "node:child_process";
@@ -58,15 +58,25 @@ async function cli(command, ...args) {
     windowsHide: true,
   });
 }
-async function start() {
-  child = spawn(node, [script, "start", ...common], {
-    env: { ...process.env, AKSARA_LOCAL_MODEL_PORT: "18760" },
-    stdio: "pipe",
-    windowsHide: true,
-  });
+async function start(closeDiagnosticPipe = false) {
+  child = spawn(
+    node,
+    [
+      script,
+      "start",
+      ...(closeDiagnosticPipe ? ["--startup-diagnostics"] : []),
+      ...common,
+    ],
+    {
+      env: { ...process.env, AKSARA_LOCAL_MODEL_PORT: "18760" },
+      stdio: "pipe",
+      windowsHide: true,
+    },
+  );
   let logs = "";
   child.stdout.on("data", (b) => (logs += b));
-  child.stderr.on("data", (b) => (logs += b));
+  if (closeDiagnosticPipe) child.stderr.destroy();
+  else child.stderr.on("data", (b) => (logs += b));
   for (let i = 0; i < 150; i++) {
     if (child.exitCode !== null) throw new Error(logs);
     try {
@@ -104,13 +114,33 @@ try {
   await cli("stop");
   await exit;
   assert.equal(JSON.parse((await cli("doctor")).stdout).running, false);
+  // An already-owned state must fail with safe diagnostics, without stealing
+  // the lock or replacing credentials. This also exercises desktop stderr mode.
+  const identity = await readFile(path.join(dir, "personal/identity.json"));
+  const lock = JSON.stringify({ pid: process.pid });
+  await writeFile(path.join(dir, "instance.lock"), lock);
+  await assert.rejects(cli("start", "--startup-diagnostics"), (error) => {
+    assert.match(
+      error.stderr,
+      /AKSARA_STARTUP .*"stage":"instance ownership".*"code":"INSTANCE_OWNED"/,
+    );
+    assert.ok(!error.stderr.includes(identity.toString()));
+    return true;
+  });
+  assert.equal(await readFile(path.join(dir, "instance.lock"), "utf8"), lock);
+  assert.deepEqual(
+    await readFile(path.join(dir, "personal/identity.json")),
+    identity,
+  );
+  await rm(path.join(dir, "instance.lock"));
   await cli(
     "backup",
     path.join(dir, "personal backup.sqlite"),
     "--profile",
     "personal",
   );
-  await start();
+  // The resident host must survive the desktop closing its diagnostic pipe.
+  await start(true);
   const exitAgain = new Promise((r) => child.once("exit", r));
   await cli("stop");
   await exitAgain;
