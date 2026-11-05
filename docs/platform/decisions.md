@@ -1,5 +1,12 @@
 # Current implementation decisions
 
+5 November design direction: the user selected Reading Room's light concept and
+open-triangle mark, relaxed the star threshold, accepted MPL and asked us to
+consider complete packages including BlockNote XL. The [source study](../design/orbit-and-workspace-building-blocks-2026-11-05.md)
+recommends BlockNote with XL exporters, an optional React Flow canvas and existing
+Univer/Mastra. XL's GPL/commercial distribution choice is not yet settled; no
+license, product dependency or implemented behavior changes in this research pass.
+
 31 October reassessment: [resident-agent review](resident-agent-reassessment-2026-10-31.md)
 and [delivery plan](resident-computer-device-plan-2026-10-31.md) propose reducing
 the default architecture and enabling a full tool loop. They distinguish proposals,

@@ -42,16 +42,30 @@ Full production enrollment, isolated shared computers and live external channel
 deployment remain separate qualification gates; consult the implementation ledger.
 
 The next document experience should allow ordinary rich-text writing and editing,
-with save state and readable review. The user excludes Terminus and requests
-editor/platform candidates with permissive licenses and at least 5,000 GitHub stars.
-No editor has been selected or integrated in this design-research increment.
+with save state, collaboration and readable review. Terminus is excluded. The
+user clarified that 5,000 GitHub stars is a rough discovery guide, not a minimum,
+and accepts MPL dependencies. They want complete, elegant packages considered,
+including BlockNote XL, rather than recreating their capabilities piecemeal.
+
+BlockNote core with XL document exporters is now the preferred research direction.
+Core is MPL-2.0; XL is GPL-3.0 or commercial. This is not an authorization to buy
+a subscription, change Aksara's license or ship a combined GPL distribution.
+Those distribution terms must be settled before release. No editor dependency
+has been installed by this research. Mastra remains the selected durable harness.
 
 ## Brand Commitments
 
 Aksara is warm, concise and language-adaptive in conversation. The existing name
-and minimal open-triangle mark remain available. Earlier user references favor
-graphite, lilac and warmth; the user now requests a substantially calmer, more
-modern working interface. The visual alternatives are not yet a selected system.
+and minimal open-triangle mark are retained. The user selected the second
+displayed concept, Reading Room, especially its light mode. Lilac remains the
+light accent; dark mode should use a different accent. Muted copper on ink is the
+current proposal, not an implemented or user-confirmed palette. Home should feel
+distinctive and conversational while avoiding a generic productivity dashboard.
+
+Aksara and ETNOS/Strata should share a visual family. Aksara has more conversational
+personality; a shared visual system does not merge product identities, custody or
+authorization. Material 3 Expressive informs restrained motion and interaction;
+it does not require installing a second component library.
 
 ## Evidence on Hand
 

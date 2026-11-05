@@ -397,3 +397,54 @@ Milkdown, Excalidraw and complete-app alternatives are research candidates only;
 no editor dependency or donor implementation is installed/copied by this pass.
 Generated concept images are fictional UI proposals, not reference-product assets
 or screenshots of implemented behavior.
+
+## Reading Room / complete workspace source study — 5 November 2026
+
+The user relaxed the 5,000-star guide, accepted MPL and asked us to evaluate the
+complete BlockNote XL package. [Source study and recommendation](design/orbit-and-workspace-building-blocks-2026-11-05.md).
+All entries below are research, not imported product dependencies or copied code.
+
+- **Orbit**, `coollabsio/orbit`, Apache-2.0 root, commit
+  `cf5ca05228a96d4fd99b5d058240de810c608911`: web/server/mobile/editor manifests,
+  `PageEditor.tsx`, `TaskBoard.tsx`, `DocTree.tsx`, collaboration module/socket/
+  BlockNote converter, `mcp.rs`, operations/MCP docs and Expo `PageEditor.dom.tsx`
+  studied. Candidate reuse: coherent shared editor/schema, scoped live rooms,
+  task/artifact navigation and compact delivery. BlockNote remains MPL; converter
+  comments identify ported upstream functions, requiring provenance review before
+  adaptation. Mock mail and general durable maintenance jobs are not an agent loop.
+- **BlockNote 0.57.0**, `TypeCellOS/BlockNote`, commit
+  `262fb815a25e892b7a6e4d06b63df19a9ae5d6a8`: root and XL license, exporter/AI
+  manifests, DOCX exporter and default block mappings, PDF exporter, official
+  export/import/collaboration/AI transport guides, pricing source and commercial
+  agreement read. Core is MPL-2.0; `xl-*` is GPL-3.0 or commercial. Preferred
+  document toolkit for a trial, subject to an explicit distribution choice.
+  Default hosted asset proxy must be replaced; PDF compiler/fonts are separate
+  lazy assets. No paid license purchased, repository relicensed or XL code copied.
+- **Kanwas**, `kanwas-ai/kanwas`, declared Apache-2.0, commit
+  `7c2292aec94ff0dcab3c72155d253a73ee794a89`: root license, architecture overview,
+  frontend/backend/Yjs manifests, React Flow surface, BlockNote bindings,
+  `tool_loop_runner.ts`, runtime lease recovery, background execution and sandbox
+  registry, Yjs service and `execenv/src/sync-manager.ts` studied. Reuse candidates:
+  document/canvas/file-tree composition and a scoped bidirectional agent worktree.
+  Do not import its canonical CRDT graph, broad sandbox credentials or full
+  Adonis/Redis/Docker/E2B deployment into the default Surface package.
+- **OpenLoaf**, AGPL-3.0, commit
+  `f7eccf6064317cb2923137079b68d79b8e5c5f3e`: license and web/server/desktop
+  manifests, `agentManager.ts` spawn/history recovery and CDP browser automation
+  source read. Architecture reference only; no AGPL source copied. Actual studied
+  dependencies are AI SDK/Claude Agent SDK, not Mastra; Electron is not adopted.
+- **assistant-ui**, MIT, source revision
+  `5d55d7eb66e41e859baf2994c141693cef28f466`: manifest/README,
+  `packages/core/src/react/runtimes/useExternalStoreRuntime.ts`, custom runtime,
+  Mastra, Interactables and MCP Apps/Safe Content Frame guides read. Candidate
+  client adapter to existing canonical messages; not Assistant Cloud, a second
+  history authority or unreviewed app-wide automatic update tools. Current
+  Interactables API is unstable; Mastra docs are a guide, not a dedicated package.
+
+React Flow/Yjs actual MIT licenses, noVNC's MPL/mixed-asset license, AI Elements'
+Apache-2.0 license and MCP Apps' MIT-to-Apache transition text were read. React
+Arborist's canonical repository is now `jameskerr/react-arborist`, MIT. These remain
+component candidates, not vendored source. Google's official Material Web status,
+motion physics and repository roadmap were checked: the component library is in
+maintenance mode and does not implement M3 Expressive. Existing Motion 13 and
+Base UI remain the proposed implementation tools for that interaction language.

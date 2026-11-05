@@ -3,6 +3,13 @@
 4 November 2026. Research and visual proposals, not an adopted design system or
 an installed editor. Terminus is excluded at the user's request.
 
+**Follow-up:** the user subsequently selected Reading Room, relaxed the star
+threshold, accepted MPL and asked us to consider the complete BlockNote XL
+package. The strict permissive filter and Plate-first recommendation below are
+historical. The [5 November source study](orbit-and-workspace-building-blocks-2026-11-05.md)
+records the updated recommendation, Orbit/Kanwas findings and XL distribution
+choices. No editor was installed by either research pass.
+
 The user selected **shared channel → watch Aksara work → review a shared artifact**
 as the primary redesign journey. Product truth is recorded in
 [PRODUCT.md](../../apps/platform/PRODUCT.md).
