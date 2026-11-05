@@ -2,7 +2,7 @@
 
 A local-first AI workspace for people and teams. Talk with Aksara, send work to a background agent, and keep the resulting documents and knowledge in one place.
 
-**Development alpha.** [Try the interactive UI preview](https://aksara-core-preview.pages.dev) · [Run locally](docs/platform/windows-local.md) · [Implementation status](docs/platform/resident-harness-implementation-2026-11-02.md)
+**Development alpha.** [Try the interactive UI preview](https://aksara-core-preview.pages.dev) · [Run locally](docs/platform/windows-local.md) · [Implementation status](docs/platform/reading-room-implementation-2026-11-06.md)
 
 The hosted preview uses disposable sample data. Models, files on your computer, and the Rust backend are disconnected there. Run the local app to test the working platform.
 
@@ -22,7 +22,8 @@ User data stays in `%LOCALAPPDATA%\Aksara`, separate from app files. This is a d
 
 - **A continuing workspace:** Home, private conversation, shared channels, a searchable Library, and source-linked working knowledge. Personal and community profiles use separate databases.
 - **Interactive and background work:** a durable Mastra agent can delegate to a configured task model, check progress, and save drafts while the main conversation remains available. Local workflow checkpoints support fenced crash recovery; uncertain tool delivery pauses for inspection.
-- **Files and documents:** preserve uploaded originals, read supported formats, create document drafts, and edit a CSV worktree with the lazy-loaded Univer spreadsheet editor.
+- **A shared writing desk:** rich BlockNote documents open beside their room’s conversation. Autosave preserves revisions and detects conflicting edits. Ask Aksara about a saved snapshot, then read the exact proposed artifact before approving it.
+- **Files and source tables:** retain uploaded originals, search eligible knowledge, edit CSV worktrees in Univer, and arrange Library sources on a saved, movable table. Markdown downloads work locally.
 - **Memory with provenance:** reviewed facts and working wiki, people, and procedure drafts stay linked to their sources. Current access and withdrawal checks apply when retrieving them or using derived results.
 - **Native computer use:** explicitly connect one private desktop window for a limited time through Vercel agent-desktop. Observation, clicks, field edits, and physical typing have separate bounds. Currently available to local models. This controls your signed-in desktop; it is **not an OS sandbox**.
 - **Shared interfaces:** the CLI and scoped MCP gateway read the same canonical workspace. Optional local Pocket TTS supports read-aloud.
@@ -55,6 +56,8 @@ npm run test:platform
 React renders the workspace. The Node workbench connects providers and tools. Mastra runs and checkpoints the agent loop; Rust and SQLite hold identity, scope, source custody, work, approvals, and effect receipts. UI state and agent output cannot grant authority.
 
 Original bytes are retained. Search, wiki, memory, and other indexes are projections over authorized sources. Local effects and receipts commit together; external actions record an intent before delivery, and uncertain outcomes remain uncertain until reconciled. Recovery revalidates current authority; uncertain tool and computer delivery is never blindly repeated.
+
+Rich documents and source tables are shared through saved revisions, not live simultaneous cursors. BlockNote XL Office/PDF exporters are not included pending a distribution-license choice.
 
 This is a working foundation, with substantial seams still open: production identity and enrollment, isolated shared-channel computers, live Telegram/WhatsApp and Strata federation, fuller memory indexing, and physical hardware. The device SDK currently includes behavior simulators. Local data is not encrypted at rest against the host OS account. See the [component coverage](docs/platform/component-coverage.csv) and [decisions](docs/platform/decisions.md) for the full boundary.
 

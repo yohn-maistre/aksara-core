@@ -5,6 +5,7 @@ import {
   Sprout,
   Volume2,
   Users,
+  ArrowLeft,
 } from "lucide-react";
 import { lazy, Suspense, useState } from "react";
 import { PREVIEW } from "../transport";
@@ -55,6 +56,9 @@ export function ConversationView() {
     foregroundWorking,
     pinnedReplies,
     setPinnedReplies,
+    profiles,
+    closeAssistant,
+    beforeNavigate,
   } = useWorkspace();
   const [showWork, setShowWork] = useState(false);
   if (!session) return null;
@@ -62,6 +66,20 @@ export function ConversationView() {
     <>
       <>
         <div className="page-heading chat-heading">
+          {privateLane && (
+            <button
+              className="icon-button"
+              aria-label="Close private conversation"
+              onClick={() =>
+                void run(async () => {
+                  await beforeNavigate.current?.();
+                  closeAssistant();
+                })
+              }
+            >
+              <ArrowLeft size={16} />
+            </button>
+          )}
           <h1>{privateLane ? "Private thread" : lane?.name}</h1>
           <span className="privacy-chip">
             {privateLane ? <LockKeyhole size={14} /> : <Users size={14} />}
@@ -105,11 +123,12 @@ export function ConversationView() {
                 >
                   <span className="avatar">
                     {m.role === "assistant" ? (
-                      <Sprout size={18} />
+                      <Mark />
                     ) : m.run.owner === me.id ? (
                       session.profile.name[0]
                     ) : (
-                      "M"
+                      (profiles.find((p) => p.actor === m.run.owner)?.name ||
+                        "Member")[0]
                     )}
                   </span>
                   <div>
@@ -122,7 +141,8 @@ export function ConversationView() {
                           ? m.run.kind === "background"
                             ? "Background task"
                             : "You"
-                          : "Member"}
+                          : profiles.find((p) => p.actor === m.run.owner)
+                              ?.name || "Member"}
                       <small>
                         {m.run.provider === "preview"
                           ? "preview"

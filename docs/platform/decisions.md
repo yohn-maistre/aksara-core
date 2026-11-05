@@ -97,3 +97,29 @@ code instead of shipping frontend dependency sources; keep native SQLite outside
 the JS bundle. Per-user installation and tray controls do not imply PC/fleet
 management. The static preview stays disconnected pending explicit pairing or a
 qualified remote host. Desktop build dependencies remain outside the kernel workspace.
+
+## Reading Room implementation — 6 November 2026
+
+The selected second concept is now the structural reference for the web/Tauri
+client: labeled navigation, same-room conversation and a peer working document.
+Home becomes a compact living brief, not a persistent third column. Warm paper
+and lilac are the light defaults; graphite and copper are the implemented dark
+proposal. Existing palette/Auto overrides remain. The new main plane has no
+mandatory atmosphere shader, floating blob or expanding-window choreography.
+
+BlockNote core/react/shadcn 0.57.0 (MPL-2.0) replaces plain-text document forms.
+React Flow 12.10.1 (MIT) provides a saved Library-source table. Schema 5 adds
+lane-bound working surfaces, optimistic revisions and idempotent immutable
+snapshots. Current source eligibility is rechecked on listing, reading, saving
+and snapshot creation. Drafts cannot discard prior source dependencies. Concurrent
+stale writes preserve local unsaved text and reject server overwrite.
+
+A draft is not an approved document. “Help here” freezes a source snapshot and
+fills the same room’s composer; it does not send without the user. Review keeps
+prepare, exact approval, execution and receipt boundaries. Work-result links use
+actual receipts/run artifacts rather than the first available Library object.
+
+No live CRDT transport, watches, transcription, remote channel delivery or
+isolated shared computer is added. XL GPL/commercial distribution remains an
+unanswered user choice; core MPL integration does not require relicensing Aksara.
+[Implementation and verification](reading-room-implementation-2026-11-06.md).

@@ -1,424 +1,305 @@
-import { WorkIsland } from "./WorkIsland";
 import {
   ArrowUpRight,
   BookOpen,
   Check,
-  ChevronDown,
-  Circle,
   FileText,
   History,
-  LockKeyhole,
   Plus,
+  Users,
   X,
+  LayoutDashboard,
 } from "lucide-react";
-import { motion } from "motion/react";
-import { useEffect, lazy, Suspense, useState, type ReactNode } from "react";
-import { Expandable, ExpandableContent } from "../components/ui/expandable";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "../components/ui/dropdown-menu";
-import { PREVIEW } from "../transport";
-import { ActivityCalendar } from "./ActivityCalendar";
-import { shortDate, stateWord, type Work } from "./shared";
-import { useWorkspace } from "./state";
+import { lazy, Suspense, type ReactNode } from "react";
 const MessageBody = lazy(() =>
   import("../surfaces").then((m) => ({ default: m.MessageBody })),
 );
-function WorkSection({
-  title,
-  items,
-  historical = false,
-}: {
-  title: string;
-  items: Work[];
-  historical?: boolean;
-}) {
-  const { openWork } = useWorkspace();
-  const [expanded, setExpanded] = useState(true);
-  if (!items.length) return null;
-  return (
-    <Expandable
-      expanded={expanded}
-      onToggle={() => setExpanded((v) => !v)}
-      transitionDuration={0.2}
-      className="work-section"
-    >
-      <button
-        className="section-toggle"
-        aria-expanded={expanded}
-        onClick={() => setExpanded((v) => !v)}
-      >
-        <h3>
-          {title}
-          <span>{items.length}</span>
-        </h3>
-        <ChevronDown
-          size={15}
-          style={{ transform: expanded ? "none" : "rotate(-90deg)" }}
-        />
-      </button>
-      <ExpandableContent>
-        {items.map((w) => (
-          <button
-            key={w.id}
-            className={`work-row state-${w.state.toLowerCase()}`}
-            disabled={historical}
-            aria-label={`${w.state === "AWAITING_APPROVAL" ? "Review" : "Open"} ${w.request}`}
-            onClick={() => void openWork(w)}
-          >
-            <span className="work-state-icon">
-              {w.state === "COMPLETED" ? (
-                <Check size={16} />
-              ) : w.state === "AWAITING_APPROVAL" ? (
-                <LockKeyhole size={15} />
-              ) : (
-                <Circle size={14} />
-              )}
-            </span>
-            <span>
-              <strong>{w.request}</strong>
-              <small>{stateWord(w.state)}</small>
-            </span>
-            {!historical && <ArrowUpRight size={14} />}
-          </button>
-        ))}
-      </ExpandableContent>
-    </Expandable>
-  );
-}
-/** Same Home component contracts into the margin; scope changes remount it. */
-export function TodayView({
-  compact = false,
-  composer,
-  onSettled,
-}: {
-  compact?: boolean;
-  composer?: ReactNode;
-  onSettled?: () => void;
-}) {
-  const {
-    session,
-    page,
-    privateLane,
-    at,
-    setAt,
-    visibleWorks,
-    working,
-    artifacts,
-    memories,
-    navigate,
-    setShowDoc,
-    api,
-    setDetail,
-    run,
-    needs,
-    messages,
-    pinnedReplies,
-    setPinnedReplies,
-    homeReplyAfter,
-    setHomeReplyAfter,
-  } = useWorkspace();
-  const [panels, setPanels] = useState(["activity", "work", "library"]);
-  const [wide, setWide] = useState(
-    () => window.matchMedia("(min-width: 1101px)").matches,
-  );
-  useEffect(() => {
-    const media = window.matchMedia("(min-width: 1101px)");
-    const update = () => setWide(media.matches);
-    media.addEventListener("change", update);
-    return () => media.removeEventListener("change", update);
-  }, []);
-  if (!session) return null;
-  const eligibleMemories = memories.filter((m) =>
-    artifacts.some((a) => a.id === m.source_artifact_id),
-  );
+import { useWorkspace } from "./state";
+import { shortDate, stateWord } from "./shared";
+import { PREVIEW } from "../transport";
+export function TodayView({ composer }: { composer?: ReactNode }) {
+  const w = useWorkspace();
+  if (!w.session) return null;
+  const pending = w.needs[0];
+  const latest = w.artifacts[0];
+  const recent = w.visibleWorks.slice(0, 4);
+  const openThread = () => w.navigate(w.privateLane ? "Ask" : "Conversation");
   const homeReply =
-    homeReplyAfter === null
-      ? undefined
-      : [...messages]
+    w.homeReplyAfter === null
+      ? null
+      : [...w.messages]
           .reverse()
-          .find((m) => m.role === "assistant" && m.seq > homeReplyAfter);
-  const Heading = compact ? "h2" : "h1";
-  const openThread = () => navigate(privateLane ? "Ask" : "Conversation");
+          .find((m) => m.role === "assistant" && m.seq > w.homeReplyAfter!);
   return (
-    <motion.section
-      layout="position"
-      onLayoutAnimationComplete={onSettled}
-      transition={{ duration: 0.54, ease: [0.22, 1, 0.36, 1] }}
-      className="home-surface"
-      data-compact={compact}
-      aria-label="Home"
-    >
-      <div className="home-intro">
-        <span className="home-label">Home</span>
-        <p className="home-date">{shortDate(new Date())}</p>
-        <Heading>
-          {compact ? (
-            "Today"
-          ) : at ? (
-            "A look back."
+    <section className="home-surface" aria-label="Home">
+      <header className="home-topline">
+        <span>
+          {w.session.profile.mode === "personal"
+            ? "Your space"
+            : "Aksara Commons"}
+        </span>
+        <time>{shortDate(new Date())}</time>
+      </header>
+      <div className="living-brief">
+        <h1>
+          {pending ? (
+            <>
+              A little attention.
+              <br />
+              <span>A meaningful next step.</span>
+            </>
+          ) : w.working.length ? (
+            <>
+              The work is moving.
+              <br />
+              <span>What’s on your mind?</span>
+            </>
           ) : (
             <>
-              Room for
+              A little space
               <br />
-              <span>what matters.</span>
+              <span>for what comes next.</span>
             </>
           )}
-        </Heading>
-        {!at &&
-          (compact || !homeReply) &&
-          !["Ask", "Conversation"].includes(page) && (
-            <button className="text-button home-continue" onClick={openThread}>
-              Continue our conversation <ArrowUpRight size={15} />
-            </button>
-          )}
-        {!PREVIEW &&
-          !localStorage.getItem(`aksara-setup:${session.profile.id}`) && (
-            <button
-              className="text-button home-setup"
-              onClick={() => navigate("Setup")}
-            >
-              Connect a model <ArrowUpRight size={14} />
-            </button>
-          )}
-      </div>
-      {!compact && !at && composer && (
+        </h1>
+        <p>
+          {pending
+            ? "There’s work ready for your judgement."
+            : w.working.length
+              ? `${w.working.length} ${w.working.length === 1 ? "task is" : "tasks are"} continuing in this conversation.`
+              : "Bring a question, an unfinished thought, or something we can make together."}
+        </p>
         <div className="home-composer">{composer}</div>
-      )}
-      {!compact && !at && homeReply && (
-        <section className="home-reply-bubble" aria-label="Latest Home reply">
-          <p>
-            {homeReply.text.split("```", 1)[0].trim().slice(0, 240) ||
-              "Your reply is ready to review."}
-          </p>
-          <button className="text-button" onClick={openThread}>
-            Open conversation <ArrowUpRight size={14} />
+        {!PREVIEW && !w.model && (
+          <button className="text-button" onClick={() => w.navigate("Setup")}>
+            Connect a model <ArrowUpRight size={14} />
           </button>
-          <button
-            className="icon-button"
-            aria-label="Dismiss Home reply"
-            onClick={() => setHomeReplyAfter(null)}
-          >
-            <X size={14} />
-          </button>
-        </section>
-      )}
-      {!compact && !at && <WorkIsland />}
-      <div className="home-panels">
-        {!at &&
-          (!compact || wide) &&
-          pinnedReplies.map((seq) => {
-            const reply = messages.find(
-              (m) => m.seq === seq && m.role === "assistant",
-            );
-            return reply ? (
-              <section
-                className="home-pinned-panel"
-                key={seq}
-                aria-label="Pinned reply"
-              >
-                <div className="home-panel-heading">
-                  <h2>From our conversation</h2>
-                  <button
-                    className="icon-button"
-                    aria-label="Unpin reply from Home"
-                    onClick={() =>
-                      setPinnedReplies((ids) => ids.filter((id) => id !== seq))
-                    }
-                  >
-                    <X size={15} />
-                  </button>
-                </div>
-                <Suspense fallback={<p>Opening reply…</p>}>
-                  <MessageBody text={reply.text} />
-                </Suspense>
-                <button className="text-button" onClick={openThread}>
-                  Open thread <ArrowUpRight size={14} />
-                </button>
-              </section>
-            ) : null;
-          })}
-
-        {panels.includes("activity") && (
-          <details className="calendar-glance">
-            <summary>Calendar</summary>
-            <ActivityCalendar />
-          </details>
         )}
-        {(panels.includes("work") || at) && (
-          <section className="home-work-panel" aria-label="Your work">
-            <div className="home-panel-heading">
-              <h2>{at ? "Recorded work" : "Your work"}</h2>
-              <label className="date-picker">
-                <History size={14} />
-                <input
-                  aria-label="Historical date"
-                  type="date"
-                  value={at}
-                  max={new Date().toLocaleDateString("en-CA")}
-                  onChange={(e) => setAt(e.target.value)}
-                />
-                {at && (
-                  <button aria-label="Return to now" onClick={() => setAt("")}>
-                    <X size={16} />
-                  </button>
-                )}
-              </label>
-            </div>
-            {at && (
-              <p className="history-notice">
-                Recorded work states only. Past content is not reconstructed.
-              </p>
-            )}
-            {at && !visibleWorks.length ? (
-              <h3 className="history-empty">No recorded work for this date</h3>
-            ) : (
-              <>
-                <WorkSection
-                  title="Needs you"
-                  items={visibleWorks.filter((w: Work) =>
-                    ["AWAITING_APPROVAL", "NEEDS_INPUT"].includes(w.state),
-                  )}
-                  historical={!!at}
-                />
-                <WorkSection
-                  title="Moving along"
-                  items={visibleWorks.filter((w: Work) =>
-                    ["HEARD", "WORKING"].includes(w.state),
-                  )}
-                  historical={!!at}
-                />
-                <WorkSection
-                  title="Recently settled"
-                  items={visibleWorks
-                    .filter((w: Work) =>
-                      ["COMPLETED", "FAILED", "CANCELLED"].includes(w.state),
-                    )
-                    .slice(0, 3)}
-                  historical={!!at}
-                />
-                {!visibleWorks.length && (
-                  <p className="panel-empty">
-                    A little room for your next idea.
-                  </p>
-                )}
-              </>
-            )}
+        {homeReply && (
+          <section
+            className="home-acknowledgment"
+            aria-label="Latest Home reply"
+          >
+            <p>{homeReply.text.split("```", 1)[0].slice(0, 240)}</p>
+            <button className="text-button" onClick={openThread}>
+              Open conversation <ArrowUpRight size={14} />
+            </button>
+            <button
+              className="icon-button"
+              aria-label="Dismiss Home reply"
+              onClick={() => w.setHomeReplyAfter(null)}
+            >
+              <X size={14} />
+            </button>
           </section>
         )}
-        {panels.includes("library") && !at && (
-          <section className="home-library-panel">
-            <div className="home-panel-heading">
-              <h2>
-                <BookOpen size={17} />
-                Your Library
-              </h2>
-              <button
-                className="icon-button"
-                aria-label="Open Library"
-                onClick={() => navigate("Library")}
-              >
-                <ArrowUpRight size={17} />
-              </button>
-            </div>
-            {artifacts.slice(0, compact ? 1 : 2).map((a) => (
-              <button
-                key={a.id}
-                className="artifact-glance"
-                onClick={() =>
-                  void run(async () =>
-                    setDetail(
-                      await api(
-                        `kernel/artifact?id=${encodeURIComponent(a.id)}`,
-                      ),
-                    ),
-                  )
-                }
-              >
-                <FileText size={20} />
-                <span>
-                  {a.title}
-                  <small>
-                    {a.visibility === "private" ? "Private" : "Community"}
-                  </small>
-                </span>
-                <ArrowUpRight size={15} />
-              </button>
-            ))}
-            {!artifacts.length && (
-              <p className="panel-empty">
-                Sources, notes and things worth keeping.
-              </p>
-            )}
+      </div>
+      <div className="home-desk">
+        <section className="home-attention">
+          <div className="section-title">
+            <h2>{pending ? "Needs your eye" : "Pick up the thread"}</h2>
             <button
               className="text-button"
-              onClick={() => {
-                setShowDoc(true);
-              }}
+              aria-label="Open Library"
+              onClick={() => w.navigate("Library")}
             >
-              Create a document <Plus size={14} />
+              Library <ArrowUpRight size={14} />
             </button>
-          </section>
-        )}
-        {panels.includes("knowledge") && !at && (
-          <section className="home-knowledge-panel">
-            <h2>Reviewed knowledge</h2>
-            {eligibleMemories.length ? (
+          </div>
+          {pending ? (
+            <button
+              className="attention-document"
+              onClick={() => void w.openWork(pending)}
+            >
+              <span className="paper-tab">
+                <FileText size={20} />
+              </span>
+              <h3>{pending.request.replace(/^Create document: /, "")}</h3>
+              <p>{pending.display_safe_summary || stateWord(pending.state)}</p>
+              <span className="text-button">
+                Review the work <ArrowUpRight size={14} />
+              </span>
+            </button>
+          ) : latest ? (
+            <button
+              className="attention-document"
+              onClick={() =>
+                void w.run(async () =>
+                  w.setDetail(
+                    await w.api(
+                      `kernel/artifact?id=${encodeURIComponent(latest.id)}`,
+                    ),
+                  ),
+                )
+              }
+            >
+              <span className="paper-tab">
+                <FileText size={20} />
+              </span>
+              <h3>{latest.title}</h3>
               <p>
-                {eligibleMemories.length} approved{" "}
-                {eligibleMemories.length === 1 ? "excerpt" : "excerpts"} to
-                build on.
+                {latest.visibility === "private"
+                  ? "A source in your private Library."
+                  : "A source to build on together."}
               </p>
-            ) : (
-              <p className="panel-empty">Keep useful knowledge close.</p>
-            )}
-            <button className="text-button" onClick={() => navigate("Library")}>
-              Explore knowledge <ArrowUpRight size={14} />
+              <span className="text-button">
+                Open document <ArrowUpRight size={14} />
+              </span>
+            </button>
+          ) : (
+            <div className="home-first-page">
+              <h3>Every good thing starts somewhere.</h3>
+              <p>
+                A note can become a plan. A few sources can become shared
+                understanding.
+              </p>
+              <button
+                className="text-button"
+                onClick={() => {
+                  w.setDocTitle("");
+                  w.setDocContent("");
+                  w.setDocSources([]);
+                  w.setShowDoc(true);
+                }}
+              >
+                Give an idea a page <Plus size={15} />
+              </button>
+            </div>
+          )}
+        </section>
+        <section className="home-continuity">
+          <h2>
+            {w.working.length ? "Moving quietly" : "In this conversation"}
+          </h2>
+          {recent.length ? (
+            recent.map((item: any) => (
+              <button
+                className="continuity-row"
+                key={item.id}
+                disabled={!!w.at}
+                onClick={() => void w.openWork(item)}
+              >
+                <span
+                  className={`work-dot state-${item.state.toLowerCase()}`}
+                />
+                <span>
+                  <strong>{item.request}</strong>
+                  <small>{stateWord(item.state)}</small>
+                </span>
+                <ArrowUpRight size={14} />
+              </button>
+            ))
+          ) : (
+            <p className="panel-empty">
+              Ask Aksara to help. You’ll find the work and its results here.
+            </p>
+          )}
+          {!homeReply && w.messages.length > 0 && (
+            <button className="text-button" onClick={openThread}>
+              Continue our conversation <ArrowUpRight size={14} />
+            </button>
+          )}
+          <div className="home-starts">
+            <button onClick={() => w.navigate("Channels")}>
+              <Users size={17} />
+              <span>Think together</span>
+              <ArrowUpRight size={14} />
+            </button>
+            <button onClick={w.newCanvas}>
+              <LayoutDashboard size={17} />
+              <span>Open a shared table</span>
+              <ArrowUpRight size={14} />
+            </button>
+          </div>
+        </section>
+      </div>
+      {w.entries.length > 0 && (
+        <section className="home-working-pages">
+          <div className="section-title">
+            <h2>On the desk</h2>
+            <span>Saved in this conversation</span>
+          </div>
+          {w.entries.slice(0, 3).map((e) => (
+            <button
+              key={e.id}
+              className="working-page-row"
+              onClick={() => void w.openEntry(e.id)}
+            >
+              {e.kind === "canvas" ? (
+                <LayoutDashboard size={18} />
+              ) : (
+                <FileText size={18} />
+              )}
+              <strong>{e.title}</strong>
+              <small>Revision {e.revision}</small>
+              <ArrowUpRight size={14} />
+            </button>
+          ))}
+        </section>
+      )}
+      {w.pinnedReplies.map((seq) => {
+        const reply = w.messages.find(
+          (m) => m.seq === seq && m.role === "assistant",
+        );
+        return reply ? (
+          <section
+            className="home-working-pages pinned-reading"
+            key={seq}
+            aria-label="Pinned reply"
+          >
+            <div className="section-title">
+              <h2>From our conversation</h2>
+              <button
+                className="icon-button"
+                aria-label="Unpin reply from Home"
+                onClick={() =>
+                  w.setPinnedReplies((ids) => ids.filter((id) => id !== seq))
+                }
+              >
+                <X size={15} />
+              </button>
+            </div>
+            <Suspense fallback={<p>Opening reply…</p>}>
+              <MessageBody text={reply.text} />
+            </Suspense>
+            <button className="text-button" onClick={openThread}>
+              Open thread <ArrowUpRight size={14} />
             </button>
           </section>
+        ) : null;
+      })}
+      <details className="home-history">
+        <summary>
+          <History size={15} />
+          Recorded work
+        </summary>
+        <label>
+          Choose a date{" "}
+          <input
+            type="date"
+            aria-label="Historical date"
+            max={new Date().toLocaleDateString("en-CA")}
+            value={w.at}
+            onChange={(e) => w.setAt(e.target.value)}
+          />
+        </label>
+        {w.at && (
+          <>
+            <p>Recorded states only; past content is not reconstructed.</p>
+            {w.visibleWorks.length ? (
+              w.visibleWorks.map((item: any) => (
+                <p key={item.id}>
+                  {item.request} · {stateWord(item.state)}
+                </p>
+              ))
+            ) : (
+              <h3>No recorded work for this date</h3>
+            )}
+            <button className="text-button" onClick={() => w.setAt("")}>
+              Return to now
+            </button>
+          </>
         )}
-      </div>
-      {!at && (
-        <DropdownMenu>
-          <DropdownMenuTrigger className="text-button home-add">
-            <Plus size={16} />
-            Add panel
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="workspace-context-menu">
-            <DropdownMenuGroup>
-              <DropdownMenuLabel>Home panels</DropdownMenuLabel>
-              {[
-                ["activity", "Recorded activity"],
-                ["work", "Your work"],
-                ["library", "Library glance"],
-                ["knowledge", "Reviewed knowledge"],
-              ].map(([id, label]) => (
-                <DropdownMenuCheckboxItem
-                  key={id}
-                  checked={panels.includes(id)}
-                  onCheckedChange={(checked) =>
-                    setPanels((v) =>
-                      checked ? [...v, id] : v.filter((p) => p !== id),
-                    )
-                  }
-                >
-                  {label}
-                </DropdownMenuCheckboxItem>
-              ))}
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
-      <span className="sr-only">
-        {working.length
-          ? `${working.length} work items in progress`
-          : `${needs.length} work items need you`}
-      </span>
-    </motion.section>
+      </details>
+    </section>
   );
 }

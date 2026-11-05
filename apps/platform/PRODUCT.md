@@ -47,11 +47,12 @@ user clarified that 5,000 GitHub stars is a rough discovery guide, not a minimum
 and accepts MPL dependencies. They want complete, elegant packages considered,
 including BlockNote XL, rather than recreating their capabilities piecemeal.
 
-BlockNote core with XL document exporters is now the preferred research direction.
-Core is MPL-2.0; XL is GPL-3.0 or commercial. This is not an authorization to buy
-a subscription, change Aksara's license or ship a combined GPL distribution.
-Those distribution terms must be settled before release. No editor dependency
-has been installed by this research. Mastra remains the selected durable harness.
+BlockNote 0.57.0 core (MPL-2.0) is installed for rich working documents and readable
+review. Shared drafts use optimistic revisions, not live CRDT collaboration. React
+Flow 12.10.1 (MIT) provides a saved source table, not a freehand whiteboard.
+XL document exporters remain preferred for a future complete package, but XL is
+GPL-3.0 or commercial. No XL package, paid license or distribution change has been
+authorized. Markdown export works locally. Mastra remains the durable harness.
 
 ## Brand Commitments
 
@@ -59,7 +60,7 @@ Aksara is warm, concise and language-adaptive in conversation. The existing name
 and minimal open-triangle mark are retained. The user selected the second
 displayed concept, Reading Room, especially its light mode. Lilac remains the
 light accent; dark mode should use a different accent. Muted copper on ink is the
-current proposal, not an implemented or user-confirmed palette. Home should feel
+implemented default dark palette, subject to iteration with the user. Home should feel
 distinctive and conversational while avoiding a generic productivity dashboard.
 
 Aksara and ETNOS/Strata should share a visual family. Aksara has more conversational

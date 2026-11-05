@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { fileURLToPath } from "node:url";
 import { copyFile, mkdir } from "node:fs/promises";
+import { frontendNotices } from "../../scripts/frontend_notices.mjs";
 export default defineConfig(({ mode }) => ({
   define: {
     "import.meta.env.VITE_AKSARA_PREVIEW": JSON.stringify(
@@ -12,6 +13,7 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     tailwindcss(),
+    frontendNotices(),
     {
       name: "pages-preview-files",
       async closeBundle() {

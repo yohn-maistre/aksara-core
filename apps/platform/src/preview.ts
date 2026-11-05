@@ -92,6 +92,7 @@ export function createPreview() {
         memories: [],
         lanes: [],
         seq: 0,
+        entries: [],
       });
     }
     const community = stores.get("community")!;
@@ -197,11 +198,95 @@ export function createPreview() {
       source_artifact_id: source.id,
       text: "Aksara brings people, knowledge and work into one living workspace.",
     });
+    const meetingText =
+      "# Community meeting brief\n\n## Purpose\n\nAgree on the next community activity and the resources we can share.\n\n## Questions for the room\n\n- Which activity should we start with?\n- Who can help with the venue?\n- What do new members need?\n\n## Next steps\n\n- [ ] Confirm a venue and time.\n- [ ] Review the budget together.\n- [ ] Share the agreed invitation.\n\nThis is fictional preview material, not a recorded community decision.";
+    const meetingSource: Item = {
+      id: "preview-meeting-notes",
+      title: "Community planning notes",
+      content: meetingText,
+      owner: "Operator",
+      visibility: "institution",
+      purpose: "knowledge",
+      provenance: "Synthetic preview fixture",
+      active: true,
+      lane_id: "common",
+      source_ids: [],
+      sha256: await sha(meetingText),
+      bytes: new TextEncoder().encode(meetingText).length,
+    };
+    community.artifacts.push(meetingSource);
+    community.entries.push({
+      id: "preview-meeting-page",
+      kind: "document",
+      title: "Community meeting brief",
+      revision: 1,
+      content: meetingText,
+      body: [],
+      source_ids: [meetingSource.id],
+      lane: { id: "common", audience: people },
+      owner: "Operator",
+      updated_by: "Operator",
+      updated_at: Math.floor(Date.now() / 1000),
+    });
+    const meetingWork = {
+      ...work,
+      id: "preview-work-meeting",
+      lane_id: "common",
+      audience: people,
+      request: "Prepare our community meeting brief",
+      display_safe_summary: "Sample draft ready for the room",
+    };
+    community.works.push(meetingWork);
+    community.effects.push({
+      prepared: {
+        id: "preview-effect-meeting",
+        work_id: meetingWork.id,
+        args_hash: await sha(meetingText),
+        capability: "artifact.create",
+        status: "PREPARED",
+      },
+      args: {
+        title: "Community meeting brief",
+        content: meetingText,
+        visibility: "institution",
+        source_ids: [meetingSource.id],
+      },
+      receipt: null,
+    });
+    community.messages.push(
+      {
+        seq: ++community.seq,
+        role: "user",
+        text: "Could you prepare a brief for our next community meeting? Keep the questions and next steps clear.",
+        run: {
+          owner: "Maria",
+          work_id: meetingWork.id,
+          lane_id: "common",
+          audience: people,
+          source_ids: [meetingSource.id],
+          provider: "preview",
+        },
+      },
+      {
+        seq: ++community.seq,
+        role: "assistant",
+        text: "The sample brief is on our desk. It keeps the venue and budget as open questions for everyone to review. This is a guided preview; no model was called.",
+        run: {
+          owner: "Maria",
+          work_id: meetingWork.id,
+          lane_id: "common",
+          audience: people,
+          source_ids: [meetingSource.id],
+          provider: "preview",
+        },
+      },
+    );
     select(profiles[0]);
   })();
   function eligible(a: Item) {
     return (
       a.active &&
+      (!a.lane_id || a.lane_id === session!.lane) &&
       (a.visibility === "institution" ||
         (a.owner === session!.profile.actor &&
           view()!.lanes.find((l: Item) => l.lane.id === session!.lane)?.lane
@@ -375,6 +460,39 @@ export function createPreview() {
     const getId = u.searchParams.get("id") || input.id;
     if (method === "GET")
       switch (op) {
+        case "workspace-entries":
+          return json(
+            (store.entries || []).filter(
+              (e: Item) =>
+                e.lane.id === lane.id &&
+                dependencies(e.source_ids || []) &&
+                lane.audience.every((p: string) => e.lane.audience.includes(p)),
+            ),
+          );
+        case "workspace-entry": {
+          const e = (store.entries || []).find(
+            (e: Item) =>
+              e.id === u.searchParams.get("id") && e.lane.id === lane.id,
+          );
+          return e
+            ? json(e)
+            : json({ error: "Working document unavailable" }, 404);
+        }
+        case "work-artifacts": {
+          const work = store.works.find(
+            (w: Item) => w.id === getId && visibleWork(w),
+          );
+          const ids = store.effects
+            .filter((e: Item) => e.prepared.work_id === getId)
+            .map((e: Item) => e.receipt?.artifact_id);
+          return work
+            ? json(
+                store.artifacts.filter(
+                  (a: Item) => ids.includes(a.id) && eligible(a),
+                ),
+              )
+            : json({ error: "Work unavailable" }, 404);
+        }
         case "me":
           return json({
             id: session.profile.actor,
@@ -477,6 +595,51 @@ export function createPreview() {
       }
     if (method === "POST")
       switch (op) {
+        case "workspace-snapshot": {
+          const entry = (store.entries || []).find(
+            (e: Item) => e.id === input.id && e.lane.id === lane.id,
+          );
+          if (!entry || entry.revision !== input.revision)
+            return json({ error: "Draft changed before snapshot" }, 409);
+          const a = {
+            id: id(),
+            title: entry.title,
+            content: entry.content,
+            source_ids: entry.source_ids,
+            owner: session.profile.actor,
+            visibility: lane.audience.length === 1 ? "private" : "institution",
+            purpose: "knowledge",
+            provenance: `workspace-snapshot:${entry.id}:${entry.revision};unreviewed`,
+            active: true,
+            bytes: new TextEncoder().encode(entry.content).length,
+            sha256: await sha(entry.content),
+          };
+          store.artifacts.push(a);
+          return json(a);
+        }
+        case "workspace-save": {
+          store.entries ||= [];
+          const old = store.entries.find((e: Item) => e.id === input.id);
+          if (
+            (old && old.lane.id !== lane.id) ||
+            (old?.revision || 0) !== input.revision
+          )
+            return json(
+              { error: "A newer draft is saved; reload before editing." },
+              409,
+            );
+          const entry: Item = {
+            ...copy(input),
+            lane: copy(lane),
+            revision: input.revision + 1,
+            owner: old?.owner || session.profile.actor,
+            updated_by: session.profile.actor,
+            updated_at: Math.floor(Date.now() / 1000),
+          };
+          store.entries = store.entries.filter((e: Item) => e.id !== entry.id);
+          store.entries.unshift(entry);
+          return json(entry);
+        }
         case "channel-create": {
           if (
             typeof input.name !== "string" ||

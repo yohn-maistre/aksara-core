@@ -1,4 +1,3 @@
-// shadcn sidebar-08 (MIT), adapted for a regular full-height Aksara navigation spine.
 import {
   BookOpen,
   ChevronDown,
@@ -8,193 +7,126 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Settings2,
-  X,
+  MessageCircle,
+  LayoutDashboard,
 } from "lucide-react";
 import { useState } from "react";
-import { Dock, DockItem } from "./ui/dock";
 import { useWorkspace } from "../workspace/state";
 import { ContextMenu } from "../workspace/ContextMenu";
 import { Mark } from "../workspace/shared";
-import { AksaraLauncher } from "../workspace/AksaraLauncher";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
-} from "./ui/sidebar";
 export function AppSidebar() {
-  const { session, page, navigate, api, accept, run, busy, working } =
-    useWorkspace();
-  const { setOpenMobile, isMobile, state, toggleSidebar } = useSidebar();
+  const w = useWorkspace();
   const [channelsOpen, setChannelsOpen] = useState(true);
-  if (!session) return null;
-  const go = (p: string) => {
-    navigate(p);
-    setOpenMobile(false);
-  };
+  if (!w.session) return null;
+  const { session, page, navExpanded, navigate, setNavExpanded } = w;
   const links = [
     ["Today", "Home", House],
+    ["Ask", "Aksara", MessageCircle],
     ["Library", "Library", BookOpen],
     ["Channels", "Channels", Hash],
+    ["Canvas", "Shared table", LayoutDashboard],
     ["Tools", "Capabilities", Layers],
   ] as const;
   return (
-    <Sidebar
-      variant="inset"
-      collapsible="icon"
-      className="aksara-sidebar"
-      data-working={working.length > 0}
+    <aside
+      className="reading-nav"
+      data-expanded={navExpanded}
+      aria-label="Workspace navigation"
     >
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              className="brand-button"
-              tooltip="Aksara Home"
-              aria-label="Aksara Home"
-              onClick={() => go("Today")}
+      <button
+        className="reading-brand"
+        aria-label="Aksara Home"
+        onClick={() => navigate("Today")}
+      >
+        <Mark />
+        <span>
+          Aksara
+          <small>
+            {session.profile.mode === "personal"
+              ? "Personal space"
+              : "Community office"}
+          </small>
+        </span>
+      </button>
+      <nav aria-label="Main">
+        {links.map(([id, label, Icon]) => (
+          <div key={id}>
+            <button
+              className="reading-nav-link"
+              title={label}
+              aria-label={
+                id === "Tools" ? "Tools" : id === "Ask" ? "Ask PRIVATE" : label
+              }
+              aria-current={
+                page === id || (id === "Channels" && page === "Conversation")
+                  ? "page"
+                  : undefined
+              }
+              onClick={() => (id === "Canvas" ? w.newCanvas() : navigate(id))}
             >
-              <Mark />
-              <span className="brand-wordmark">aksara</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarHeader>
-      <SidebarContent>
-        <nav aria-label="Main">
-          <Dock vertical className="desktop-dock">
-            <SidebarMenu>
-              {links.map(([id, label, Icon]) => (
-                <SidebarMenuItem key={id}>
-                  <DockItem
-                    className="navigation-dock-item"
-                    title={label}
-                    aria-label={id === "Tools" ? "Tools" : label}
-                    aria-current={
-                      page === id ||
-                      (id === "Channels" && page === "Conversation")
-                        ? "page"
-                        : undefined
-                    }
-                    onClick={() => go(id)}
-                  >
-                    <Icon />
-                    <span className="dock-label">{label}</span>
-                  </DockItem>
-                  {id === "Channels" &&
-                    session.lanes.some((l) => l.lane.audience.length > 1) && (
-                      <div
-                        className="channel-branch"
-                        data-expanded={state === "expanded" || isMobile}
-                        aria-hidden={state !== "expanded" && !isMobile}
-                        inert={state !== "expanded" && !isMobile}
-                      >
-                        <button
-                          className="branch-toggle"
-                          aria-label="Show shared channels"
-                          aria-expanded={channelsOpen}
-                          onClick={() => setChannelsOpen(!channelsOpen)}
-                        >
-                          <span>Shared</span>
-                          <ChevronDown
-                            size={13}
-                            style={{
-                              transform: channelsOpen
-                                ? "none"
-                                : "rotate(-90deg)",
-                            }}
-                          />
-                        </button>
-                        <div
-                          className="channel-branch-list"
-                          data-open={channelsOpen}
-                        >
-                          <div>
-                            {session.lanes
-                              .filter((l) => l.lane.audience.length > 1)
-                              .map((l) => (
-                                <button
-                                  key={l.lane.id}
-                                  className="branch-channel"
-                                  disabled={busy}
-                                  aria-current={
-                                    session.lane === l.lane.id &&
-                                    page === "Conversation"
-                                      ? "page"
-                                      : undefined
-                                  }
-                                  aria-label={`Open channel ${l.name}`}
-                                  onClick={() =>
-                                    void run(async () => {
-                                      const s = await api("scope", {
-                                        profile: session.profile.id,
-                                        lane: l.lane.id,
-                                      });
-                                      accept(s);
-                                      go("Conversation");
-                                    })
-                                  }
-                                >
-                                  <span>{l.name}</span>
-                                </button>
-                              ))}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </Dock>
-        </nav>
-      </SidebarContent>
-      <SidebarFooter>
-        {!isMobile && (
-          <div className="sidebar-assistant">
-            <AksaraLauncher />
+              <Icon size={19} />
+              <span>{label}</span>
+              {id === "Channels" && navExpanded && <ChevronDown size={13} />}
+            </button>
+            {id === "Channels" && navExpanded && (
+              <div className="reading-channels">
+                {session.lanes
+                  .filter((l) => l.lane.audience.length > 1)
+                  .map((l) => (
+                    <button
+                      key={l.lane.id}
+                      className="reading-channel"
+                      aria-label={`Open channel ${l.name}`}
+                      aria-current={
+                        session.lane === l.lane.id && page === "Conversation"
+                          ? "page"
+                          : undefined
+                      }
+                      disabled={w.busy}
+                      onClick={() =>
+                        void w.run(async () => {
+                          await w.beforeNavigate.current?.();
+                          const s = await w.api("scope", {
+                            profile: session.profile.id,
+                            lane: l.lane.id,
+                          });
+                          w.accept(s);
+                          w.setPage("Conversation");
+                        })
+                      }
+                    >
+                      <Hash size={14} />
+                      <span>{l.name}</span>
+                    </button>
+                  ))}
+              </div>
+            )}
           </div>
-        )}
-        <SidebarMenuButton
-          tooltip={
-            state === "collapsed" ? "Expand sidebar" : "Collapse sidebar"
-          }
-          aria-label={
-            isMobile
-              ? "Close navigation"
-              : state === "collapsed"
-                ? "Expand sidebar"
-                : "Collapse sidebar"
-          }
-          onClick={() => (isMobile ? setOpenMobile(false) : toggleSidebar())}
+        ))}
+      </nav>
+      <div className="reading-nav-footer">
+        <button
+          className="reading-nav-link"
+          aria-label="Settings"
+          onClick={() => navigate("Settings")}
         >
-          {isMobile ? (
-            <X />
-          ) : state === "collapsed" ? (
-            <PanelLeftOpen />
-          ) : (
-            <PanelLeftClose />
-          )}
-          <span>{isMobile ? "Close navigation" : "Collapse sidebar"}</span>
-        </SidebarMenuButton>
+          <Settings2 size={18} />
+          <span>Settings</span>
+        </button>
         <ContextMenu />
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              tooltip="Settings"
-              aria-label="Settings"
-              isActive={page === "Settings"}
-              onClick={() => go("Settings")}
-            >
-              <Settings2 />
-              <span>Settings</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
-    </Sidebar>
+        <button
+          className="reading-nav-link nav-fold"
+          aria-label={navExpanded ? "Collapse sidebar" : "Expand sidebar"}
+          onClick={() => setNavExpanded(!navExpanded)}
+        >
+          {navExpanded ? (
+            <PanelLeftClose size={17} />
+          ) : (
+            <PanelLeftOpen size={17} />
+          )}
+          <span>Collapse sidebar</span>
+        </button>
+      </div>
+    </aside>
   );
 }

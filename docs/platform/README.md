@@ -1,3 +1,7 @@
+> Current UI/document checkpoint: [Reading Room — 6 November 2026](reading-room-implementation-2026-11-06.md).
+> This supersedes the atmospheric-shell and plain-text-editor descriptions below;
+> earlier sections retain historical qualification context.
+
 Windows packaging update: [Tauri 2 installer and compact local host](desktop-installation.md).
 
 Latest design research: [Reading Room, Orbit/Kanwas and BlockNote XL](../design/orbit-and-workspace-building-blocks-2026-11-05.md).

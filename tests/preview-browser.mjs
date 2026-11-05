@@ -77,11 +77,15 @@ try {
   page.on("pageerror", (e) => errors.push(e.message));
   page.on("request", (r) => requests.push(r.url()));
   await page.goto(base);
-  await page.getByRole("heading", { name: /Room for/ }).waitFor();
+  await page.locator(".living-brief h1").waitFor();
   await page.getByText("Interactive UI preview", { exact: true }).waitFor();
   mark("Preview opens on Today and identifies sample data without a backend");
+  await page
+    .getByRole("button", { name: "Collapse sidebar", exact: true })
+    .click();
+  await page.waitForTimeout(260);
   const navLeft = await page
-    .locator('[data-slot="sidebar-container"]')
+    .locator(".reading-nav")
     .evaluate((el) => el.getBoundingClientRect().left);
   const iconLeft = await page
     .getByRole("button", { name: "Home", exact: true })
@@ -101,65 +105,41 @@ try {
       ).x - iconLeft,
     ) < 1,
   );
-  assert.ok(await page.locator(".brand-button .mark").isVisible());
+  assert.ok(await page.locator(".reading-brand .mark").isVisible());
   await page
     .getByRole("button", { name: "Collapse sidebar", exact: true })
     .click();
   for (let i = 0; i < 5; i++) {
     assert.equal(
       await page
-        .locator('[data-slot="sidebar-container"]')
+        .locator(".reading-nav")
         .evaluate((el) => el.getBoundingClientRect().left),
       navLeft,
     );
     await page.waitForTimeout(100);
   }
-  assert.ok(await page.locator(".brand-button .mark").isVisible());
+  assert.ok(await page.locator(".reading-brand .mark").isVisible());
   mark(
     "Navbar keeps its left edge and icon column while folding, with a visible brand in both states",
   );
   assert.ok(
     (await page.locator("#workspace-content").boundingBox()).width > 1000,
   );
-  await page.getByRole("button", { name: "Add panel", exact: true }).click();
-  await page
-    .getByRole("menuitemcheckbox", { name: "Library glance", exact: true })
-    .click();
-  await page.keyboard.press("Escape");
-  assert.equal(await page.locator(".home-library-panel").count(), 0);
   await navigateSurface(page, "Library");
-  assert.equal(
-    await page.locator(".home-surface").getAttribute("data-compact"),
-    "true",
-  );
+  assert.equal(await page.locator(".home-surface").count(), 0);
   assert.equal(
     await page.getByLabel("Message Aksara", { exact: true }).count(),
     0,
   );
   await navigateSurface(page, "Home");
-  assert.equal(await page.locator(".home-library-panel").count(), 0);
-  await page.getByRole("button", { name: "Add panel", exact: true }).click();
-  await page
-    .getByRole("menuitemcheckbox", { name: "Library glance", exact: true })
-    .click();
-  await page.keyboard.press("Escape");
-  mark(
-    "Home contracts without resetting panel choices and keeps exactly one composer",
-  );
-  await page
-    .getByRole("button", { name: "Context: Operator", exact: true })
-    .click();
-  await page
-    .getByRole("menuitem", { name: "Pause background motion", exact: true })
-    .click();
   assert.equal(
-    await page
-      .locator(".ambient-field .smoke-layer-one")
-      .evaluate((el) => getComputedStyle(el).animationPlayState),
-    "paused",
+    await page.getByLabel("Message Aksara", { exact: true }).count(),
+    1,
   );
-  mark("Atmosphere can be paused without affecting the workspace");
-
+  assert.equal(await page.locator(".aksara-launcher canvas").count(), 0);
+  mark(
+    "Home is a peer view with one composer; other workspaces use the full plane without a shader",
+  );
   await page.getByLabel("Message Aksara").fill("A thought started on Today");
   await page
     .getByRole("button", { name: "Continue our conversation", exact: true })
@@ -167,24 +147,10 @@ try {
   await page
     .getByRole("heading", { name: "Private thread", exact: true })
     .waitFor();
-  const peerLayout = await page.locator(".work-surface").evaluate((el) => {
-    const home = document.querySelector(".home-surface");
-    return {
-      position: getComputedStyle(el).position,
-      main: el.getBoundingClientRect().toJSON(),
-      home: home.getBoundingClientRect().toJSON(),
-      compact: home.dataset.compact,
-    };
-  });
-  assert.equal(peerLayout.position, "relative");
-  assert.equal(peerLayout.compact, "true");
-  assert.ok(peerLayout.home.x >= peerLayout.main.right);
+  assert.equal(await page.locator(".home-surface").count(), 0);
   assert.equal(
-    await page
-      .locator(".home-surface")
-      .getByRole("button", { name: "Continue our conversation", exact: true })
-      .count(),
-    0,
+    await page.getByLabel("Message Aksara", { exact: true }).count(),
+    1,
   );
   assert.equal(
     await page.getByLabel("Message Aksara").inputValue(),
@@ -230,11 +196,11 @@ try {
     .getByRole("heading", { name: "Selected sample sources" })
     .waitFor();
   await resource.getByRole("button").first().click();
-  await page.getByRole("dialog").waitFor();
+  await page.locator(".document-plane").waitFor();
   await page
-    .getByRole("button", { name: "Close document", exact: true })
+    .getByRole("button", { name: "Back to Library", exact: true })
     .click();
-  await page.getByRole("dialog").waitFor({ state: "hidden" });
+  await navigateSurface(page, "Ask PRIVATE");
   mark(
     "A literal OpenUI resource card resolves current data and opens the trusted document view",
   );
@@ -297,7 +263,7 @@ try {
   const second = await browser.newContext();
   const other = await second.newPage();
   await other.goto(base);
-  await other.getByRole("heading", { name: /Room for/ }).waitFor();
+  await other.locator(".living-brief h1").waitFor();
   await other.getByRole("button", { name: "Library", exact: true }).click();
   assert.equal(
     await other
@@ -338,13 +304,14 @@ try {
   );
   mark("Hardware and model downloads are disconnected in the preview");
   await page.getByRole("button", { name: /^Home/ }).click();
+  await page.getByText("Recorded work", { exact: true }).click();
   await page.getByLabel("Historical date").fill("2001-01-01");
   await page
     .getByRole("heading", { name: "No recorded work for this date" })
     .waitFor();
   mark("Unrecorded history stays empty");
   await page.reload();
-  await page.getByRole("heading", { name: /Room for/ }).waitFor();
+  await page.locator(".living-brief h1").waitFor();
   await page.getByRole("button", { name: "Library", exact: true }).click();
   assert.equal(
     await page
@@ -361,7 +328,7 @@ try {
     .getByRole("menuitem", { name: "Personal space", exact: true })
     .click();
   await page
-    .locator(".location-name")
+    .locator(".reading-brand small")
     .filter({ hasText: "Personal space" })
     .waitFor();
   await page
@@ -371,8 +338,8 @@ try {
     .getByRole("menuitem", { name: "Community workspace", exact: true })
     .click();
   await page
-    .locator(".location-name")
-    .filter({ hasText: "Aksara Commons" })
+    .locator(".reading-brand small")
+    .filter({ hasText: "Community office" })
     .waitFor();
   mark(
     "The workspace switcher changes custody through the same fenced host action",
@@ -407,12 +374,17 @@ try {
     "Onboarding can preview provider choices while account and model calls stay disconnected",
   );
   await page.reload();
-  await page.getByRole("heading", { name: /Room for/ }).waitFor();
+  await page.locator(".living-brief h1").waitFor();
   await page.getByRole("button", { name: /^Home/ }).click();
   await navigateSurface(page, "Home");
-  await page
-    .getByRole("button", { name: "Expand sidebar", exact: true })
-    .click();
+  if (
+    await page
+      .getByRole("button", { name: "Expand sidebar", exact: true })
+      .isVisible()
+  )
+    await page
+      .getByRole("button", { name: "Expand sidebar", exact: true })
+      .click();
   await page
     .getByRole("button", { name: "Open channel Field notes", exact: true })
     .click();
@@ -425,7 +397,7 @@ try {
       .isVisible(),
   );
   assert.ok(
-    !(await page.locator(".home-surface").innerText()).includes(
+    !(await page.locator(".work-surface").innerText()).includes(
       "A place for our first steps",
     ),
   );
@@ -507,7 +479,7 @@ try {
     "navigation and Send share the composer row",
   );
   await page.keyboard.press("Escape");
-  await page.getByRole("heading", { name: /Room for/ }).waitFor();
+  await page.locator(".living-brief h1").waitFor();
   assert.equal(
     await page.getByLabel("Message Aksara").inputValue(),
     "A line\nAnother line\nA third line",
@@ -526,7 +498,7 @@ try {
       .getByRole("heading", { name: "Private thread", exact: true })
       .waitFor();
     await page.keyboard.press("Escape");
-    await page.getByRole("heading", { name: /Room for/ }).waitFor();
+    await page.locator(".living-brief h1").waitFor();
     await navigateSurface(page, "Settings");
     await page
       .getByRole("heading", { name: "Appearance", exact: true })
@@ -610,7 +582,7 @@ try {
     "none",
   );
   await page.reload();
-  await page.getByRole("heading", { name: /Room for/ }).waitFor();
+  await page.locator(".living-brief h1").waitFor();
   assert.equal(
     await page.evaluate(() => localStorage.getItem("aksara-palette")),
     "clay",

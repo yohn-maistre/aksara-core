@@ -171,7 +171,29 @@ export function useAppearance(theme: string, scope = "") {
     root.style.setProperty("--glass-tint", c("surface"));
     // The atmosphere never reads resolvedTheme: Auto's binary role switch
     // cannot make the sky jump. Explicit theme overrides add a gentle scrim.
-    root.style.setProperty("--canvas", solar.ground);
+    // Reading Room uses a stable paper/ink plane. Solar time still selects Auto
+    // appearance; atmospheric roles remain available to optional panels.
+    const dark = resolvedTheme === "dark";
+    const reading = {
+      "--canvas": dark ? "#191a1b" : "#faf8f5",
+      "--panel": dark ? "#222425" : "#ffffff",
+      "--soft": dark ? "#2b2d2f" : "#efede9",
+      "--ink": dark ? "#ece8e1" : "#242329",
+      "--ink-muted": dark ? "#b1aca7" : "#69636d",
+      "--line": dark ? "#3d3e40" : "#e1ddd7",
+    };
+    for (const [token, value] of Object.entries(reading))
+      root.style.setProperty(token, value);
+    if (palette === "lilac") {
+      root.style.setProperty("--green", dark ? "#d9a47e" : "#75529a");
+      root.style.setProperty("--primary", dark ? "#d9a47e" : "#75529a");
+      root.style.setProperty(
+        "--primary-foreground",
+        dark ? "#241a12" : "#ffffff",
+      );
+      root.style.setProperty("--duet-user", dark ? "#382c24" : "#f0e9f5");
+      root.style.setProperty("--user-ink", dark ? "#ece8e1" : "#242329");
+    }
     root.style.setProperty("--sky-ground", solar.ground);
     root.style.setProperty("--sky-upper", solar.upper);
     root.style.setProperty("--sky-lower", solar.lower);
@@ -185,11 +207,6 @@ export function useAppearance(theme: string, scope = "") {
           ? "#171923bc"
           : "#e3e5e7b8",
     );
-    if (solar.twilight > 0.35 && theme === "auto") {
-      const ink = solar.isLight ? "#000000" : "#ffffff";
-      root.style.setProperty("--ink", ink);
-      root.style.setProperty("--ink-muted", ink);
-    }
     root.dataset.sky =
       skyScene === "auto"
         ? weather && Date.now() - weather.fetched_at < 60 * 60 * 1000

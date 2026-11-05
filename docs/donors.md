@@ -448,3 +448,36 @@ component candidates, not vendored source. Google's official Material Web status
 motion physics and repository roadmap were checked: the component library is in
 maintenance mode and does not implement M3 Expressive. Existing Motion 13 and
 Base UI remain the proposed implementation tools for that interaction language.
+
+## Installed Reading Room components — 6 November 2026
+
+- **BlockNote core/react/shadcn 0.57.0**, MPL-2.0. Actual installed sources read:
+  editor construction/view APIs, Markdown conversion, file URL resolution and
+  shadcn theme integration. Unmodified dependency source corresponds to
+  `TypeCellOS/BlockNote` commit `262fb815a25e892b7a6e4d06b63df19a9ae5d6a8`.
+  Reuse: rich working documents and readable review. The app owns scoped saves,
+  snapshots and exact approval; editor state grants no authority. No XL package
+  or hosted BlockNote asset proxy is enabled. Unsupported blocks have a preserved
+  Markdown fallback; inline image upload is not integrated.
+- **@xyflow/react 12.10.1**, MIT. Installed node/edge state, node drag/select,
+  source handles, fitView and viewport controls studied and used. Reuse: a saved,
+  lane-bound table of eligible Library sources. It is not an execution graph or
+  freehand whiteboard. No React Flow server or alternate state authority added.
+- `scripts/frontend_notices.mjs` emits the actual bundled npm license inventory
+  and notices under `licenses/` in each web build, including the unmodified MPL
+  source location. The native package carries the same built assets. This pass
+  retains Apache-2.0 for Aksara integration code; XL GPL/commercial choice is open.
+
+Earlier “research only” entries describe the earlier source study. The two
+packages above are now installed; the other candidate stacks remain unimported.
+
+## OpenBot / Twenty follow-up — 6 November 2026
+
+[Assessment and exact source references](design/openbot-twenty-assessment-2026-11-06.md).
+OpenBot provider docs and ACP configuration at
+`821ede3aef07458c368244a0699abf869093a057` were studied. Its root license is
+PolyForm Noncommercial 1.0.0: architecture reference only, no source copied.
+Twenty UI at `985f1b6dea78b65938a8216a343dc2196f8b53d1`, version 2.57.0,
+is MIT at the package boundary. Manifest/license, SettingsRow, MainButton and
+public setup docs read. Candidate reuse: accessible settings/list controls and
+scoped theme/subpath patterns. No Twenty package or CRM application source added.

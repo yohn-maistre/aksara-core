@@ -82,7 +82,7 @@ export function MobileSpaces() {
 export function MobileDock() {
   const { page } = useWorkspace();
   const { isMobile } = useSidebar();
-  if (!isMobile || ["Ask", "Conversation"].includes(page)) return null;
+  if (!isMobile || ["Ask", "Conversation", "Document", "Canvas"].includes(page)) return null;
   return (
     <div className="mobile-dock mobile-launchers">
       <MobileSpaces />

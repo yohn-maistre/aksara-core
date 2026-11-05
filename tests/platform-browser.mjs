@@ -139,7 +139,7 @@ try {
   await page
     .getByRole("button", { name: "Explore first", exact: true })
     .click();
-  await page.getByRole("heading", { name: /Room for/ }).waitFor();
+  await page.getByRole("heading", { name: /A little space/ }).waitFor();
 
   await page.screenshot({
     animations: "disabled",
@@ -171,12 +171,13 @@ try {
     .getByLabel("Document content", { exact: true })
     .fill("A carefully reviewed synthetic document.");
   await page.getByRole("button", { name: "Prepare for review" }).click();
-  await page.getByRole("button", { name: "Approve exact proposal" }).waitFor();
-  await page.getByRole("button", { name: "Approve exact proposal" }).click();
-  await page.getByRole("button", { name: "Execute approved effect" }).click();
+  await page.getByRole("button", { name: "Approve this document" }).waitFor();
+  await page.getByRole("button", { name: "Approve this document" }).click();
+  await page.getByRole("button", { name: "Save approved document" }).click();
   await page.getByText(/Receipt: VERIFIED/).waitFor();
   await page.getByRole("button", { name: "Close work", exact: true }).click();
   mark("Exact document proposal → explicit approval → execution → receipt");
+  await navigateSurface(page, "Library");
   await page
     .locator(".file-explorer")
     .getByRole("button", { name: /Private original Private/ })
@@ -286,7 +287,7 @@ try {
     .getByRole("button", { name: "Prepare for review", exact: true })
     .click();
   await page
-    .getByRole("button", { name: "Approve exact proposal", exact: true })
+    .getByRole("button", { name: "Approve this document", exact: true })
     .waitFor();
   await page.evaluate(async () => {
     const session = await (await fetch("/api/session")).json();
@@ -391,28 +392,30 @@ try {
   await page
     .getByRole("button", { name: "Review spreadsheet revision", exact: true })
     .click();
+  await page.waitForFunction(() => document.querySelector('[contenteditable=true][aria-label="Document content"]')?.textContent.includes("Edited paper"));
   assert.match(
-    await page.getByLabel("Document content", { exact: true }).inputValue(),
+    await page.getByLabel("Document content", { exact: true }).innerText(),
     /Edited paper/,
   );
   assert.match(
-    await page.getByLabel("Document content", { exact: true }).inputValue(),
+    await page.getByLabel("Document content", { exact: true }).innerText(),
     /=SUM\(B2:B3\)/,
   );
   await page
     .getByRole("button", { name: "Prepare for review", exact: true })
     .click();
   await page
-    .getByRole("button", { name: "Approve exact proposal", exact: true })
+    .getByRole("button", { name: "Approve this document", exact: true })
     .click();
   await page
-    .getByRole("button", { name: "Execute approved effect", exact: true })
+    .getByRole("button", { name: "Save approved document", exact: true })
     .click();
   await page.getByText(/Receipt: VERIFIED/).waitFor();
   await page.getByRole("button", { name: "Close work", exact: true }).click();
   mark(
     "Actual Univer cell editing produces a source-linked reviewed document and receipt",
   );
+  await navigateSurface(page, "Library");
   await page
     .locator(".file-explorer")
     .getByRole("button", { name: /^budget.csv Private/ })
@@ -441,6 +444,7 @@ try {
     "Withdrawing the original disposes the open Office worktree and hides its derived revision",
   );
   await page.getByRole("button", { name: "Home", exact: true }).click();
+  await page.getByText("Recorded work", { exact: true }).click();
   await page.getByLabel("Historical date").fill("2001-01-01");
   await page
     .getByRole("heading", { name: "No recorded work for this date" })

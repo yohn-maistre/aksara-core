@@ -37,6 +37,9 @@ const readOps = new Set([
   "lane-names",
   "lanes",
   "library",
+  "workspace-entries",
+  "workspace-entry",
+  "work-artifacts",
   "search",
   "threads",
   "thread",
@@ -54,6 +57,8 @@ const readOps = new Set([
 ]);
 const writeOps = new Set([
   "ingest",
+  "workspace-save",
+  "workspace-snapshot",
   "ingest-file",
   "delegate",
   "prepare",

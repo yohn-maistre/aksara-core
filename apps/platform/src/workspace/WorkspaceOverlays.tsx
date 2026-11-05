@@ -7,6 +7,10 @@ import {
   ExpandableScreenContent,
 } from "../components/ui/expandable-screen";
 import { PREVIEW } from "../transport";
+import { lazy, Suspense } from "react";
+const BlockEditor = lazy(() =>
+  import("./BlockEditor").then((m) => ({ default: m.BlockEditor })),
+);
 
 import { stateWord } from "./shared";
 import { useWorkspace } from "./state";
@@ -90,9 +94,37 @@ export function WorkspaceOverlays() {
                 </OutcomePill>
                 {effects.map((e) => (
                   <section className="effect-review" key={e.prepared.id}>
-                    <h3>{e.prepared.capability}</h3>
-                    <p>Exact proposed arguments · {e.prepared.status}</p>
-                    <pre>{JSON.stringify(e.args, null, 2)}</pre>
+                    <h3>
+                      {e.prepared.capability === "artifact.create"
+                        ? "Create this document"
+                        : e.prepared.capability}
+                    </h3>
+                    {e.prepared.capability === "artifact.create" &&
+                    !e.args.redacted ? (
+                      <div className="review-document">
+                        <p>
+                          {e.args.visibility === "private"
+                            ? "Only you"
+                            : "Institution Library · eligible institutional members"}{" "}
+                          · {e.args.source_ids?.length || 0} linked sources
+                        </p>
+                        <h4>{e.args.title}</h4>
+                        <Suspense fallback={<pre>{e.args.content}</pre>}>
+                          <BlockEditor
+                            key={e.prepared.args_hash}
+                            content={e.args.content}
+                            title={e.args.title}
+                            readOnly
+                          />
+                        </Suspense>
+                      </div>
+                    ) : null}
+                    <details>
+                      <summary>
+                        Exact proposal details · {e.prepared.status}
+                      </summary>
+                      <pre>{JSON.stringify(e.args, null, 2)}</pre>
+                    </details>
                     {e.receipt ? (
                       <div className="notice">
                         <ShieldCheck size={18} />
@@ -126,10 +158,12 @@ export function WorkspaceOverlays() {
                           }
                         >
                           {approved[e.prepared.id]
-                            ? "Approved for exact arguments"
+                            ? "This version is approved"
                             : PREVIEW
                               ? "Try sample approval"
-                              : "Approve exact proposal"}
+                              : e.prepared.capability === "artifact.create"
+                                ? "Approve this document"
+                                : "Approve exact proposal"}
                         </button>
                         <button
                           className="primary"
@@ -148,7 +182,9 @@ export function WorkspaceOverlays() {
                         >
                           {PREVIEW
                             ? "Create sample document"
-                            : "Execute approved effect"}
+                            : e.prepared.capability === "artifact.create"
+                              ? "Save approved document"
+                              : "Execute approved effect"}
                         </button>
                       </div>
                     )}
@@ -185,156 +221,6 @@ export function WorkspaceOverlays() {
                 </button>
               </>
             )}
-          </ExpandableScreenContent>
-        </Dialog.Portal>
-      </ExpandableScreen>
-      <ExpandableScreen
-        open={!!detail}
-        onOpenChange={(v) => {
-          if (!v) setDetail(null);
-        }}
-      >
-        <Dialog.Portal>
-          <Dialog.Backdrop className="dialog-backdrop" />
-          <ExpandableScreenContent className="dialog">
-            <Dialog.Title>{detail?.artifact.title}</Dialog.Title>
-            <Dialog.Close className="dialog-close" aria-label="Close document">
-              <X size={20} />
-            </Dialog.Close>
-            {detail && (
-              <>
-                <p className="fingerprint">SHA-256 {detail.artifact.sha256}</p>
-                <FilePreview detail={detail} key={`${session.scope}:${detail.artifact.id}`} />
-                <div className="review-actions">
-                  <button
-                    className="secondary"
-                    disabled={typeof detail.content !== "string"}
-                    onClick={() => {
-                      setDocSources([detail.artifact.id]);
-                      setDocTitle(`Notes on ${detail.artifact.title}`);
-                      setDocContent(detail.content);
-                      setDetail(null);
-                      setShowDoc(true);
-                    }}
-                  >
-                    Draft from this source
-                  </button>
-                  <button
-                    className="secondary"
-                    disabled={typeof detail.content !== "string"}
-                    onClick={() =>
-                      void run(async () => {
-                        await api("kernel/memory-candidate", {
-                          text: Array.from(detail.content as string)
-                            .slice(0, 300)
-                            .join(""),
-                          source_artifact_id: detail.artifact.id,
-                          visibility: detail.artifact.visibility,
-                          purpose: "knowledge",
-                          kind: "semantic",
-                          evidence_kind: "source_fact",
-                          retention_seconds: 604800,
-                        });
-                        setDetail(null);
-                        await refresh();
-                      })
-                    }
-                  >
-                    Propose evidence for memory
-                  </button>
-                  <button
-                    className="text-button danger"
-                    disabled={me.id !== detail.artifact.owner}
-                    onClick={() =>
-                      void run(async () => {
-                        await api("kernel/withdraw", {
-                          id: detail.artifact.id,
-                        });
-                        setDetail(null);
-                        await refresh();
-                      })
-                    }
-                  >
-                    Withdraw source
-                  </button>
-                </div>
-              </>
-            )}
-          </ExpandableScreenContent>
-        </Dialog.Portal>
-      </ExpandableScreen>
-      <ExpandableScreen open={showDoc} onOpenChange={setShowDoc}>
-        <Dialog.Portal>
-          <Dialog.Backdrop className="dialog-backdrop" />
-          <ExpandableScreenContent className="dialog">
-            <Dialog.Title>Give an idea a page</Dialog.Title>
-            <Dialog.Description>
-              Draft locally, review the exact content, then approve its creation
-              in this context.
-            </Dialog.Description>
-            <Dialog.Close className="dialog-close" aria-label="Close editor">
-              <X size={20} />
-            </Dialog.Close>
-            <WorkspacePane
-              label="Document context"
-              primary={
-                <>
-                  {" "}
-                  <form className="source-form" onSubmit={proposeDoc}>
-                    <input
-                      aria-label="Document title"
-                      placeholder="Untitled document"
-                      value={docTitle}
-                      onChange={(e) => setDocTitle(e.target.value)}
-                      required
-                      maxLength={256}
-                    />
-                    <textarea
-                      className="editor"
-                      aria-label="Document content"
-                      placeholder="A beginning, in your own words…"
-                      value={docContent}
-                      onChange={(e) => setDocContent(e.target.value)}
-                      required
-                      maxLength={500000}
-                    />
-                    {docSources.length > 0 && (
-                      <p>
-                        Linked to {docSources.length} eligible source. Its
-                        restrictions follow this document.
-                      </p>
-                    )}
-                    <button className="primary" disabled={busy}>
-                      Prepare for review <ArrowUpRight size={15} />
-                    </button>
-                  </form>
-                </>
-              }
-              secondary={
-                <div className="document-context">
-                  <h3>In this draft</h3>
-                  <p>
-                    Local editing · {docContent.length.toLocaleString()}{" "}
-                    characters
-                  </p>
-                  <h3>Source trail</h3>
-                  {docSources.length ? (
-                    docSources.map((id) => (
-                      <p key={id}>
-                        {artifacts.find((a) => a.id === id)?.title ||
-                          "Source unavailable"}
-                      </p>
-                    ))
-                  ) : (
-                    <p>No Library sources attached.</p>
-                  )}
-                  <p>
-                    Source restrictions follow derived documents. Creating this
-                    page still needs your exact review.
-                  </p>
-                </div>
-              }
-            />
           </ExpandableScreenContent>
         </Dialog.Portal>
       </ExpandableScreen>

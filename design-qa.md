@@ -1,65 +1,90 @@
-# Expressive workspace visual QA
+# Reading Room design and functional QA
 
-Date: 30 October 2026 (Asia/Bangkok)
+6 November 2026, Asia/Bangkok. Development alpha 0.3.0.
 
-final result: passed
+The user selected the second Reading Room concept and authorized implementation
+and iteration. This build adapts its navigation/conversation/document structure
+to real scoped work. It is not a pixel reproduction or an award/readiness claim.
 
-Target: the user's selected Hark-like atmospheric ergonomics, followed by the
-explicit dock/mobile-row/blob/composer refinements. This adapts those references
-and the accepted design specification; it is not a pixel clone or a claim about
-Hark's private implementation.
+## Implemented and inspected
 
-Fresh Chromium production-preview captures were opened and inspected at
-1440×900 and 390×844: light Sage Library, dark Home, private/shared threads,
-phone inline work and a 390×420 compact-height composer. Provided Hark
-screenshots and actual Cult registry source ground the visual/interaction review.
-Earlier generated images establish workspace structure; the latest explicit
-refinements supersede their opaque rail.
+The main window is now a calm peer surface. Desktop documents keep the same-room
+conversation alongside an actual BlockNote editor; Home is a compact living
+brief. Navigation labels and channel branches stay legible. Light uses warm paper
+and lilac, dark graphite and copper. The new shell mounts no atmosphere shader.
 
-## Review and repair loop
+Shared working drafts autosave through the real Rust authority. Optimistic
+revisions reject stale writes and keep local unsaved text. “Help here” freezes an
+exact source snapshot and fills this room’s composer. Full document review shows
+the content and destination before exact approval and execution. A React Flow
+source table persists actual eligible source references and hands an explicit
+selection into the same-room conversation.
 
-- Removed the opaque rail frame and fixed collapsed icon geometry. Measured
-  horizontal/vertical icon-center error is zero pixels. Phone dock navigation
-  is direct; More retains a focus-trapped secondary sheet.
-- Repaired the mobile More resize race by opening mobile state explicitly.
-- Repaired a full-width rule extending the fixed private surface and its send
-  control beyond the viewport. It now accounts for collapsed/expanded desktop
-  navigation and phone safe-area spacing.
-- Reduced message type/weight/spacing, restored a real multiline composer and
-  kept phone Activity inline. Compact send bounds are x=312, y=346, width=40,
-  height=36 inside a 390×420 viewport.
-- Home and full thread use the same draft and canonical messages, with one
-  visible composer. Source withdrawal and scope checks clear restricted content.
-- An ARM CI failure exposed a stale layout-completion callback. Completion now
-  checks the current route before changing visibility; a repeated private/Home/
-  Settings sequence under 4× CPU throttling verifies the newer page stays visible.
-- Home contraction precedes surface reveal. Reduced motion skips choreography;
-  interrupted layout has a bounded fallback.
+Fresh Chromium screenshots were captured at 1488×1056 and 390×844. All content is
+fictional preview material, visibly labeled. This is browser rendering, not
+Surface Pro 3, Android hardware or assistive-technology measurement.
 
-## Evidence
+- [Light document](.impeccable/review/desktop.png)
+- [Dark document](.impeccable/review/desktop-dark.png)
+- [Phone document](.impeccable/review/mobile.png)
+- [Dark Home](.impeccable/review/home-dark.png)
+- [Phone Home](.impeccable/review/home-mobile.png)
+- [Phone return to the room](.impeccable/review/room-mobile.png)
+- [Visible title focus](.impeccable/review/title-focus.png)
+- [Readable exact review](.impeccable/review/review-desktop.png)
 
-![Home and desktop dock](docs/platform/ui-audit/expressive-home-desktop.jpg)
+The independent [finish review](.impeccable/review/finish-review.md) inspected all
+five captures and sampled source. Its initial disposition was **fix**: disclose
+the missing concept-seed provenance, restore a named phone return to conversation,
+and strengthen the working title’s focus indicator. The latter two were repaired
+through the existing guarded navigation and theme-primary focus color. Follow-up
+evidence is recorded beside that review: [scored verdict](.impeccable/review/finish-verdict.md), disposition **ship for the three scored fixes**, with the strict workflow limitation retained.
 
-![Expanded private conversation](docs/platform/ui-audit/expressive-thread-desktop.jpg)
+**Workflow limitation:** no verifiable original Impeccable direction-seed roll or
+world quality-card was preserved. No late roll, measured comp diff or completed
+strict Impeccable pipeline is claimed. The direction is the user’s selected image;
+the review records this process gap separately from rendered usability. Two
+mechanical incumbent Inter-font warnings were observed earlier; its temporary log
+was lost when the execution environment resumed. No substitute scan or clean
+mechanical report was manufactured.
 
-![Light Sage Library](docs/platform/ui-audit/expressive-library-light.jpg)
+## Functional evidence
 
-![Phone thread and bottom dock](docs/platform/ui-audit/expressive-thread-phone.jpg)
+Checks passed on this local Linux environment, using synthetic data:
 
-![Phone inline work](docs/platform/ui-audit/expressive-thread-phone-activity.jpg)
+- Rust workspace tests, formatting and warnings-as-errors Clippy; three new tests
+  cover working revisions, exact/idempotent snapshots, lineage/withdrawal and
+  private-source denial.
+- Pi and platform runtime suites; platform: 46 passed, one skipped.
+- 22 real-process stress checks, plus eight privacy/approval browser smoke checks.
+- 24 real-host product browser checks, including actual Mastra fixture inference,
+  exact review/receipt, source withdrawal, real Univer CSV editing, consent,
+  personal/shared separation and phone overflow.
+- Three new two-browser scenarios: persisted rich drafts; shared reading and a
+  held conflicting save preserving both local text and the newer server revision;
+  saved source-table reopening and source-bound request handoff.
+- 26 static-preview checks, including visitor isolation, reload reset, keyboard,
+  360 px, 200% type, reduced effects, route interruption and zero external/API egress.
+- Resident-agent recovery fixture, nine device SDK Python checks, normal/preview
+  builds and compact host build. The compact host build is about 60.2 MB/324 files;
+  this is not installer compression, runtime RSS or a Surface benchmark.
 
-The capture run has no page errors. The actual shader appears in normal captures;
-reduced effects also exercises the fallback. Taste v2 at 1440/768/390 reports no
-findings with explicit aesthetic allowances: lilac, large Home statement,
-independent panel heights, sparse real calendar hue, and the user-requested
-procedural smoke gradient. No accessibility finding is waived. This is not a
-full WCAG conformance audit.
+Each frontend build emits the actual 155-package license inventory and notices.
+BlockNote core/react/shadcn 0.57.0 are unmodified MPL-2.0; React Flow 12.10.1 MIT.
+No GPL/AGPL package appears in that bundled inventory. XL exporters remain
+uninstalled pending the distribution-license choice.
 
-25 preview checks, 20 real-host product checks and eight existing privacy/approval
-browser smoke checks pass. Material supplies paired color roles; static
-inspection does not establish every moving composite/native-device condition.
-Real Surface/A12 GPU, keyboard, battery and frame-time measurement remains.
+Windows/ARM CI and public preview deployment must be checked for the final commit;
+local x64 evidence alone does not qualify those targets. Current artifacts and
+status are reported in the completion message rather than assumed here.
 
-No P0/P1/P2 visual issue remains in captured states. P3: tune glass density,
-springs and atmosphere with real device feedback. Weather input, custom seeds
-and routed deep links remain outside this checkpoint.
+## Boundaries
+
+No live multiuser CRDT/cursors, Office/PDF export, watch scheduler, meeting
+audio/transcription, remote Telegram/WhatsApp or isolated shared computer was
+added. Vercel agent-desktop remains the existing bounded private desktop path.
+The preview never runs a model or real backend. A successful CLI connection and
+actual inference are separate checks; no fresh real-account success is claimed.
+
+Historical atmospheric-shell QA is preserved in git history. It does not describe
+this Reading Room implementation.

@@ -21,6 +21,7 @@ import {
 } from "./shared";
 function useWorkspaceState() {
   const composerInput = useRef<HTMLTextAreaElement>(null);
+  const beforeNavigate = useRef<(() => Promise<void>) | null>(null);
   const transferComposerFocus = useRef(false);
   const assistantOrigin = useRef<{
     page: string;
@@ -36,7 +37,7 @@ function useWorkspaceState() {
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
     [mobile, setMobile] = useState(false),
-    [navExpanded, setNavExpanded] = useState(false);
+    [navExpanded, setNavExpanded] = useState(() => innerWidth >= 960);
   const scope = useRef("");
   const audioRef = useRef<HTMLAudioElement | null>(null),
     audioURL = useRef("");
@@ -48,6 +49,8 @@ function useWorkspaceState() {
     setAudioSeq(null);
   }
   const [works, setWorks] = useState<Work[]>([]),
+    [entries, setEntries] = useState<Data[]>([]),
+    [activeEntry, setActiveEntry] = useState<Data | null>(null),
     [messages, setMessages] = useState<Data[]>([]),
     [timeline, setTimeline] = useState<Data[]>([]),
     [pinnedReplies, setPinnedReplies] = useState<number[]>([]),
@@ -118,9 +121,15 @@ function useWorkspaceState() {
       if (started !== scope.current)
         throw new Error("Context changed; old response discarded");
       if (!r.ok) {
-        if (r.status === 403 || r.status === 401 || r.status === 409) {
+        if (
+          r.status === 403 ||
+          r.status === 401 ||
+          (r.status === 409 && path !== "kernel/workspace-save")
+        ) {
           stopAudio();
           setWorks([]);
+          setEntries([]);
+          setActiveEntry(null);
           setMessages([]);
           setTimeline([]);
           setPinnedReplies([]);
@@ -149,7 +158,9 @@ function useWorkspaceState() {
             setPage("Today");
           }
         }
-        throw new Error(data.error || "Request failed");
+        throw Object.assign(new Error(data.error || "Request failed"), {
+          status: r.status,
+        });
       }
       return data;
     },
@@ -163,6 +174,8 @@ function useWorkspaceState() {
     setSession(s);
     setSetupOpen(!PREVIEW && !localStorage.getItem("aksara-onboarding-v2"));
     setWorks([]);
+    setEntries([]);
+    setActiveEntry(null);
     setMessages([]);
     setTimeline([]);
     setPinnedReplies([]);
@@ -208,7 +221,7 @@ function useWorkspaceState() {
     if (!scope.current) return;
     const current = scope.current;
     try {
-      const [w, m, a, mem, cand, identity, recorded] = await Promise.all(
+      const [w, m, a, mem, cand, identity, recorded, docs] = await Promise.all(
         [
           "threads",
           "messages",
@@ -217,10 +230,12 @@ function useWorkspaceState() {
           "memory-candidates",
           "me",
           "today",
+          "workspace-entries",
         ].map((p) => api(`kernel/${p}`)),
       );
       if (current !== scope.current) return;
       setWorks(w);
+      setEntries(docs);
       setMessages(m);
       setArtifacts(a);
       setMemories(mem);
@@ -231,6 +246,20 @@ function useWorkspaceState() {
       if (current === scope.current) setError((e as Error).message);
     }
   }, [api]);
+  useEffect(() => {
+    if (showDoc) {
+      setDetail(null);
+      setActiveEntry(null);
+      setPage("Document");
+    }
+  }, [showDoc]);
+  useEffect(() => {
+    if (detail) {
+      setActiveEntry(null);
+      setShowDoc(false);
+      setPage("Document");
+    }
+  }, [detail?.artifact?.id]);
   // One account-catalog check when selecting ChatGPT, not an inference call or
   // another background poll. The API and cleanup fence stale custody results.
   useEffect(() => {
@@ -291,6 +320,12 @@ function useWorkspaceState() {
     if (detail?.artifact && !artifacts.some((a) => a.id === detail.artifact.id))
       setDetail(null);
     const eligible = new Set(artifacts.map((a) => a.id));
+    if (
+      activeEntry &&
+      activeEntry.revision > 0 &&
+      !entries.some((e) => e.id === activeEntry.id)
+    )
+      setActiveEntry(null);
     const lostSource = (ids: string[]) => ids.some((id) => !eligible.has(id));
     if (showDoc && lostSource(docSources)) {
       setShowDoc(false);
@@ -307,7 +342,7 @@ function useWorkspaceState() {
       setEffects([]);
       setApproved({});
     }
-  }, [artifacts, works]);
+  }, [artifacts, works, entries]);
   useEffect(() => {
     setPinnedReplies((ids) => {
       const kept = ids.filter((seq) =>
@@ -359,6 +394,7 @@ function useWorkspaceState() {
   };
   async function switchContext(profile: string, lane?: string) {
     await run(async () => {
+      await beforeNavigate.current?.();
       const s = await api("scope", { profile, lane });
       accept(s);
       setMobile(false);
@@ -373,6 +409,33 @@ function useWorkspaceState() {
       setEffects(e);
       setSelected(current);
       setApproved({});
+    });
+  }
+  async function openEntry(id: string) {
+    await run(async () => {
+      await beforeNavigate.current?.();
+      const entry = await api(
+        `kernel/workspace-entry?id=${encodeURIComponent(id)}`,
+      );
+      setDetail(null);
+      setShowDoc(false);
+      setActiveEntry(entry);
+      setPage(entry.kind === "canvas" ? "Canvas" : "Document");
+    });
+  }
+  function newCanvas() {
+    void run(async () => {
+      await beforeNavigate.current?.();
+      setActiveEntry({
+        id: `table_${crypto.randomUUID()}`,
+        revision: 0,
+        kind: "canvas",
+        title: "Shared table",
+        content: "",
+        body: { nodes: [] },
+        source_ids: [],
+      });
+      setPage("Canvas");
     });
   }
   async function send(e: FormEvent) {
@@ -414,9 +477,16 @@ function useWorkspaceState() {
   }
   async function proposeDoc(e: FormEvent) {
     e.preventDefault();
+    await prepareDocument(docTitle, docContent, docSources);
+  }
+  async function prepareDocument(
+    title: string,
+    content: string,
+    sourceIds: string[],
+  ) {
     await run(async () => {
       const w = await api("kernel/delegate", {
-        request: `Create document: ${docTitle}`,
+        request: `Create document: ${title}`,
         idempotency_key: key(),
       });
       await api("kernel/prepare", {
@@ -426,14 +496,14 @@ function useWorkspaceState() {
         idempotency_key: key(),
         capability: "artifact.create",
         args: {
-          title: docTitle,
-          content: docContent,
+          title,
+          content,
           visibility:
             session!.lanes.find((l) => l.lane.id === session!.lane)!.lane
               .audience.length === 1
               ? "private"
               : "institution",
-          source_ids: docSources,
+          source_ids: sourceIds,
         },
       });
       setShowDoc(false);
@@ -482,7 +552,7 @@ function useWorkspaceState() {
       });
     } else finish();
   };
-  const navigate = (p: string) => {
+  const navigateNow = (p: string) => {
     if (p === "Setup") {
       setSetupOpen(true);
       return;
@@ -523,10 +593,19 @@ function useWorkspaceState() {
     setPage(p);
     setMobile(false);
   };
+  const navigate = (p: string) => {
+    if (p !== page && beforeNavigate.current) {
+      void run(async () => {
+        await beforeNavigate.current?.();
+        navigateNow(p);
+      });
+    } else navigateNow(p);
+  };
 
   return {
     ...appearance,
     composerInput,
+    beforeNavigate,
     profiles,
     setProfiles,
     session,
@@ -548,6 +627,11 @@ function useWorkspaceState() {
     setAudioSeq,
     stopAudio,
     works,
+    entries,
+    activeEntry,
+    setActiveEntry,
+    openEntry,
+    newCanvas,
     setWorks,
     messages,
     setupOpen,
@@ -627,6 +711,7 @@ function useWorkspaceState() {
     openWork,
     send,
     proposeDoc,
+    prepareDocument,
     lane,
     privateLane,
     working,

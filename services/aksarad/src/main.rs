@@ -336,6 +336,11 @@ async fn api(
         let count=|key:&str,default:usize|query.get(key).map(|v|v.parse::<usize>().map_err(|_|Error::Invalid("invalid page size".into()))).unwrap_or(Ok(default));
         match (method.as_str(),operation.as_str()) {
             ("GET","library")=>Ok(json!(k.library_items(&ctx)?)),
+            ("GET","workspace-entries")=>Ok(json!(k.workspace_entries(&ctx)?)),
+            ("POST","workspace-snapshot")=>Ok(json!(k.snapshot_workspace(&ctx,field(&input,"id")?,input["revision"].as_i64().ok_or_else(||Error::Invalid("missing revision".into()))?)?)),
+            ("GET","workspace-entry")=>Ok(json!(k.workspace_entry(&ctx,get("id")?)?)),
+            ("GET","work-artifacts")=>Ok(json!(k.work_artifacts(&ctx,get("id")?)?)),
+            ("POST","workspace-save")=>Ok(json!(k.save_workspace(&ctx,&serde_json::from_value(input)?)?)),
             ("GET","messages")=>Ok(json!(k.messages(&ctx,count("after",0)? as i64)?)),
             ("GET","today")=>{let at=query.get("at").map(|s|s.parse::<i64>().map_err(|_|Error::Invalid("invalid timestamp".into()))).transpose()?;Ok(k.today(&ctx,at)?)},
             ("GET","model-pending")=>Ok(json!(k.pending_models(&ctx)?)),

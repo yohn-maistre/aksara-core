@@ -34,6 +34,9 @@ export function LibraryView() {
     refresh,
     run,
     privateLane,
+    entries,
+    openEntry,
+    newCanvas,
   } = useWorkspace();
   const [importOpen, setImportOpen] = useState(false);
   const [collection, setCollection] = useState("all");
@@ -89,6 +92,35 @@ export function LibraryView() {
           </button>
         </div>
       </div>
+      <section className="working-pages" aria-label="Working pages">
+        <div className="section-title">
+          <h2>On the desk</h2>
+          <button className="text-button" onClick={newCanvas}>
+            New shared table <Plus size={14} />
+          </button>
+        </div>
+        {entries.length ? (
+          entries.map((entry) => (
+            <button
+              className="working-page-row"
+              key={entry.id}
+              onClick={() => void openEntry(entry.id)}
+            >
+              <FileText size={18} />
+              <strong>{entry.title}</strong>
+              <small>
+                {entry.kind === "canvas" ? "Table" : "Working page"} · revision{" "}
+                {entry.revision}
+              </small>
+              <ArrowUpRight size={14} />
+            </button>
+          ))
+        ) : (
+          <p className="panel-empty">
+            Working pages and shared tables stay with this conversation.
+          </p>
+        )}
+      </section>
       <section className="knowledge-section" aria-label="Reviewed knowledge">
         <div className="section-title">
           <h2>Reviewed knowledge</h2>

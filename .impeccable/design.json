@@ -1,0 +1,547 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-05T18:03:04.691768+00:00",
+  "title": "Design System: Aksara Reading Room",
+  "extensions": {
+    "colorMeta": {
+      "lilac": {
+        "role": "primary",
+        "displayName": "Lilac",
+        "tonalRamp": [
+          "oklch(0.150 0.0350 305.06)",
+          "oklch(0.260 0.0650 305.06)",
+          "oklch(0.380 0.0900 305.06)",
+          "oklch(0.500 0.1000 305.06)",
+          "oklch(0.620 0.1000 305.06)",
+          "oklch(0.740 0.0800 305.06)",
+          "oklch(0.860 0.0500 305.06)",
+          "oklch(0.950 0.0200 305.06)"
+        ]
+      },
+      "lilac-soft": {
+        "role": "primary",
+        "displayName": "Lilac Soft",
+        "tonalRamp": [
+          "oklch(0.150 0.0080 308.19)",
+          "oklch(0.260 0.0149 308.19)",
+          "oklch(0.380 0.0207 308.19)",
+          "oklch(0.500 0.0230 308.19)",
+          "oklch(0.620 0.0230 308.19)",
+          "oklch(0.740 0.0184 308.19)",
+          "oklch(0.860 0.0115 308.19)",
+          "oklch(0.950 0.0046 308.19)"
+        ]
+      },
+      "lilac-user": {
+        "role": "primary",
+        "displayName": "Lilac User",
+        "tonalRamp": [
+          "oklch(0.150 0.0062 311.57)",
+          "oklch(0.260 0.0114 311.57)",
+          "oklch(0.380 0.0158 311.57)",
+          "oklch(0.500 0.0176 311.57)",
+          "oklch(0.620 0.0176 311.57)",
+          "oklch(0.740 0.0141 311.57)",
+          "oklch(0.860 0.0088 311.57)",
+          "oklch(0.950 0.0035 311.57)"
+        ]
+      },
+      "copper": {
+        "role": "primary",
+        "displayName": "Copper",
+        "tonalRamp": [
+          "oklch(0.150 0.0284 56.79)",
+          "oklch(0.260 0.0528 56.79)",
+          "oklch(0.380 0.0731 56.79)",
+          "oklch(0.500 0.0813 56.79)",
+          "oklch(0.620 0.0813 56.79)",
+          "oklch(0.740 0.0650 56.79)",
+          "oklch(0.860 0.0406 56.79)",
+          "oklch(0.950 0.0163 56.79)"
+        ]
+      },
+      "copper-soft": {
+        "role": "primary",
+        "displayName": "Copper Soft",
+        "tonalRamp": [
+          "oklch(0.150 0.0083 53.22)",
+          "oklch(0.260 0.0154 53.22)",
+          "oklch(0.380 0.0213 53.22)",
+          "oklch(0.500 0.0236 53.22)",
+          "oklch(0.620 0.0236 53.22)",
+          "oklch(0.740 0.0189 53.22)",
+          "oklch(0.860 0.0118 53.22)",
+          "oklch(0.950 0.0047 53.22)"
+        ]
+      },
+      "copper-user": {
+        "role": "primary",
+        "displayName": "Copper User",
+        "tonalRamp": [
+          "oklch(0.150 0.0079 55.39)",
+          "oklch(0.260 0.0147 55.39)",
+          "oklch(0.380 0.0203 55.39)",
+          "oklch(0.500 0.0226 55.39)",
+          "oklch(0.620 0.0226 55.39)",
+          "oklch(0.740 0.0181 55.39)",
+          "oklch(0.860 0.0113 55.39)",
+          "oklch(0.950 0.0045 55.39)"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "tonalRamp": [
+          "oklch(0.150 0.0016 78.30)",
+          "oklch(0.260 0.0029 78.30)",
+          "oklch(0.380 0.0041 78.30)",
+          "oklch(0.500 0.0045 78.30)",
+          "oklch(0.620 0.0045 78.30)",
+          "oklch(0.740 0.0036 78.30)",
+          "oklch(0.860 0.0023 78.30)",
+          "oklch(0.950 0.0009 78.30)"
+        ]
+      },
+      "white-panel": {
+        "role": "neutral",
+        "displayName": "White Panel",
+        "tonalRamp": [
+          "oklch(0.150 0.0000 89.88)",
+          "oklch(0.260 0.0000 89.88)",
+          "oklch(0.380 0.0000 89.88)",
+          "oklch(0.500 0.0000 89.88)",
+          "oklch(0.620 0.0000 89.88)",
+          "oklch(0.740 0.0000 89.88)",
+          "oklch(0.860 0.0000 89.88)",
+          "oklch(0.950 0.0000 89.88)"
+        ]
+      },
+      "paper-soft": {
+        "role": "neutral",
+        "displayName": "Paper Soft",
+        "tonalRamp": [
+          "oklch(0.150 0.0020 84.57)",
+          "oklch(0.260 0.0037 84.57)",
+          "oklch(0.380 0.0052 84.57)",
+          "oklch(0.500 0.0058 84.57)",
+          "oklch(0.620 0.0058 84.57)",
+          "oklch(0.740 0.0046 84.57)",
+          "oklch(0.860 0.0029 84.57)",
+          "oklch(0.950 0.0012 84.57)"
+        ]
+      },
+      "paper-ink": {
+        "role": "neutral",
+        "displayName": "Paper Ink",
+        "tonalRamp": [
+          "oklch(0.150 0.0039 293.25)",
+          "oklch(0.260 0.0073 293.25)",
+          "oklch(0.380 0.0101 293.25)",
+          "oklch(0.500 0.0112 293.25)",
+          "oklch(0.620 0.0112 293.25)",
+          "oklch(0.740 0.0090 293.25)",
+          "oklch(0.860 0.0056 293.25)",
+          "oklch(0.950 0.0022 293.25)"
+        ]
+      },
+      "paper-muted": {
+        "role": "neutral",
+        "displayName": "Paper Muted",
+        "tonalRamp": [
+          "oklch(0.150 0.0060 312.11)",
+          "oklch(0.260 0.0112 312.11)",
+          "oklch(0.380 0.0155 312.11)",
+          "oklch(0.500 0.0172 312.11)",
+          "oklch(0.620 0.0172 312.11)",
+          "oklch(0.740 0.0138 312.11)",
+          "oklch(0.860 0.0086 312.11)",
+          "oklch(0.950 0.0034 312.11)"
+        ]
+      },
+      "paper-line": {
+        "role": "neutral",
+        "displayName": "Paper Line",
+        "tonalRamp": [
+          "oklch(0.150 0.0032 78.28)",
+          "oklch(0.260 0.0060 78.28)",
+          "oklch(0.380 0.0083 78.28)",
+          "oklch(0.500 0.0092 78.28)",
+          "oklch(0.620 0.0092 78.28)",
+          "oklch(0.740 0.0074 78.28)",
+          "oklch(0.860 0.0046 78.28)",
+          "oklch(0.950 0.0018 78.28)"
+        ]
+      },
+      "graphite": {
+        "role": "neutral",
+        "displayName": "Graphite",
+        "tonalRamp": [
+          "oklch(0.150 0.0009 247.94)",
+          "oklch(0.260 0.0016 247.94)",
+          "oklch(0.380 0.0022 247.94)",
+          "oklch(0.500 0.0025 247.94)",
+          "oklch(0.620 0.0025 247.94)",
+          "oklch(0.740 0.0020 247.94)",
+          "oklch(0.860 0.0012 247.94)",
+          "oklch(0.950 0.0005 247.94)"
+        ]
+      },
+      "graphite-panel": {
+        "role": "neutral",
+        "displayName": "Graphite Panel",
+        "tonalRamp": [
+          "oklch(0.150 0.0012 228.93)",
+          "oklch(0.260 0.0023 228.93)",
+          "oklch(0.380 0.0031 228.93)",
+          "oklch(0.500 0.0035 228.93)",
+          "oklch(0.620 0.0035 228.93)",
+          "oklch(0.740 0.0028 228.93)",
+          "oklch(0.860 0.0017 228.93)",
+          "oklch(0.950 0.0007 228.93)"
+        ]
+      },
+      "graphite-soft": {
+        "role": "neutral",
+        "displayName": "Graphite Soft",
+        "tonalRamp": [
+          "oklch(0.150 0.0016 247.98)",
+          "oklch(0.260 0.0030 247.98)",
+          "oklch(0.380 0.0041 247.98)",
+          "oklch(0.500 0.0046 247.98)",
+          "oklch(0.620 0.0046 247.98)",
+          "oklch(0.740 0.0037 247.98)",
+          "oklch(0.860 0.0023 247.98)",
+          "oklch(0.950 0.0009 247.98)"
+        ]
+      },
+      "graphite-ink": {
+        "role": "neutral",
+        "displayName": "Graphite Ink",
+        "tonalRamp": [
+          "oklch(0.150 0.0036 81.79)",
+          "oklch(0.260 0.0067 81.79)",
+          "oklch(0.380 0.0093 81.79)",
+          "oklch(0.500 0.0103 81.79)",
+          "oklch(0.620 0.0103 81.79)",
+          "oklch(0.740 0.0083 81.79)",
+          "oklch(0.860 0.0052 81.79)",
+          "oklch(0.950 0.0021 81.79)"
+        ]
+      },
+      "graphite-muted": {
+        "role": "neutral",
+        "displayName": "Graphite Muted",
+        "tonalRamp": [
+          "oklch(0.150 0.0032 67.69)",
+          "oklch(0.260 0.0059 67.69)",
+          "oklch(0.380 0.0082 67.69)",
+          "oklch(0.500 0.0091 67.69)",
+          "oklch(0.620 0.0091 67.69)",
+          "oklch(0.740 0.0073 67.69)",
+          "oklch(0.860 0.0046 67.69)",
+          "oklch(0.950 0.0018 67.69)"
+        ]
+      },
+      "graphite-line": {
+        "role": "neutral",
+        "displayName": "Graphite Line",
+        "tonalRamp": [
+          "oklch(0.150 0.0013 264.52)",
+          "oklch(0.260 0.0024 264.52)",
+          "oklch(0.380 0.0033 264.52)",
+          "oklch(0.500 0.0037 264.52)",
+          "oklch(0.620 0.0037 264.52)",
+          "oklch(0.740 0.0029 264.52)",
+          "oklch(0.860 0.0018 264.52)",
+          "oklch(0.950 0.0007 264.52)"
+        ]
+      },
+      "copper-on-primary": {
+        "role": "neutral",
+        "displayName": "Copper On Primary",
+        "tonalRamp": [
+          "oklch(0.150 0.0076 60.06)",
+          "oklch(0.260 0.0141 60.06)",
+          "oklch(0.380 0.0195 60.06)",
+          "oklch(0.500 0.0217 60.06)",
+          "oklch(0.620 0.0217 60.06)",
+          "oklch(0.740 0.0173 60.06)",
+          "oklch(0.860 0.0108 60.06)",
+          "oklch(0.950 0.0043 60.06)"
+        ]
+      },
+      "needs-light": {
+        "role": "neutral",
+        "displayName": "Needs Light",
+        "tonalRamp": [
+          "oklch(0.150 0.0307 51.27)",
+          "oklch(0.260 0.0570 51.27)",
+          "oklch(0.380 0.0789 51.27)",
+          "oklch(0.500 0.0876 51.27)",
+          "oklch(0.620 0.0876 51.27)",
+          "oklch(0.740 0.0701 51.27)",
+          "oklch(0.860 0.0438 51.27)",
+          "oklch(0.950 0.0175 51.27)"
+        ]
+      },
+      "done-light": {
+        "role": "neutral",
+        "displayName": "Done Light",
+        "tonalRamp": [
+          "oklch(0.150 0.0213 156.72)",
+          "oklch(0.260 0.0396 156.72)",
+          "oklch(0.380 0.0549 156.72)",
+          "oklch(0.500 0.0610 156.72)",
+          "oklch(0.620 0.0610 156.72)",
+          "oklch(0.740 0.0488 156.72)",
+          "oklch(0.860 0.0305 156.72)",
+          "oklch(0.950 0.0122 156.72)"
+        ]
+      },
+      "problem-light": {
+        "role": "neutral",
+        "displayName": "Problem Light",
+        "tonalRamp": [
+          "oklch(0.150 0.0350 23.01)",
+          "oklch(0.260 0.0650 23.01)",
+          "oklch(0.380 0.0900 23.01)",
+          "oklch(0.500 0.1000 23.01)",
+          "oklch(0.620 0.1000 23.01)",
+          "oklch(0.740 0.0800 23.01)",
+          "oklch(0.860 0.0500 23.01)",
+          "oklch(0.950 0.0200 23.01)"
+        ]
+      },
+      "needs-dark": {
+        "role": "neutral",
+        "displayName": "Needs Dark",
+        "tonalRamp": [
+          "oklch(0.150 0.0263 55.10)",
+          "oklch(0.260 0.0488 55.10)",
+          "oklch(0.380 0.0675 55.10)",
+          "oklch(0.500 0.0750 55.10)",
+          "oklch(0.620 0.0750 55.10)",
+          "oklch(0.740 0.0600 55.10)",
+          "oklch(0.860 0.0375 55.10)",
+          "oklch(0.950 0.0150 55.10)"
+        ]
+      },
+      "done-dark": {
+        "role": "neutral",
+        "displayName": "Done Dark",
+        "tonalRamp": [
+          "oklch(0.150 0.0189 152.66)",
+          "oklch(0.260 0.0351 152.66)",
+          "oklch(0.380 0.0486 152.66)",
+          "oklch(0.500 0.0540 152.66)",
+          "oklch(0.620 0.0540 152.66)",
+          "oklch(0.740 0.0432 152.66)",
+          "oklch(0.860 0.0270 152.66)",
+          "oklch(0.950 0.0108 152.66)"
+        ]
+      },
+      "problem-dark": {
+        "role": "neutral",
+        "displayName": "Problem Dark",
+        "tonalRamp": [
+          "oklch(0.150 0.0290 19.04)",
+          "oklch(0.260 0.0538 19.04)",
+          "oklch(0.380 0.0745 19.04)",
+          "oklch(0.500 0.0828 19.04)",
+          "oklch(0.620 0.0828 19.04)",
+          "oklch(0.740 0.0662 19.04)",
+          "oklch(0.860 0.0414 19.04)",
+          "oklch(0.950 0.0166 19.04)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Home living-brief greeting."
+      },
+      "document-title": {
+        "displayName": "Document Title",
+        "purpose": "Editable working-document title."
+      },
+      "heading": {
+        "displayName": "Heading",
+        "purpose": "Reading Room heading."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Reading Room body."
+      },
+      "conversation": {
+        "displayName": "Conversation",
+        "purpose": "Reading Room conversation."
+      },
+      "document-body": {
+        "displayName": "Document Body",
+        "purpose": "Georgia paragraphs inside working documents."
+      },
+      "control": {
+        "displayName": "Control",
+        "purpose": "Reading Room control."
+      },
+      "metadata": {
+        "displayName": "Metadata",
+        "purpose": "Reading Room metadata."
+      }
+    },
+    "shadows": [
+      {
+        "name": "menu",
+        "value": "0 10px 35px #0002",
+        "purpose": "Composer options and context menus."
+      },
+      {
+        "name": "dialog",
+        "value": "0 20px 65px #0003",
+        "purpose": "Centered review and setup overlays."
+      },
+      {
+        "name": "toast",
+        "value": "0 8px 35px #0002",
+        "purpose": "Transient feedback."
+      },
+      {
+        "name": "phone-dock",
+        "value": "0 5px 22px #0002",
+        "purpose": "Compact phone launcher."
+      }
+    ],
+    "motion": [
+      {
+        "name": "page-enter",
+        "value": "200ms cubic-bezier(0.16, 1, 0.3, 1); opacity 0.65 \u2192 1; translateY 5px \u2192 0",
+        "purpose": "Short page settling; disabled for reduced motion."
+      },
+      {
+        "name": "rail-width",
+        "value": "240ms cubic-bezier(0.2, 0.8, 0.2, 1)",
+        "purpose": "Interruptible navigation expansion."
+      },
+      {
+        "name": "button-state",
+        "value": "background 150ms, color 150ms; active scale 0.985",
+        "purpose": "Small control feedback; transitions removed for reduced motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "document-thread-hidden",
+        "value": "1100px"
+      },
+      {
+        "name": "phone",
+        "value": "767px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Compact action using the active appearance roles.",
+      "html": "<button class=\"ds-primary\">Save draft</button>",
+      "css": ".ds-primary{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:38px;padding:0 16px;border-radius:8px;font-size:.8125rem;font-weight:550;cursor:pointer;transition:background 150ms,color 150ms;font-family:\"Inter Variable\",Inter,ui-sans-serif,system-ui,sans-serif;background:var(--green,#75529a);color:var(--primary-foreground,#fff);border:0;}.ds-primary:hover{filter:brightness(.97);}.ds-primary:focus-visible{outline:2px solid var(--green,#75529a);outline-offset:3px;}.ds-primary:active:not(:disabled){scale:.985;}.ds-primary:disabled{opacity:.45;cursor:not-allowed;}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Compact action using the active appearance roles.",
+      "html": "<button class=\"ds-secondary\">Save draft</button>",
+      "css": ".ds-secondary{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:38px;padding:0 16px;border-radius:8px;font-size:.8125rem;font-weight:550;cursor:pointer;transition:background 150ms,color 150ms;font-family:\"Inter Variable\",Inter,ui-sans-serif,system-ui,sans-serif;background:var(--panel,#fff);color:var(--ink,#242329);border:1px solid var(--line,#e1ddd7);}.ds-secondary:hover{filter:brightness(.97);}.ds-secondary:focus-visible{outline:2px solid var(--green,#75529a);outline-offset:3px;}.ds-secondary:active:not(:disabled){scale:.985;}.ds-secondary:disabled{opacity:.45;cursor:not-allowed;}"
+    },
+    {
+      "name": "Text Button",
+      "kind": "button",
+      "refersTo": "button-text",
+      "description": "Low-emphasis contextual action.",
+      "html": "<button class=\"ds-text\">Open conversation <svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M7 17 17 7M7 7h10v10\"/></svg></button>",
+      "css": ".ds-text{display:inline-flex;align-items:center;gap:6px;background:none;border:0;padding:9px 0;color:var(--green,#75529a);font-size:.8125rem;cursor:pointer;font-family:\"Inter Variable\",Inter,ui-sans-serif,system-ui,sans-serif;}.ds-text:hover{filter:brightness(.97);}.ds-text:focus-visible{outline:2px solid var(--green,#75529a);outline-offset:3px;}.ds-text:active{scale:.985;}"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Standard field with a visible accent focus.",
+      "html": "<input class=\"ds-field\" aria-label=\"Document name\" placeholder=\"Document name\">",
+      "css": ".ds-field{color:var(--ink,#242329);font-family:\"Inter Variable\",Inter,ui-sans-serif,system-ui,sans-serif;min-height:44px;max-width:100%;padding:11px 12px;border:1px solid var(--line,#e1ddd7);border-radius:10px;background:var(--panel,#fff);font-size:.875rem;caret-color:var(--green,#75529a);}.ds-field:focus{outline:2px solid var(--green,#75529a);outline-offset:3px;}"
+    },
+    {
+      "name": "Active Navigation",
+      "kind": "nav",
+      "refersTo": "nav-active",
+      "description": "Selected destination in the compact reading rail.",
+      "html": "<button class=\"ds-nav\" aria-current=\"page\"><svg width=\"19\" height=\"19\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z\"/></svg><span>Home</span></button>",
+      "css": ".ds-nav{display:flex;align-items:center;gap:12px;min-height:42px;width:200px;padding:9px 12px;border:0;border-radius:8px;background:var(--duet-accent-soft,#ede5f5);color:var(--green,#75529a);font-size:.875rem;font-weight:500;text-align:left;cursor:pointer;font-family:\"Inter Variable\",Inter,ui-sans-serif,system-ui,sans-serif;}.ds-nav:hover{background:var(--soft,#efede9);}.ds-nav:focus-visible{outline:2px solid var(--green,#75529a);outline-offset:3px;}.ds-nav:active{scale:.985;}"
+    },
+    {
+      "name": "Audience Indicator",
+      "kind": "chip",
+      "refersTo": "privacy-chip",
+      "description": "Muted scope beside the conversation heading.",
+      "html": "<span class=\"ds-scope\"><svg width=\"13\" height=\"13\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"4\" y=\"10\" width=\"16\" height=\"11\" rx=\"2\"/><path d=\"M8 10V7a4 4 0 0 1 8 0v3\"/></svg>Only you</span>",
+      "css": ".ds-scope{display:inline-flex;align-items:center;gap:6px;color:var(--ink-muted,#69636d);font-size:.75rem;font-family:\"Inter Variable\",Inter,ui-sans-serif,system-ui,sans-serif;}"
+    },
+    {
+      "name": "Attention Document",
+      "kind": "card",
+      "refersTo": "attention-document",
+      "description": "Home preview that opens the work needing attention.",
+      "html": "<button class=\"ds-document\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 13h8M8 17h6\"/></svg><h3>Community meeting brief</h3><p>Ready for your review</p><span>Review the work <svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M7 17 17 7M7 7h10v10\"/></svg></span></button>",
+      "css": ".ds-document{display:block;width:100%;text-align:left;min-height:190px;padding:23px 25px 18px;border:1px solid var(--line,#e1ddd7);border-radius:4px 13px 13px 13px;background:var(--panel,#fff);cursor:pointer;color:var(--ink,#242329);font-family:\"Inter Variable\",Inter,ui-sans-serif,system-ui,sans-serif;}.ds-document>svg{color:var(--green,#75529a);margin-bottom:15px;}.ds-document h3{font-size:1.125rem;font-weight:550;line-height:1.4;margin:0 0 8px;}.ds-document p{font-size:.8125rem;margin:0 0 10px;color:var(--ink-muted,#69636d);}.ds-document span{font-size:.8125rem;color:var(--green,#75529a);}.ds-document:hover{border-color:var(--green,#75529a);}.ds-document:focus-visible{outline:2px solid var(--green,#75529a);outline-offset:3px;}.ds-document:active{scale:.985;}"
+    },
+    {
+      "name": "Conversation Composer",
+      "kind": "custom",
+      "refersTo": "composer",
+      "description": "One compact writing field and send action.",
+      "html": "<form class=\"ds-composer\"><textarea aria-label=\"Message Aksara\" placeholder=\"Message Aksara\u2026\" rows=\"1\"></textarea><button aria-label=\"Send message\" type=\"submit\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M12 19V5m-7 7 7-7 7 7\"/></svg></button></form>",
+      "css": ".ds-composer{display:flex;align-items:center;gap:8px;min-height:48px;padding:6px 9px;border:1px solid var(--line,#e1ddd7);border-radius:11px;background:var(--panel,#fff);color:var(--ink,#242329);font-family:\"Inter Variable\",Inter,ui-sans-serif,system-ui,sans-serif;}.ds-composer textarea{flex:1;min-width:0;min-height:26px;resize:none;padding:4px 5px;border:0;background:transparent;color:var(--ink,#242329);font-size:.875rem;line-height:1.5;font-family:\"Inter Variable\",Inter,ui-sans-serif,system-ui,sans-serif;}.ds-composer textarea:focus-visible{outline:2px solid var(--green,#75529a);outline-offset:3px;}.ds-composer button{display:grid;place-items:center;width:34px;height:34px;border:0;border-radius:8px;background:var(--green,#75529a);color:var(--primary-foreground,#fff);cursor:pointer;}.ds-composer button:hover{filter:brightness(.97);}.ds-composer button:focus-visible{outline:2px solid var(--green,#75529a);outline-offset:3px;}.ds-composer button:active{scale:.985;}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Working Reading Room",
+    "overview": "Aksara is a working reading room: warm paper, quiet ink, a clear conversation and a document that carries the emphasis. The retained open-triangle mark anchors a compact, labeled interface. The tone is concise and welcoming, with space given to reading and writing rather than atmospheric decoration.\n\nFlat planes and hairline boundaries organize the work. Light mode pairs warm paper with lilac; dark mode changes character to graphite and muted copper. Inter keeps navigation and controls clear, while Georgia gives document paragraphs an editorial reading texture.",
+    "keyCharacteristics": [
+      "Paper and ink planes with restrained tonal separation.",
+      "Compact Inter controls and Georgia document paragraphs.",
+      "A conversation and its document share one room.",
+      "Responsive writing space with explicit context and save state."
+    ],
+    "rules": [
+      {
+        "name": "The Reading Accent Rule",
+        "body": "Use lilac on warm paper and copper on graphite for primary actions, selected navigation and interaction emphasis. The legacy CSS name \u201cgreen\u201d denotes this accent role, not a green hue.",
+        "section": "colors"
+      },
+      {
+        "name": "The Two Voices Rule",
+        "body": "Keep interface text, document titles and headings in Inter. Use Georgia for document paragraphs; do not apply the serif indiscriminately to controls, lists or the whole editor.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Room Rule",
+        "body": "Keep working planes flat at rest. Reserve soft shadows for temporary overlays and the phone launcher dock.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do keep audience, save state and source context readable beside the actual work.",
+      "Do preserve a direct named conversation return when the adjacent thread is hidden.",
+      "Do use the implemented accent outline for keyboard focus and respect reduced motion.",
+      "Do give phone inputs a readable 1rem size and account for the bottom safe area."
+    ],
+    "donts": [
+      "Don't introduce atmospheric wallpaper or decorative blobs into the Reading Room.",
+      "Don't turn every work item into a floating dashboard card; use hairline-separated rows where the implementation does.",
+      "Don't substitute blue-slate dark surfaces for the graphite and copper palette.",
+      "Don't imply live collaboration, real contributors or real model activity through decorative presence or fabricated content."
+    ]
+  }
+}

@@ -1,27 +1,12 @@
-const SetupView = lazy(() =>
-  import("./workspace/SetupView").then((m) => ({ default: m.SetupView })),
-);
-import { X } from "lucide-react";
-import { MotionConfig } from "motion/react";
-import {
-  lazy,
-  StrictMode,
-  Suspense,
-  useMemo,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import { lazy, StrictMode, Suspense, useEffect, useMemo } from "react";
 import { createRoot } from "react-dom/client";
+import { MotionConfig, motion, useReducedMotion } from "motion/react";
+import { X } from "lucide-react";
 import "./duet.css";
 import "./style.css";
 import "./workspace.css";
-import "./atmosphere.css";
-import "./expressive.css";
-import "./open-workspace.css";
 import "./resident-workspace.css";
-import { motion, useReducedMotion } from "motion/react";
+import "./reading-room.css";
 import { Composer } from "./workspace/Composer";
 import { ConversationView } from "./workspace/ConversationView";
 import { useWorkspace, WorkspaceProvider } from "./workspace/state";
@@ -30,7 +15,9 @@ import { TodayView } from "./workspace/TodayView";
 import { Welcome } from "./workspace/Welcome";
 import { WorkspaceOverlays } from "./workspace/WorkspaceOverlays";
 import { WorkspaceShell } from "./workspace/WorkspaceShell";
-import { ScrollEdges } from "./workspace/ScrollEdges";
+const SetupView = lazy(() =>
+  import("./workspace/SetupView").then((m) => ({ default: m.SetupView })),
+);
 const ChannelsView = lazy(() =>
   import("./workspace/ChannelsView").then((m) => ({ default: m.ChannelsView })),
 );
@@ -43,6 +30,12 @@ const SettingsView = lazy(() =>
 const ToolsView = lazy(() =>
   import("./workspace/ToolsView").then((m) => ({ default: m.ToolsView })),
 );
+const DocumentView = lazy(() =>
+  import("./workspace/DocumentView").then((m) => ({ default: m.DocumentView })),
+);
+const CanvasView = lazy(() =>
+  import("./workspace/CanvasView").then((m) => ({ default: m.CanvasView })),
+);
 function App() {
   const {
     session,
@@ -53,56 +46,16 @@ function App() {
     openWork,
     run,
     setDetail,
-    navigate,
     closeAssistant,
-    restoreScroll,
   } = useWorkspace();
   const reduced = useReducedMotion();
-  const routeKey = `${session?.scope}:${page}`;
-  const activeRoute = useRef(routeKey);
-  const [settled, setSettled] = useState("");
-  const previous = useRef(page);
-  useLayoutEffect(() => {
-    activeRoute.current = routeKey;
-    const mustContract =
-      previous.current === "Today" &&
-      page !== "Today" &&
-      innerWidth > 1100 &&
-      !reduced;
-    previous.current = page;
-    if (!mustContract) {
-      setSettled(routeKey);
-      return;
-    }
-    // Completion callback is primary; bounded fallback handles layout cancellation.
-    const timer = setTimeout(() => {
-      if (activeRoute.current === routeKey) setSettled(routeKey);
-    }, 750);
-    return () => clearTimeout(timer);
-  }, [routeKey, reduced]);
-  const ready = settled === routeKey || !!reduced;
-  useEffect(() => {
-    if (!ready || restoreScroll.current === null) return;
-    const top = restoreScroll.current;
-    restoreScroll.current = null;
-    document.querySelector(".work-surface .surface-body")?.scrollTo({ top });
-    if (page === "Today") window.scrollTo({ top });
-  }, [ready, page, session?.scope]);
-  useEffect(() => {
-    if (page === "Ask" && ready && !document.querySelector('[role="dialog"]'))
-      document
-        .querySelector<HTMLTextAreaElement>(
-          '.page-ask textarea[aria-label="Message Aksara"]',
-        )
-        ?.focus({ preventScroll: true });
-  }, [page, ready, session?.scope]);
   useEffect(() => {
     if (page !== "Ask") return;
     const escape = (event: KeyboardEvent) => {
       if (
         event.key === "Escape" &&
         !event.defaultPrevented &&
-        !document.querySelector('[role="dialog"], [role="menu"]')
+        !document.querySelector('[role="dialog"],[role="menu"]')
       )
         closeAssistant();
     };
@@ -129,6 +82,7 @@ function App() {
     [session?.scope, api],
   );
   if (!session) return <Welcome />;
+  const conversation = ["Ask", "Conversation"].includes(page);
   return (
     <SurfacePortProvider port={port} key={session.scope}>
       <WorkspaceShell>
@@ -136,8 +90,7 @@ function App() {
           id="workspace-content"
           tabIndex={-1}
           className="workspace-stage"
-          data-home={page === "Today"}
-          data-private={page === "Ask"}
+          data-page={page}
           key={session.scope}
         >
           {error && (
@@ -148,73 +101,51 @@ function App() {
               </button>
             </div>
           )}
-          {page !== "Today" && (
-            <motion.section
-              key={`active-surface:${session.scope}:${page}`}
-              initial={{
-                opacity: reduced ? 1 : 0,
-                y: reduced ? 0 : 10,
-                filter: reduced ? "none" : "blur(5px)",
-              }}
-              animate={{
-                opacity: ready ? 1 : 0,
-                y: ready ? 0 : 10,
-                filter: ready ? "blur(0px)" : "blur(5px)",
-              }}
-              transition={{
-                duration: reduced ? 0 : 0.46,
-                ease: [0.16, 1, 0.3, 1],
-              }}
-              inert={!ready}
-              aria-hidden={!ready}
-              className={`work-surface content page-${page.toLowerCase()}`}
-              aria-label="Active workspace"
-            >
-              {page === "Ask" && (
-                <button
-                  className="private-thread-close icon-button"
-                  aria-label="Close private conversation"
-                  onClick={closeAssistant}
-                >
-                  <X size={22} />
-                </button>
-              )}
-              <div className="surface-body">
-                <Suspense
-                  fallback={
-                    <p className="view-loading" role="status">
-                      Opening workspace…
-                    </p>
-                  }
-                >
-                  {(page === "Ask" || page === "Conversation") && (
-                    <ConversationView />
-                  )}
-                  {page === "Channels" && <ChannelsView />}
-                  {page === "Library" && <LibraryView />}
-                  {page === "Tools" && <ToolsView />}
-                  {page === "Settings" && <SettingsView />}
-                </Suspense>
+          <motion.section
+            key={page}
+            initial={reduced ? false : { opacity: 0.65, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className={`work-surface content page-${page.toLowerCase()}`}
+            aria-label="Active workspace"
+          >
+            <div className="surface-body">
+              <Suspense
+                fallback={
+                  <p className="view-loading" role="status">
+                    Opening workspace…
+                  </p>
+                }
+              >
+                {page === "Today" && (
+                  <TodayView composer={<Composer presentation="line" />} />
+                )}
+                {conversation && <ConversationView />}
+                {page === "Channels" && <ChannelsView />}
+                {page === "Library" && <LibraryView />}
+                {page === "Tools" && <ToolsView />}
+                {page === "Settings" && <SettingsView />}
+                {page === "Canvas" && <CanvasView />}
+                {page === "Document" && (
+                  <div className="document-layout">
+                    <aside
+                      className="document-thread"
+                      aria-label="Document conversation"
+                    >
+                      <ConversationView />
+                      <Composer />
+                    </aside>
+                    <DocumentView />
+                  </div>
+                )}
+              </Suspense>
+            </div>
+            {conversation && (
+              <div className="surface-composer">
+                <Composer />
               </div>
-              <ScrollEdges selector=".surface-body" />
-              {["Ask", "Conversation"].includes(page) && (
-                <div className="surface-composer">
-                  <Composer />
-                </div>
-              )}
-            </motion.section>
-          )}
-          <TodayView
-            key="continuing-home"
-            compact={page !== "Today"}
-            onSettled={() => {
-              // Motion can finish an older layout after another destination opens.
-              if (activeRoute.current === routeKey) setSettled(routeKey);
-            }}
-            composer={
-              page === "Today" ? <Composer presentation="line" /> : undefined
-            }
-          />
+            )}
+          </motion.section>
         </main>
       </WorkspaceShell>
       <Suspense fallback={null}>

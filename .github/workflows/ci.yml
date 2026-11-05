@@ -54,6 +54,7 @@ jobs:
           npm run test:platform
           node tests/resident-agent.mjs
           node tests/platform-browser.mjs
+          node tests/workspace-browser.mjs
           node tests/preview-browser.mjs
       - name: Static phone host
         # A real native desktop fixture supplements the driver contract tests.
