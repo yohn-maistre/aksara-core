@@ -58,7 +58,7 @@ await page
   .click();
 await page.getByRole("dialog").waitFor();
 await page.getByRole("button", { name: "Explore first", exact: true }).click();
-await page.getByRole("heading", { name: /Room for/ }).waitFor();
+await page.getByRole("region", { name: "Home", exact: true }).waitFor();
 assert.equal((await fetch(base + "/api/profiles")).status, 401);
 mark(
   "Public test gateway requires credentials before revealing personas or API data",
@@ -106,7 +106,7 @@ await page
 await page
   .getByRole("button", { name: "Operator Community workspace" })
   .click();
-await page.getByRole("heading", { name: /Room for/ }).waitFor();
+await page.getByRole("region", { name: "Home", exact: true }).waitFor();
 mark(
   "Open browser recovers from a restarted host without retaining a stale authenticated view",
 );
