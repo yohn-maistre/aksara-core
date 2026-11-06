@@ -11,7 +11,7 @@ Aksara's integration code is Apache-2.0. Dependencies and copied source retain t
 | Twenty UI | MIT, 2.56.0 | Actual Button, Input, Select and ThemeProvider. Installed public input/theme APIs and portal/keyboard behavior inspected. The CRM app is not embedded. |
 | Base UI | MIT, 1.9.0 | Dialog, popover, menu, focus and selection behavior. |
 | BlockNote core/react/shadcn | MPL-2.0, 0.57.0 | Rich documents, Markdown conversion and read-only review. Unmodified dependency source: TypeCellOS/BlockNote at `262fb815a25e892b7a6e4d06b63df19a9ae5d6a8`. No XL exporters or hosted file proxy. |
-| Excalidraw | MIT, 0.18.1 | Saved vector drawings, scene conversion and SVG export. Public element/update/export APIs inspected. Fonts ship locally with their OFL/MIT notices and Liberation GPL font exception; no embedded browser, remote images or collaboration service. |
+| Excalidraw | MIT, 0.18.1 | Saved vector drawings, scene conversion and SVG export. Public element/update/export APIs inspected. Fonts ship locally with their OFL/MIT notices and Liberation GPL font exception. The Vite transform removes the pinned font registry’s unconditional CDN fallback; it fails the build if the expected implementation changes. no embedded browser, remote images or collaboration service. |
 | React Flow | MIT, 12.10.1 | Movable Library-source table with lane-bound saved revisions. |
 | Univer OSS | Apache-2.0, 1.3.1 | Lazy CSV spreadsheet worktrees. No commercial Office converters. |
 | OpenUI React Lang | MIT, 1.0.2 | Bounded registered text/resource components. No arbitrary query/mutation renderer. |

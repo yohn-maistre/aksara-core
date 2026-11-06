@@ -14,6 +14,18 @@ export default defineConfig(({ mode }) => ({
     react(),
     tailwindcss(),
     frontendNotices(),
+    {
+      name:"self-hosted-drawing-fonts",
+      transform(code,id){
+        // Excalidraw 0.18.1 FontFace.createUrls always appends its CDN,
+        // even with an explicit local asset path. Keep only local candidates.
+        if(!id.includes("/@excalidraw/excalidraw/dist/prod/")||!code.includes("ASSETS_FALLBACK_URL"))return;
+        const pattern=/return (\w+)\.push\(new URL\((\w+),\w+\.ASSETS_FALLBACK_URL\)\),\1/g;
+        const matches=[...code.matchAll(pattern)];
+        if(matches.length!==1)throw new Error("Requalify the pinned drawing font registry before changing Excalidraw");
+        return {code:code.replace(pattern,"return $1"),map:null};
+      }
+    },
     {name:"local-drawing-fonts",async closeBundle(){
       await cp(fileURLToPath(new URL("../../node_modules/@excalidraw/excalidraw/dist/prod/fonts/",import.meta.url)),fileURLToPath(new URL(`./${mode==="preview"?"dist-preview":"dist"}/excalidraw/fonts/`,import.meta.url)),{recursive:true});
       await cp(fileURLToPath(new URL("../../third_party/excalidraw-fonts/",import.meta.url)),fileURLToPath(new URL(`./${mode==="preview"?"dist-preview":"dist"}/licenses/excalidraw-fonts/`,import.meta.url)),{recursive:true});
