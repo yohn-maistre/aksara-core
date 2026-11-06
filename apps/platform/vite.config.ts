@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => ({
     tailwindcss(),
     frontendNotices(),
     {name:"local-drawing-fonts",async closeBundle(){
-      await cp(fileURLToPath(new URL("../../node_modules/@excalidraw/excalidraw/dist/prod/fonts/",import.meta.url)),fileURLToPath(new URL(`./${mode==="preview"?"dist-preview":"dist"}/excalidraw/`,import.meta.url)),{recursive:true});
+      await cp(fileURLToPath(new URL("../../node_modules/@excalidraw/excalidraw/dist/prod/fonts/",import.meta.url)),fileURLToPath(new URL(`./${mode==="preview"?"dist-preview":"dist"}/excalidraw/fonts/`,import.meta.url)),{recursive:true});
       await cp(fileURLToPath(new URL("../../third_party/excalidraw-fonts/",import.meta.url)),fileURLToPath(new URL(`./${mode==="preview"?"dist-preview":"dist"}/licenses/excalidraw-fonts/`,import.meta.url)),{recursive:true});
     }},
     {

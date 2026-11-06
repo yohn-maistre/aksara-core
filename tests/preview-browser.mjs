@@ -18,6 +18,7 @@ const mime = {
   ".svg": "image/svg+xml",
   ".png": "image/png",
   ".webmanifest": "application/manifest+json",
+  ".woff2": "font/woff2",
 };
 const server = http.createServer(async (req, res) => {
   try {
@@ -212,6 +213,7 @@ try {
     .click();
   await page.getByRole("button", { name: "New drawing", exact: true }).click();
   await page.locator(".excalidraw canvas").first().waitFor();
+  assert.equal(await page.evaluate(()=>fetch("/excalidraw/fonts/Excalifont/Excalifont-Regular-a88b72a24fb54c9f94e3b5fdaa7481c9.woff2").then(r=>r.status)),200);
   await page.getByLabel("Drawing title").fill("Water point diagram");
   const rectangle = page.getByLabel("Rectangle", { exact: true });
   await rectangle.locator("..").click();
