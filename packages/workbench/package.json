@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
+    "@aksara/memory": "0.1.0",
     "@aksara/runtime-mastra": "0.2.0",
     "@aksara/contracts": "0.2.0"
   },

@@ -8,7 +8,8 @@ import {
 import { NativeDesktopPort } from "../gateway/desktop.mjs";
 import { createWeatherPort } from "./weather.mjs";
 import { resolveResourceSurface } from "./surfaces.mjs";
-import { validatePack } from "@aksara/contracts";
+import { validatePack, MemoryRecallQuery } from "@aksara/contracts";
+import { createMemoryService } from "@aksara/memory";
 import { finalizePcmWav } from "./audio.mjs";
 import http from "node:http";
 import { readFile, stat } from "node:fs/promises";
@@ -30,6 +31,7 @@ const types = {
   ".css": "text/css; charset=utf-8",
   ".svg": "image/svg+xml",
   ".png": "image/png",
+  ".woff2": "font/woff2",
   ".webmanifest": "application/manifest+json",
 };
 const readOps = new Set([
@@ -38,6 +40,7 @@ const readOps = new Set([
   "lanes",
   "library",
   "workspace-entries",
+  "home-overview",
   "workspace-entry",
   "work-artifacts",
   "search",
@@ -190,11 +193,22 @@ export async function createWorkbench({
         actor: s.profile.actor,
       },
       scope: s.scope,
+      ...(s.contextKey ? {context:s.contextKey} : {}),
       lane: s.lane,
       lanes,
       development: true,
       test_host: process.env.AKSARA_TEST_HOST === "1",
     };
+  }
+  async function recallMemory(snapshot, input = {}, runId = null) {
+    let first = true;
+    const service = createMemoryService({load:async()=>{
+      const operation = runId && first ? "model-memory" : "knowledge";
+      first = false;
+      return kernel(snapshot,operation,operation === "model-memory" ? {id:runId} : undefined);
+    }});
+    try { return await service.recall(MemoryRecallQuery.parse(input)); }
+    finally { await service.close(); }
   }
   const launch = (
     run,
@@ -212,7 +226,8 @@ export async function createWorkbench({
     resident.admit({ run, profile: snapshot.profile.id, lane: snapshot.lane });
     const assertTask = () => {
       if (!background && sessionKey) {
-        const current = sessions.get(sessionKey);
+        const parent = sessions.get(sessionKey);
+        const current = snapshot.contextKey ? parent?.contexts?.get(snapshot.contextKey) : parent;
         if (
           !current ||
           current.expires < Date.now() ||
@@ -316,8 +331,7 @@ export async function createWorkbench({
             tasks: () => kernel(snapshot, "model-tasks", { id: run.id }),
             ...(run.provider === "local"
               ? {
-                  memory: () =>
-                    kernel(snapshot, "model-memory", { id: run.id }),
+                  memory: (input) => recallMemory(snapshot,input,run.id),
                 }
               : {}),
             ...(computerBinding
@@ -491,6 +505,14 @@ export async function createWorkbench({
         sessions.delete(cookie);
         s = undefined;
       }
+      const parentSession = s;
+      const contextKey = req.headers["x-aksara-context"];
+      if(contextKey) {
+        if(typeof contextKey !== "string" || !s?.contexts?.has(contextKey)) throw fail("Context unavailable",403);
+        s=s.contexts.get(contextKey);
+        if(!s || s.expires < Date.now() || s.profile.actor !== parentSession.profile.actor) throw fail("Context unavailable",403);
+        if(["/api/session","/api/logout","/api/scope","/api/contexts/private"].includes(url.pathname) && req.method !== "GET") throw fail("This private context cannot change the workspace session",403);
+      }
       if (req.method === "POST" && url.pathname === "/api/session") {
         const b = await body(req);
         const profile = profiles.find((p) => p.id === b.profile);
@@ -518,6 +540,18 @@ export async function createWorkbench({
       }
       if (!same(req.headers["x-aksara-scope"], s.scope))
         throw fail("Scope changed; refresh this view", 409);
+      if(req.method === "POST" && url.pathname === "/api/contexts/private") {
+        // One explicit actor-bound private view beside the primary workspace.
+        // It never replaces the parent's profile/lane or weakens scope fencing.
+        const principal=await kernel(s,"me");
+        const p=profiles.find(p=>p.actor===s.profile.actor && p.mode==="personal");
+        if(!p || !principal.active) throw fail("Private context unavailable",403);
+        await kernel({...s,profile:p,lane:p.lane},"capabilities");
+        s.contexts ??= new Map();
+        let child=[...s.contexts.values()].find(c=>c.profile.id===p.id && c.expires>Date.now());
+        if(!child){const key=uid();child={profile:p,lane:p.lane,scope:uid(),contextKey:key,expires:s.expires};s.contexts.set(key,child);}
+        reply(res,await sessionView(child));return;
+      }
       if (req.method === "POST" && url.pathname === "/api/logout") {
         if (s.providerCustody) codex.cancelPending(s.providerCustody);
         sessions.delete(cookie);
@@ -555,6 +589,10 @@ export async function createWorkbench({
         if (s.scope !== snapshot.scope)
           throw fail("Scope changed; result discarded", 409);
       };
+      if(req.method === "POST" && url.pathname === "/api/memory/recall") {
+        const result=await recallMemory(snapshot,await body(req));
+        assertScope();reply(res,result);return;
+      }
       const custodyFor = async () => {
         const principal = await kernel(snapshot, "me");
         await kernel(snapshot, "capabilities");

@@ -155,7 +155,14 @@ test(
         (e) => !String(e).includes("PRIVATE_MCP_WORK_SENTINEL"),
       );
       const tools = await alice.listTools();
-      assert.equal(Object.keys(tools).length, 0);
+      assert.equal(Object.keys(tools).length, 1);
+      assert.ok(Object.keys(tools)[0].endsWith("memory_search"));
+      const search = tools[Object.keys(tools)[0]];
+      const found = await search.execute({query:"MCP_PRIVATE_SENTINEL",mode:"associative",limit:8},{});
+      assert.ok(JSON.stringify(found).includes(memory.id));
+      const otherTools=await bob.listTools();
+      const hidden=await otherTools[Object.keys(otherTools)[0]].execute({query:"MCP_PRIVATE_SENTINEL",mode:"associative",limit:8},{});
+      assert.ok(!JSON.stringify(hidden).includes(memory.id));
       const recalled = JSON.parse(
         (await alice.resources.read("aksara", "aksara://workspace/knowledge"))
           .contents[0].text,
@@ -167,6 +174,8 @@ test(
       );
       assert.deepEqual(otherMemory.reviewed, []);
       await write("withdraw", { id: source.id });
+      const afterRecall=await search.execute({query:"MCP_PRIVATE_SENTINEL",mode:"associative",limit:8},{});
+      assert.ok(!JSON.stringify(afterRecall).includes(memory.id));
       const withdrawnMemory = JSON.parse(
         (await alice.resources.read("aksara", "aksara://workspace/knowledge"))
           .contents[0].text,

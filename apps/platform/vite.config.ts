@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { fileURLToPath } from "node:url";
-import { copyFile, mkdir } from "node:fs/promises";
+import { copyFile, mkdir, cp } from "node:fs/promises";
 import { frontendNotices } from "../../scripts/frontend_notices.mjs";
 export default defineConfig(({ mode }) => ({
   define: {
@@ -14,6 +14,10 @@ export default defineConfig(({ mode }) => ({
     react(),
     tailwindcss(),
     frontendNotices(),
+    {name:"local-drawing-fonts",async closeBundle(){
+      await cp(fileURLToPath(new URL("../../node_modules/@excalidraw/excalidraw/dist/prod/fonts/",import.meta.url)),fileURLToPath(new URL(`./${mode==="preview"?"dist-preview":"dist"}/excalidraw/`,import.meta.url)),{recursive:true});
+      await cp(fileURLToPath(new URL("../../third_party/excalidraw-fonts/",import.meta.url)),fileURLToPath(new URL(`./${mode==="preview"?"dist-preview":"dist"}/licenses/excalidraw-fonts/`,import.meta.url)),{recursive:true});
+    }},
     {
       name: "pages-preview-files",
       async closeBundle() {

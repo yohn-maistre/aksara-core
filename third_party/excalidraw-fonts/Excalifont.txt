@@ -1,0 +1,4 @@
+Original font name-table notices from @excalidraw/excalidraw 0.18.1.
+
+Copyright: Copyright (c) 2024 by Excalidraw. All rights reserved.
+Family: Excalifont

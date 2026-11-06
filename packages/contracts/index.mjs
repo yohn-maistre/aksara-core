@@ -1,4 +1,5 @@
 import { z } from "zod/v4";
+export {MemoryRecallQuery} from "./memory.mjs";
 const identifier = z.string().regex(/^[a-z][a-z0-9._-]{1,79}$/);
 // Manifests describe a request surface. They are never grants or executable plugin code.
 export const PackManifest = z

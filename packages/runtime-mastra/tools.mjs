@@ -1,5 +1,6 @@
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
+import {VisualSpec} from "@aksara/contracts/visuals";
 
 /** Host-injected capabilities, never browser/model-supplied authority. These
  * tools cannot approve an effect, change scope or execute a host command. */
@@ -30,8 +31,8 @@ export function residentTools(port, { local = false } = {}) {
             id: "memory_recall",
             description:
               "Recall this workspace's eligible reviewed excerpts and provisional wiki, people notes and learned procedures. Distinguish reviewed source facts from unreviewed advice. Memory is source-linked; withdrawal and current scope apply before recall. Local models only.",
-            inputSchema: z.object({}).strict(),
-            execute: execute(() => port.memory()),
+            inputSchema: z.object({query:z.string().max(1000).optional(),mode:z.enum(["strict","associative","historical"]).optional()}).strict(),
+            execute: execute((input) => port.memory(input)),
           }),
         }
       : {}),
@@ -89,6 +90,12 @@ export function residentTools(port, { local = false } = {}) {
       : {}),
     ...(port.document
       ? {
+          save_visual: createTool({
+            id:"save_visual",
+            description:"Create an actual source-linked visual draft in this thread: a small diagram with positioned nodes/edges or a bar chart using factual nonnegative data. Cite and read sources first. No scripts, external URLs, publication or approval. Shared with current channel members, private in personal custody. Counts toward the four saved-artifact run budget.",
+            inputSchema:z.object({title:z.string().min(1).max(100),visual:VisualSpec}).strict(),
+            execute:execute(({title,visual})=>port.document({title,content:JSON.stringify(visual)})),
+          }),
           save_document: createTool({
             id: "save_document",
             description:

@@ -19,7 +19,13 @@ import {
   type Session,
   type Work,
 } from "./shared";
-function useWorkspaceState() {
+type WorkspaceOptions={contextKey?:string;embedded?:boolean;active?:boolean};
+function useWorkspaceState({contextKey,embedded=false,active=true}:WorkspaceOptions={}) {
+  const request=useCallback((path:string,init?:RequestInit)=>{
+    const headers=new Headers(init?.headers);
+    if(contextKey) headers.set("x-aksara-context",contextKey);
+    return apiFetch(path,{...init,headers});
+  },[contextKey]);
   const composerInput = useRef<HTMLTextAreaElement>(null);
   const beforeNavigate = useRef<(() => Promise<void>) | null>(null);
   const transferComposerFocus = useRef(false);
@@ -32,7 +38,8 @@ function useWorkspaceState() {
   const restoreScroll = useRef<number | null>(null);
   const [profiles, setProfiles] = useState<Profile[]>([]),
     [session, setSession] = useState<Session | null>(null),
-    [page, setPage] = useState("Today"),
+    [page, setPage] = useState(embedded ? "Ask" : "Today"),
+    [assistantPanelOpen,setAssistantPanelOpen]=useState(false),
     [setupOpen, setSetupOpen] = useState(false),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
@@ -89,7 +96,7 @@ function useWorkspaceState() {
       localStorage.getItem("aksara-ambient-motion") !== "off",
     ),
     [device, setDevice] = useState<Data | null>(null);
-  const appearance = useAppearance(theme, session?.scope);
+  const appearance = useAppearance(theme, session?.scope, !embedded);
   useLayoutEffect(() => {
     const el = composerInput.current;
     if (!el) return;
@@ -101,6 +108,7 @@ function useWorkspaceState() {
     el.style.height = `${Math.max(24, Math.min(192, el.scrollHeight))}px`;
   }, [draft, page]);
   useLayoutEffect(() => {
+    if(embedded) return;
     localStorage.setItem("aksara-theme", theme);
   }, [theme]);
   useEffect(() => {
@@ -109,7 +117,7 @@ function useWorkspaceState() {
   const api = useCallback(
     async (path: string, body?: unknown): Promise<any> => {
       const started = scope.current;
-      const r = await apiFetch(`/api/${path}`, {
+      const r = await request(`/api/${path}`, {
         method: body === undefined ? "GET" : "POST",
         headers: {
           "content-type": "application/json",
@@ -164,7 +172,7 @@ function useWorkspaceState() {
       }
       return data;
     },
-    [],
+    [request],
   );
   function accept(s: Session, preserveAssistant = false) {
     if (!preserveAssistant) assistantOrigin.current = null;
@@ -172,7 +180,8 @@ function useWorkspaceState() {
     stopAudio();
     scope.current = s.scope;
     setSession(s);
-    setSetupOpen(!PREVIEW && !localStorage.getItem("aksara-onboarding-v2"));
+    setSetupOpen(!embedded && !PREVIEW && !localStorage.getItem("aksara-onboarding-v2"));
+    if(session?.profile.actor!==s.profile.actor)setAssistantPanelOpen(false);
     setWorks([]);
     setEntries([]);
     setActiveEntry(null);
@@ -206,17 +215,17 @@ function useWorkspaceState() {
     setModel("");
   }
   useEffect(() => {
-    apiFetch("/api/profiles")
+    request("/api/profiles")
       .then((r) => r.json())
       .then(setProfiles)
       .catch(() => setError("Cannot reach Aksara"));
-    apiFetch("/api/session")
+    request("/api/session")
       .then((r) => (r.ok ? r.json() : null))
       .then((s) => {
         if (s) accept(s);
       })
       .catch(() => {});
-  }, []);
+  }, [request]);
   const refresh = useCallback(async () => {
     if (!scope.current) return;
     const current = scope.current;
@@ -283,7 +292,7 @@ function useWorkspaceState() {
     };
   }, [api, session?.scope, provider, !!providers.codex?.connected]);
   useEffect(() => {
-    if (!session) return;
+    if (!session || !active) return;
     void refresh();
     api("packs")
       .then(setPacks)
@@ -291,14 +300,14 @@ function useWorkspaceState() {
     api("providers")
       .then((p) => {
         setProviders(p);
-        setModel(PREVIEW ? "guided-demo" : p.local.models[0]?.id || "");
+        setModel(current => current || (PREVIEW ? "guided-demo" : p.local.models[0]?.id || ""));
       })
       .catch((e) => setError(e.message));
     const timer = setInterval(() => {
       if (!document.hidden) void refresh();
     }, 2500);
     return () => clearInterval(timer);
-  }, [session?.scope, api, refresh]);
+  }, [session?.scope, api, refresh, active]);
   useEffect(() => {
     if (!session) return;
     if (!at) {
@@ -359,7 +368,7 @@ function useWorkspaceState() {
     await run(async () => {
       stopAudio();
       const current = scope.current;
-      const response = await apiFetch("/api/speech", {
+      const response = await request("/api/speech", {
         method: "POST",
         headers: {
           "content-type": "application/json",
@@ -420,7 +429,7 @@ function useWorkspaceState() {
       setDetail(null);
       setShowDoc(false);
       setActiveEntry(entry);
-      setPage(entry.kind === "canvas" ? "Canvas" : "Document");
+      setPage(entry.kind === "canvas" ? "Canvas" : entry.kind === "drawing" ? "Drawing" : "Document");
     });
   }
   function newCanvas() {
@@ -467,7 +476,7 @@ function useWorkspaceState() {
         idempotency_key: key(),
         source_ids: attached,
       });
-      if (page === "Today") setHomeReplyAfter(after);
+      if (page === "Today") {setHomeReplyAfter(after);setPage(privateLane?"Ask":"Conversation");}
       setDraft((current) => (current === draft ? "" : current));
       setAttached((current) => (current === attached ? [] : current));
       setConsent(false);
@@ -603,6 +612,8 @@ function useWorkspaceState() {
   };
 
   return {
+    embedded,
+    assistantPanelOpen,setAssistantPanelOpen,
     ...appearance,
     composerInput,
     beforeNavigate,
@@ -727,8 +738,8 @@ function useWorkspaceState() {
 
 export type Workspace = ReturnType<typeof useWorkspaceState>;
 const WorkspaceContext = createContext<Workspace | null>(null);
-export function WorkspaceProvider({ children }: { children: ReactNode }) {
-  const state = useWorkspaceState();
+export function WorkspaceProvider({ children,...options }: { children: ReactNode } & WorkspaceOptions) {
+  const state = useWorkspaceState(options);
   return (
     <WorkspaceContext.Provider value={state}>
       {children}

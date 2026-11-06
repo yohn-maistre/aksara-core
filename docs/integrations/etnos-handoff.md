@@ -41,7 +41,7 @@ Private repository implementation/architecture text is not copied into this note
   not remote MCP enrollment, a connector marketplace or a general publishing bridge.
 
 See [gateway ports](../../packages/gateway/README.md) and
-[durable harness](../platform/resident-harness-implementation-2026-11-02.md).
+[durable harness](../platform/architecture.md).
 
 ## Smallest useful integration
 

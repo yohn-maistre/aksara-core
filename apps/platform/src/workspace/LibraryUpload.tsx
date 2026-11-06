@@ -16,7 +16,7 @@ export function LibraryUpload() {
   const [status, setStatus] = useState("");
   return (
     <label className="library-upload text-button">
-      <span>Upload file</span>
+      <span>{PREVIEW?"Upload file · local app":"Upload file"}</span>
       <input
         type="file"
         aria-label="Upload Library file"

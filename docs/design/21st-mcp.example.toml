@@ -1,0 +1,6 @@
+# Generated/verified with @21st-dev/cli 1.18.0: 21st init --client codex.
+# Merge into your Codex config only when API_KEY_21ST is configured privately.
+# Do not commit the API key. This template does not establish an active connection.
+[mcp_servers.21st]
+url = "https://21st.dev/api/mcp"
+bearer_token_env_var = "API_KEY_21ST"

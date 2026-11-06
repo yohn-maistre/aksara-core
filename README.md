@@ -2,7 +2,7 @@
 
 A local-first AI workspace for people and teams. Talk with Aksara, send work to a background agent, and keep the resulting documents and knowledge in one place.
 
-**Development alpha.** [Try the interactive UI preview](https://aksara-core-preview.pages.dev) · [Run locally](docs/platform/windows-local.md) · [Implementation status](docs/platform/reading-room-implementation-2026-11-06.md)
+**Development alpha.** [Try the interactive UI preview](https://aksara-core-preview.pages.dev) · [Run locally](docs/platform/windows-local.md) · [Architecture and status](docs/platform/architecture.md)
 
 The hosted preview uses disposable sample data. Models, files on your computer, and the Rust backend are disconnected there. Run the local app to test the working platform.
 
@@ -20,11 +20,12 @@ User data stays in `%LOCALAPPDATA%\Aksara`, separate from app files. This is a d
 
 ## What you can test
 
-- **A continuing workspace:** Home, private conversation, shared channels, a searchable Library, and source-linked working knowledge. Personal and community profiles use separate databases.
+- **A continuing workspace:** a visual Home workbench, persistent private Aksara side pane, shared channels, a searchable Library, and source-linked working knowledge. Personal and community profiles use separate databases.
 - **Interactive and background work:** a durable Mastra agent can delegate to a configured task model, check progress, and save drafts while the main conversation remains available. Local workflow checkpoints support fenced crash recovery; uncertain tool delivery pauses for inspection.
-- **A shared writing desk:** rich BlockNote documents open beside their room’s conversation. Autosave preserves revisions and detects conflicting edits. Ask Aksara about a saved snapshot, then read the exact proposed artifact before approving it.
+- **A shared workbench:** switch a channel between conversation and an artifact workbench. Rich BlockNote documents open beside the room’s conversation. Autosave preserves revisions and detects conflicting edits. Ask Aksara about a saved snapshot, then read the exact proposed artifact before approving it.
+- **Drawings and charts:** Aksara can save source-linked diagrams and bar charts. Diagrams open as editable Excalidraw drawings; exact scene snapshots remain reviewable.
 - **Files and source tables:** retain uploaded originals, search eligible knowledge, edit CSV worktrees in Univer, and arrange Library sources on a saved, movable table. Markdown downloads work locally.
-- **Memory with provenance:** reviewed facts and working wiki, people, and procedure drafts stay linked to their sources. Current access and withdrawal checks apply when retrieving them or using derived results.
+- **Memory with provenance:** embedded LongMemory recalls reviewed facts and working wiki, people, and procedure drafts stay linked to their sources. Current access and withdrawal checks apply when retrieving them or using derived results.
 - **Native computer use:** explicitly connect one private desktop window for a limited time through Vercel agent-desktop. Observation, clicks, field edits, and physical typing have separate bounds. Currently available to local models. This controls your signed-in desktop; it is **not an OS sandbox**.
 - **Shared interfaces:** the CLI and scoped MCP gateway read the same canonical workspace. Optional local Pocket TTS supports read-aloud.
 
@@ -41,6 +42,8 @@ npm run build
 npm run aksara -- start
 ```
 
+The source build currently needs a larger Node heap for the optional editor bundles. Installed distributions use prebuilt assets; document and drawing editors load on demand.
+
 The native launcher starts two Rust authority processes and a Node workbench serving the PWA. The older Python launcher remains a multi-person conformance fixture.
 
 ```sh
@@ -49,7 +52,7 @@ npm test
 npm run test:platform
 ```
 
-[Platform guide](docs/platform/README.md) · [Verification](docs/platform/verification.md) · [Native desktop qualification](docs/platform/resident-agent-implementation.md)
+[Platform guide](docs/platform/README.md) · [Verification](docs/platform/verification.md) · [Computer-use boundary](docs/platform/architecture.md)
 
 ## How it fits together
 

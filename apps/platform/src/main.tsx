@@ -3,15 +3,17 @@ import { createRoot } from "react-dom/client";
 import { MotionConfig, motion, useReducedMotion } from "motion/react";
 import { X } from "lucide-react";
 import "./duet.css";
-import "./style.css";
-import "./workspace.css";
-import "./resident-workspace.css";
-import "./reading-room.css";
+import "twenty-ui/style.css";
+import "twenty-ui/theme-light.css";
+import "twenty-ui/theme-dark.css";
+import "./industrial.css";
 import { Composer } from "./workspace/Composer";
 import { ConversationView } from "./workspace/ConversationView";
 import { useWorkspace, WorkspaceProvider } from "./workspace/state";
 import { SurfacePortProvider, type SurfacePort } from "./workspace/SurfacePort";
-import { TodayView } from "./workspace/TodayView";
+import {HomeWorkbench} from "./workspace/HomeWorkbench";
+import {RoomWorkbench} from "./workspace/RoomWorkbench";
+import {WorkspaceTheme} from "./workspace/controls";
 import { Welcome } from "./workspace/Welcome";
 import { WorkspaceOverlays } from "./workspace/WorkspaceOverlays";
 import { WorkspaceShell } from "./workspace/WorkspaceShell";
@@ -36,6 +38,7 @@ const DocumentView = lazy(() =>
 const CanvasView = lazy(() =>
   import("./workspace/CanvasView").then((m) => ({ default: m.CanvasView })),
 );
+const DrawingView=lazy(()=>import("./workspace/DrawingView").then(m=>({default:m.DrawingView})));
 function App() {
   const {
     session,
@@ -84,7 +87,7 @@ function App() {
   if (!session) return <Welcome />;
   const conversation = ["Ask", "Conversation"].includes(page);
   return (
-    <SurfacePortProvider port={port} key={session.scope}>
+    <SurfacePortProvider port={port}>
       <WorkspaceShell>
         <main
           id="workspace-content"
@@ -118,14 +121,16 @@ function App() {
                 }
               >
                 {page === "Today" && (
-                  <TodayView composer={<Composer presentation="line" />} />
+                  <HomeWorkbench composer={<Composer presentation="line" />} />
                 )}
-                {conversation && <ConversationView />}
+                {page==="Ask"&&<ConversationView/>}
+                {page==="Conversation"&&<RoomWorkbench/>}
                 {page === "Channels" && <ChannelsView />}
                 {page === "Library" && <LibraryView />}
                 {page === "Tools" && <ToolsView />}
                 {page === "Settings" && <SettingsView />}
                 {page === "Canvas" && <CanvasView />}
+                {page === "Drawing" && <DrawingView />}
                 {page === "Document" && (
                   <div className="document-layout">
                     <aside
@@ -140,7 +145,7 @@ function App() {
                 )}
               </Suspense>
             </div>
-            {conversation && (
+            {page==="Ask" && (
               <div className="surface-composer">
                 <Composer />
               </div>
@@ -159,7 +164,7 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <MotionConfig reducedMotion="user">
       <WorkspaceProvider>
-        <App />
+        <WorkspaceTheme><App /></WorkspaceTheme>
       </WorkspaceProvider>
     </MotionConfig>
   </StrictMode>,

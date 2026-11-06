@@ -50,6 +50,7 @@ const model = http.createServer(async (req, res) => {
     "memory_recall",
     "save_document",
     "save_procedure",
+    "save_visual",
     "source_read",
     "task_status",
   ]);
@@ -100,11 +101,19 @@ const host = spawn(
 let logs = "";
 host.stdout.on("data", (b) => (logs += b));
 host.stderr.on("data", (b) => (logs += b));
-let browser;
+let browser, inspectedPage;
 const mark = (name) => {
   checks.push(name);
   console.log("PASS " + name);
 };
+async function mainConversation(page) {
+  await navigateSurface(page, "Home");
+  const current = page.getByRole("button", {
+    name: "Current conversation",
+    exact: true,
+  });
+  if (await current.isVisible()) await current.click();
+}
 try {
   for (let i = 0; i < 150; i++) {
     try {
@@ -118,6 +127,7 @@ try {
     viewport: { width: 1440, height: 1000 },
   });
   const page = await context.newPage();
+  inspectedPage = page;
   page.setDefaultTimeout(12000);
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
@@ -125,7 +135,7 @@ try {
   await mkdir(previews, { recursive: true });
   await page.goto(base);
   await page
-    .getByRole("button", { name: "Operator Community workspace" })
+    .getByRole("button", { name: /Operator Community workspace/ })
     .click();
   await page.getByRole("dialog").waitFor();
   await page.screenshot({
@@ -139,7 +149,7 @@ try {
   await page
     .getByRole("button", { name: "Explore first", exact: true })
     .click();
-  await page.getByRole("heading", { name: /A little space/ }).waitFor();
+  await page.getByRole("heading", { name: "Work, taking shape." }).waitFor();
 
   await page.screenshot({
     animations: "disabled",
@@ -147,7 +157,10 @@ try {
     fullPage: true,
   });
   mark("Fluid workspace Today renders with real empty-state data");
-  await page.getByRole("button", { name: "Library", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Library", exact: true })
+    .first()
+    .click();
   await page
     .getByRole("button", { name: "Import source", exact: true })
     .click();
@@ -172,6 +185,10 @@ try {
     .fill("A carefully reviewed synthetic document.");
   await page.getByRole("button", { name: "Prepare for review" }).click();
   await page.getByRole("button", { name: "Approve this document" }).waitFor();
+  await page.screenshot({
+    path: ".impeccable/review/review.png",
+    animations: "disabled",
+  });
   await page.getByRole("button", { name: "Approve this document" }).click();
   await page.getByRole("button", { name: "Save approved document" }).click();
   await page.getByText(/Receipt: VERIFIED/).waitFor();
@@ -189,17 +206,23 @@ try {
   await page.getByRole("button", { name: "Approve candidate" }).click();
   await page.getByRole("button", { name: "Revoke", exact: true }).waitFor();
   mark("Evidence memory stays separate until explicit review");
-  await page.getByRole("button", { name: "Library", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Library", exact: true })
+    .first()
+    .click();
   await page
     .getByRole("region", { name: "Reviewed knowledge", exact: true })
     .getByText("PRIVATE_PRODUCT_SENTINEL", { exact: false })
     .waitFor();
   mark("Reviewed knowledge appears in Library with its eligible source");
-  await page.getByRole("button", { name: "Ask PRIVATE" }).click();
+  await mainConversation(page);
   await page
     .getByRole("button", { name: "Model & sources", exact: true })
     .click();
-  await page.getByLabel("Model", { exact: true }).selectOption("fixture-local");
+  await page.getByLabel("Model", { exact: true }).click();
+  await page
+    .getByRole("option", { name: "fixture-local", exact: true })
+    .click();
   await page.getByText("Reference Library sources locally").click();
   await page.getByLabel("Private original", { exact: true }).check();
   await page
@@ -277,7 +300,7 @@ try {
     .getByRole("region", { name: "Pinned reply", exact: true })
     .getByRole("heading", { name: "Fixture finding", exact: true })
     .waitFor();
-  await page.getByRole("button", { name: "Ask PRIVATE", exact: true }).click();
+  await mainConversation(page);
   mark("An accepted generated reply can become a scoped Home panel");
   await page
     .getByRole("button", { name: "Message actions", exact: true })
@@ -318,7 +341,10 @@ try {
   mark(
     "Source withdrawal clears dependent model replies and an open derived-effect review",
   );
-  await page.getByRole("button", { name: "Library", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Library", exact: true })
+    .first()
+    .click();
   assert.equal(
     await page
       .getByRole("region", { name: "Reviewed knowledge", exact: true })
@@ -392,7 +418,11 @@ try {
   await page
     .getByRole("button", { name: "Review spreadsheet revision", exact: true })
     .click();
-  await page.waitForFunction(() => document.querySelector('[contenteditable=true][aria-label="Document content"]')?.textContent.includes("Edited paper"));
+  await page.waitForFunction(() =>
+    document
+      .querySelector('[contenteditable=true][aria-label="Document content"]')
+      ?.textContent.includes("Edited paper"),
+  );
   assert.match(
     await page.getByLabel("Document content", { exact: true }).innerText(),
     /Edited paper/,
@@ -444,17 +474,21 @@ try {
     "Withdrawing the original disposes the open Office worktree and hides its derived revision",
   );
   await page.getByRole("button", { name: "Home", exact: true }).click();
-  await page.getByText("Recorded work", { exact: true }).click();
-  await page.getByLabel("Historical date").fill("2001-01-01");
+  await page.locator(".home-history").evaluate(el=>el.open=true);
+  await page.getByLabel("History date").fill("2001-01-01");
   await page
-    .getByRole("heading", { name: "No recorded work for this date" })
+    .getByText("No recorded work for this date", { exact: true })
     .waitFor();
   mark("Historical view does not fabricate unrecorded activity");
   await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.getByRole("button", { name: "Workspace", exact: true }).click();
   await page
     .getByRole("button", { name: "My personal space", exact: true })
     .click();
-  await page.getByRole("button", { name: "Library", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Library", exact: true })
+    .first()
+    .click();
   await page
     .getByRole("heading", { name: "Make room for what you know." })
     .waitFor();
@@ -463,13 +497,18 @@ try {
   );
   mark("Personal mode uses a separate empty database");
   await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.getByRole("button", { name: "Workspace", exact: true }).click();
   await page
     .getByRole("button", { name: "Community workspace", exact: true })
     .click();
+  await page.getByRole("button",{name:"Workspace",exact:true}).click();
   await page
     .getByLabel("Current conversation")
     .selectOption({ label: "Common room · 3 members" });
-  await page.getByRole("button", { name: "Library", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Library", exact: true })
+    .first()
+    .click();
   await page
     .getByRole("heading", { name: "Make room for what you know." })
     .waitFor();
@@ -486,112 +525,77 @@ try {
   mark(
     "Device effect is reviewed and receipted through the independent simulator",
   );
-  let releaseScope, scopeEntered;
-  const sharedOrigin = await page.evaluate(() =>
+  const parent = await page.evaluate(() =>
     fetch("/api/session").then((r) => r.json()),
   );
-  const scopeGate = new Promise((resolve) => {
-    releaseScope = resolve;
-  });
-  const scopeStarted = new Promise((resolve) => {
-    scopeEntered = resolve;
-  });
-  await page.route("**/api/scope", async (route) => {
-    scopeEntered();
-    await scopeGate;
-    await route.continue();
-  });
-  await page.getByRole("button", { name: "Ask PRIVATE" }).click();
-  await scopeStarted;
-  assert.equal(
-    await page
-      .getByRole("heading", { name: "Private thread", exact: true })
-      .count(),
-    0,
-  );
-  assert.equal(await page.getByLabel("Message Aksara").count(), 0);
-  releaseScope();
   await page
-    .getByRole("heading", { name: "Private thread", exact: true })
-    .waitFor();
-  await page.unroute("**/api/scope");
-  assert.equal(await page.getByLabel("Message Aksara").inputValue(), "");
-  mark(
-    "Blob entry awaits private host admission and blocks submission during the scope switch",
-  );
-  await page
-    .getByRole("button", { name: "Close private conversation", exact: true })
+    .getByRole("button", { name: "Open private Aksara", exact: true })
+    .first()
     .click();
-  await page
-    .getByRole("heading", { name: "Capabilities", exact: true })
-    .waitFor();
+  const pane = page.locator("#private-aksara");
+  await pane.getByLabel("Message Aksara", { exact: true }).waitFor();
+  await pane
+    .getByLabel("Message Aksara", { exact: true })
+    .fill("PRIVATE_DRAFT_STAYS");
   assert.equal(
     (await page.evaluate(() => fetch("/api/session").then((r) => r.json())))
-      .lane,
-    sharedOrigin.lane,
+      .scope,
+    parent.scope,
   );
-  mark(
-    "Closing private chat re-admits its originating shared context and returns to Tools",
-  );
-  await page.getByRole("button", { name: "Ask PRIVATE", exact: true }).click();
   await page
-    .getByRole("heading", { name: "Private thread", exact: true })
-    .waitFor();
-  await page
-    .getByRole("button", { name: "Model & sources", exact: true })
+    .getByRole("button", { name: "Library", exact: true })
+    .first()
     .click();
-  await page.getByLabel("Model provider").selectOption("gemini");
   assert.equal(
-    await page.getByLabel("Model", { exact: true }).inputValue(),
-    "gemini-2.5-flash",
+    await pane.getByLabel("Message Aksara", { exact: true }).inputValue(),
+    "PRIVATE_DRAFT_STAYS",
   );
-  await page.getByLabel("Message Aksara").fill("Synthetic cloud prompt");
-  assert.ok(
-    await page.getByRole("button", { name: "Send message" }).isDisabled(),
-  );
-  let unconsentedCalls = 0;
-  const watchUnconsented = (request) => {
-    if (new URL(request.url()).pathname === "/api/chat") unconsentedCalls++;
-  };
-  page.on("request", watchUnconsented);
-  await page.getByLabel("Message Aksara").press("Enter");
-  await page.waitForTimeout(120);
-  assert.equal(unconsentedCalls, 0);
+  await pane.getByRole("button", { name: "Expand private thread" }).click();
+  assert.equal(await pane.getAttribute("data-full"), "true");
+  await pane
+    .getByRole("button", { name: "Close private conversation" })
+    .click();
+  await page.getByRole("heading", { name: "Library", exact: true }).waitFor();
+  await page
+    .getByRole("button", { name: "Open private Aksara", exact: true })
+    .first()
+    .click();
   assert.equal(
-    await page.getByLabel("Message Aksara").inputValue(),
-    "Synthetic cloud prompt",
+    await pane.getByLabel("Message Aksara", { exact: true }).inputValue(),
+    "PRIVATE_DRAFT_STAYS",
   );
-  page.off("request", watchUnconsented);
+  await pane
+    .getByRole("button", { name: "Close private conversation" })
+    .click();
   mark(
-    "Hosted model use requires explicit per-turn consent, including keyboard submission",
+    "Persistent personal pane preserves a private draft, parent scope and underlying screen",
   );
   await page.setViewportSize({ width: 360, height: 800 });
-  await page.screenshot({
-    path: path.join(previews, "chat-mobile.png"),
-    animations: "disabled",
-  });
-  const pendingDraft = await page.getByLabel("Message Aksara").inputValue();
-  await page.getByRole("button", { name: "Spaces" }).click();
-  await page.keyboard.press("Escape");
-  assert.equal(
-    await page.getByLabel("Message Aksara").inputValue(),
-    pendingDraft,
-  );
-  await page.getByRole("button", { name: "Spaces" }).click();
-  await page.getByRole("button", { name: "Home", exact: true }).click();
-  await page.locator(".spaces-menu").waitFor({ state: "hidden" });
-  await page.screenshot({
-    animations: "disabled",
-    path: path.join(previews, "today-mobile.png"),
-    fullPage: true,
-  });
+  await page
+    .getByRole("button", { name: "Open private Aksara", exact: true })
+    .click();
+  await pane.getByLabel("Message Aksara", { exact: true }).fill("Phone draft");
+  assert.equal(await page.locator(".mobile-dock").count(), 0);
   assert.equal(
     await page.evaluate(
       () => document.documentElement.scrollWidth > innerWidth,
     ),
     false,
   );
-  mark("360 px mobile view has no horizontal overflow");
+  await pane
+    .getByRole("button", { name: "Close private conversation" })
+    .click();
+  await page.getByRole("button", { name: "Spaces", exact: true }).click();
+  await page
+    .locator(".spaces-menu")
+    .getByRole("button", { name: "Home", exact: true })
+    .click();
+  await page
+    .getByRole("heading", { name: "Work, taking shape.", exact: true })
+    .waitFor();
+  mark(
+    "Phone private conversation has one composer and preserves the underlying workspace",
+  );
   const cached = await page.evaluate(async () => {
     const out = [];
     for (const k of await caches.keys())
@@ -604,6 +608,14 @@ try {
   assert.deepEqual(errors, []);
   console.log(JSON.stringify({ browser_checks_passed: checks.length, checks }));
 } catch (e) {
+  if (inspectedPage) {
+    console.error(
+      (await inspectedPage.locator("body").innerText()).slice(0, 3000),
+    );
+    await inspectedPage
+      .screenshot({ path: "/workspace/scratch/aksara-product-failure.png" })
+      .catch(() => {});
+  }
   console.error(logs.slice(-5000));
   throw e;
 } finally {

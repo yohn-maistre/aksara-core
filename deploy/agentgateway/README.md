@@ -56,7 +56,7 @@ no repeat on upstream 503 and
 absence of the test prompt from logs. It cleans up both processes and temp data.
 Windows/ARM gateway runtime and Surface resource use remain unmeasured.
 
-The [integration assessment](../../docs/platform/gateway-and-shared-rooms-2026-11-03.md)
+The [integration assessment](../../docs/platform/architecture.md)
 compares alternatives and records broader promotion gates. Keep this profile in
 this repo while its interfaces change with the host. A separate gateway package
 can follow a stable versioned integration; no upstream fork is needed now.

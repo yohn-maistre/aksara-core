@@ -1,0 +1,3 @@
+# Preserve upstream license notices byte-for-byte, including their whitespace.
+packages/memory/vendor/LICENSE* -whitespace
+third_party/excalidraw-fonts/*.txt -whitespace

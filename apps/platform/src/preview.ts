@@ -15,7 +15,7 @@ async function sha(text: string) {
     (b) => b.toString(16).padStart(2, "0"),
   ).join("");
 }
-export function createPreview() {
+export function createPreview(options:{stores?:Map<string,Item>;seed?:boolean}={}) {
   const people = ["Operator", "Maria", "Yohan"];
   const profiles = people.flatMap((name, i) =>
     ["community", "personal"].map((mode) => ({
@@ -25,7 +25,8 @@ export function createPreview() {
       mode,
     })),
   );
-  const stores = new Map<string, Item>();
+  const stores = options.stores ?? new Map<string, Item>();
+  const contexts=new Map<string,ReturnType<typeof createPreview>>();
   let session: Item | null = null;
   function domain(p: Item) {
     return p.mode === "community" ? "community" : `personal-${p.actor}`;
@@ -62,6 +63,7 @@ export function createPreview() {
     });
   }
   function select(profile: Item, lane?: string) {
+    if(session && session.profile.actor!==profile.actor)contexts.clear();
     const possible = [
       ...lanes(profile),
       ...(stores.get(domain(profile))?.lanes || []),
@@ -82,6 +84,7 @@ export function createPreview() {
     return view();
   }
   const ready = (async () => {
+    if(options.seed===false) return;
     for (const p of profiles) {
       if (stores.has(domain(p))) continue;
       stores.set(domain(p), {
@@ -300,8 +303,16 @@ export function createPreview() {
         .artifacts.some((a: Item) => a.id === k && eligible(a)),
     );
   }
-  async function request(path: string, init: RequestInit = {}) {
+  async function request(path: string, init: RequestInit = {}):Promise<Response> {
     await ready;
+    const contextKey=new Headers(init.headers).get("x-aksara-context");
+    if(contextKey){
+      const context=contexts.get(contextKey);
+      if(!session || !context)return json({error:"Sample private context unavailable"},403);
+      const headers=new Headers(init.headers);headers.delete("x-aksara-context");
+      if((init.method||"GET")!=="GET" && ["/api/scope","/api/session","/api/logout","/api/contexts/private"].includes(path))return json({error:"Sample private context cannot change the main workspace"},403);
+      return context.request(path,{...init,headers});
+    }
     if (!path.startsWith("/api/"))
       return json(
         { error: "The preview does not make external requests." },
@@ -331,8 +342,17 @@ export function createPreview() {
     if (new Headers(init.headers).get("x-aksara-scope") !== session.scope)
       return json({ error: "Preview context changed; refresh this view" }, 409);
     if (method === "POST" && u.pathname === "/api/logout") {
+      contexts.clear();
       session = null;
       return json({ logged_out: true });
+    }
+    if(method==="POST" && u.pathname==="/api/contexts/private"){
+      const p=profiles.find(p=>p.actor===session!.profile.actor && p.mode==="personal")!;
+      const key=`private-${p.id}`;
+      let child=contexts.get(key);
+      if(!child){child=createPreview({stores,seed:false});contexts.set(key,child);await child.request("/api/session",{method:"POST",body:JSON.stringify({profile:p.id})});}
+      const childSession:Item=await (await child.request("/api/session")).json();
+      return json({...childSession,context:key});
     }
     if (method === "POST" && u.pathname === "/api/scope") {
       const p = profiles.find(
@@ -352,6 +372,15 @@ export function createPreview() {
     const visibleWork = (w: Item) =>
       w.lane_id === lane.id &&
       lane.audience.every((a: string) => w.audience.includes(a));
+    if(method==="POST" && u.pathname==="/api/memory/recall"){
+      const q=String(input.query||"").toLowerCase();
+      const records:Item[]=store.memories.filter((m:Item)=>m.state==="APPROVED"&&dependencies([m.source_artifact_id])).map((m:Item)=>({id:m.id,source_id:m.source_artifact_id,title:"Reviewed knowledge",text:m.text,kind:"reviewed",review:"reviewed excerpt"}));
+      for(const a of store.artifacts.filter(eligible)){
+        const kind=a.title.startsWith("Wiki: ")?"wiki":a.title.startsWith("People: ")?"person":a.provenance?.startsWith("agent-procedure:")?"procedure":null;
+        if(kind)records.push({id:a.id,source_id:a.id,title:a.title,text:a.content.slice(0,1200),kind,review:"unreviewed working material"});
+      }
+      return json({protocol:"aksara.memory-view/1",engine:{id:"preview",profile:"disconnected sample"},results:records.filter((r:Item)=>!q||`${r.title} ${r.text}`.toLowerCase().includes(q)).slice(0,8),indexed_records:records.length,bounded_projection:true,public_release_enabled:false});
+    }
     if (method === "POST" && u.pathname === "/api/surfaces/resolve") {
       const parsed = ResourceSurfacePlan.safeParse(input);
       if (!parsed.success)
@@ -501,6 +530,15 @@ export function createPreview() {
           });
         case "threads":
           return json(store.works.filter(visibleWork).slice().reverse());
+        case "home-overview": {
+          const visibleIn=(a:Item,l:Item)=>a.active&&(!a.lane_id||a.lane_id===l.id)&&(a.visibility==="institution"||(a.owner===session!.profile.actor&&l.audience.length===1));
+          const sourcesIn=(ids:string[],l:Item)=>ids.every(k=>store.artifacts.some((a:Item)=>a.id===k&&visibleIn(a,l)));
+          const labels=view()!.lanes;
+          return json({protocol:"aksara.home/1",current_authorization:false,preview:true,work:store.works.flatMap((w:Item)=>{
+            const l=labels.find((r:Item)=>r.lane.id===w.lane_id);
+            return l&&l.lane.audience.every((a:string)=>w.audience.includes(a))&&sourcesIn(w.source_ids||[],l.lane)?[{work:w,lane:w.lane_id,channel:l.name,private:l.lane.audience.length===1,recorded_ms:0,artifacts:[]}]:[];
+          }),artifacts:store.entries.flatMap((e:Item)=>{const l=labels.find((r:Item)=>r.lane.id===e.lane.id);return l&&sourcesIn(e.source_ids||[],l.lane)?[{entry:e,preview:e.content.slice(0,240),lane:e.lane.id,channel:l.name,private:l.lane.audience.length===1}]:[];}),truncated:false});
+        }
         case "thread": {
           const w = store.works.find(
             (w: Item) => w.id === getId && visibleWork(w),
@@ -604,7 +642,7 @@ export function createPreview() {
           const a = {
             id: id(),
             title: entry.title,
-            content: entry.content,
+            content: entry.kind==="drawing"?JSON.stringify(entry.body,null,2):entry.content,
             source_ids: entry.source_ids,
             owner: session.profile.actor,
             visibility: lane.audience.length === 1 ? "private" : "institution",

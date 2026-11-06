@@ -1,3 +1,5 @@
+import { MemoryView } from "./MemoryView";
+import { ActionButton } from "./controls";
 import {
   ArrowDownUp,
   ArrowUpRight,
@@ -38,7 +40,13 @@ export function LibraryView() {
     openEntry,
     newCanvas,
   } = useWorkspace();
+  const w = useWorkspace();
+  const setActiveDrawing = () => {
+    w.setActiveEntry(null);
+    w.setPage("Drawing");
+  };
   const [importOpen, setImportOpen] = useState(false);
+  const [libraryMode, setLibraryMode] = useState("files");
   const [collection, setCollection] = useState("all");
   const [sort, setSort] = useState("recent");
   const visibleIds = new Set(artifacts.map((a) => a.id));
@@ -71,6 +79,14 @@ export function LibraryView() {
         <h1>Library</h1>
         <div className="library-actions">
           <LibraryUpload />
+          <ActionButton
+            variant="outline"
+            onClick={() => {
+              setActiveDrawing();
+            }}
+          >
+            New drawing
+          </ActionButton>
           <button
             className="text-button"
             onClick={() => {
@@ -85,329 +101,362 @@ export function LibraryView() {
           <button
             className="secondary"
             aria-label="Import source"
-            onClick={() => setImportOpen(!importOpen)}
+            onClick={() => {
+              setLibraryMode("files");
+              setImportOpen(!importOpen);
+            }}
           >
             <Plus size={16} />
             Add source
           </button>
         </div>
       </div>
-      <section className="working-pages" aria-label="Working pages">
-        <div className="section-title">
-          <h2>On the desk</h2>
-          <button className="text-button" onClick={newCanvas}>
-            New shared table <Plus size={14} />
-          </button>
-        </div>
-        {entries.length ? (
-          entries.map((entry) => (
-            <button
-              className="working-page-row"
-              key={entry.id}
-              onClick={() => void openEntry(entry.id)}
-            >
-              <FileText size={18} />
-              <strong>{entry.title}</strong>
-              <small>
-                {entry.kind === "canvas" ? "Table" : "Working page"} · revision{" "}
-                {entry.revision}
-              </small>
-              <ArrowUpRight size={14} />
-            </button>
-          ))
-        ) : (
-          <p className="panel-empty">
-            Working pages and shared tables stay with this conversation.
-          </p>
-        )}
-      </section>
-      <section className="knowledge-section" aria-label="Reviewed knowledge">
-        <div className="section-title">
-          <h2>Reviewed knowledge</h2>
-          <span>
-            {knowledge.length
-              ? `${knowledge.length} ${knowledge.length === 1 ? "excerpt" : "excerpts"}`
-              : "Build on what you know"}
-          </span>
-        </div>
-        {knowledge.length ? (
-          <div className="knowledge-grid">
-            {knowledge.map((m) => (
-              <button
-                key={m.id}
-                className="knowledge-card"
-                onClick={() => open(m.source_artifact_id)}
-              >
-                <BookOpen size={19} />
-                <h3>
-                  {artifacts.find((a) => a.id === m.source_artifact_id)
-                    ?.title || "Knowledge excerpt"}
-                </h3>
-                <p>{m.text}</p>
-                <span>
-                  Reviewed excerpt <ArrowUpRight size={14} />
-                </span>
-              </button>
-            ))}
-          </div>
-        ) : (
-          <div className="knowledge-empty">
-            <BookOpen size={21} />
-            <span>Knowledge grows from reviewed sources.</span>
-          </div>
-        )}
-      </section>
-      {artifacts.some(
-        (a) =>
-          a.title.startsWith("Wiki: ") ||
-          a.title.startsWith("People: ") ||
-          a.provenance?.startsWith("agent-procedure:"),
-      ) && (
-        <section className="knowledge-section" aria-label="Working knowledge">
-          <div className="section-title">
-            <h2>Working knowledge</h2>
-            <span>Source-linked · unreviewed</span>
-          </div>
-          <div className="knowledge-grid">
-            {artifacts
-              .filter(
-                (a) =>
-                  a.title.startsWith("Wiki: ") ||
-                  a.title.startsWith("People: ") ||
-                  a.provenance?.startsWith("agent-procedure:"),
-              )
-              .map((a) => (
-                <button
-                  className="knowledge-card"
-                  key={a.id}
-                  onClick={() => open(a.id)}
-                >
-                  <BookOpen size={19} />
-                  <h3>
-                    {a.title.replace(
-                      /^(Wiki: |People: |Procedure draft: )/,
-                      "",
-                    )}
-                  </h3>
-                  <span>
-                    {a.title.startsWith("Wiki: ")
-                      ? "Wiki page"
-                      : a.title.startsWith("People: ")
-                        ? "People note"
-                        : "Learned procedure"}{" "}
-                    <ArrowUpRight size={14} />
-                  </span>
-                </button>
-              ))}
-          </div>
-        </section>
-      )}
-      <section className="file-explorer" aria-label="Files and documents">
-        <div className="section-title">
-          <h2>
-            <FolderOpen size={18} />
-            Files & documents
-          </h2>
-          <button
-            className="text-button"
-            aria-label="Change file sort"
-            onClick={() => setSort(sort === "recent" ? "name" : "recent")}
-          >
-            <ArrowDownUp size={14} />
-            {sort === "recent" ? "Recent" : "Name"}
-          </button>
-        </div>
-        <form
-          className="search-box"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (query.trim())
-              void run(async () =>
-                setHits(
-                  await api(`kernel/search?query=${encodeURIComponent(query)}`),
-                ),
-              );
-          }}
+      <div className="view-tabs library-view-tabs" aria-label="Library views">
+        <ActionButton
+          variant={libraryMode === "files" ? "soft" : "ghost"}
+          aria-pressed={libraryMode === "files"}
+          onClick={() => setLibraryMode("files")}
         >
-          <Search size={18} />
-          <input
-            aria-label="Search Library"
-            placeholder="Search your Library…"
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setHits([]);
-            }}
-          />
-          {query && (
-            <button
-              type="button"
-              className="icon-button"
-              aria-label="Clear Library search"
-              onClick={() => {
-                setQuery("");
-                setHits([]);
+          Files & documents
+        </ActionButton>
+        <ActionButton
+          variant={libraryMode === "knowledge" ? "soft" : "ghost"}
+          aria-pressed={libraryMode === "knowledge"}
+          onClick={() => setLibraryMode("knowledge")}
+        >
+          Knowledge
+        </ActionButton>
+      </div>
+      {libraryMode === "knowledge" ? (
+        <MemoryView />
+      ) : (
+        <>
+          <section className="file-explorer" aria-label="Files and documents">
+            <div className="section-title">
+              <h2>
+                <FolderOpen size={18} />
+                Files & documents
+              </h2>
+              <button
+                className="text-button"
+                aria-label="Change file sort"
+                onClick={() => setSort(sort === "recent" ? "name" : "recent")}
+              >
+                <ArrowDownUp size={14} />
+                {sort === "recent" ? "Recent" : "Name"}
+              </button>
+            </div>
+            <form
+              className="search-box"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (query.trim())
+                  void run(async () =>
+                    setHits(
+                      await api(
+                        `kernel/search?query=${encodeURIComponent(query)}`,
+                      ),
+                    ),
+                  );
               }}
             >
-              <X size={16} />
-            </button>
-          )}
-          <button className="text-button" disabled={busy || !query.trim()}>
-            Search content
-          </button>
-        </form>
-        <div className="collection-tabs" aria-label="File collections">
-          {[
-            ["all", "All files"],
-            ["sources", "Sources"],
-            ["documents", "Documents"],
-          ].map(([id, title]) => (
-            <button
-              key={id}
-              aria-pressed={collection === id}
-              onClick={() => setCollection(id)}
-            >
-              {title}
-            </button>
-          ))}
-        </div>
-        {contentHits.length > 0 && (
-          <div className="search-results">
-            {contentHits.map((h) => (
-              <button key={h.block_id} onClick={() => open(h.artifact_id)}>
-                <strong>{h.title}</strong>
-                <p>{h.text}</p>
-              </button>
-            ))}
-          </div>
-        )}
-        {files.length ? (
-          <div className="file-rows">
-            {files.map((a) => (
-              <button
-                className="library-row"
-                key={a.id}
-                onClick={() => open(a.id)}
-              >
-                <FileText size={21} />
-                <span>
-                  <strong>{a.title}</strong>
-                  <small>
-                    {a.visibility === "private" ? "Private" : "Community"} ·{" "}
-                    {isDocument(a) ? "Document" : "Source"}
-                  </small>
-                </span>
-                <span className="file-size">
-                  {a.bytes < 1024
-                    ? `${a.bytes} B`
-                    : `${(a.bytes / 1024).toFixed(1)} KB`}
-                </span>
-                <ArrowUpRight size={16} />
-              </button>
-            ))}
-          </div>
-        ) : artifacts.length ? (
-          !contentHits.length && (
-            <p className="panel-empty">No files match this view.</p>
-          )
-        ) : (
-          <Empty
-            icon={<BookOpen size={26} />}
-            title="Make room for what you know."
-          >
-            Add a source or create your first document.
-          </Empty>
-        )}
-      </section>
-      <details
-        className="source-import"
-        open={importOpen}
-        onToggle={(e) => setImportOpen(e.currentTarget.open)}
-      >
-        <summary>
-          Bring in a source <Plus size={15} />
-        </summary>
-        <p>UTF-8 text or Markdown · original bytes preserved.</p>
-        <form
-          className="source-form"
-          onSubmit={(e) => {
-            e.preventDefault();
-            const form = e.currentTarget;
-            const fields = new FormData(form);
-            void run(async () => {
-              await api("kernel/ingest", {
-                title: fields.get("title"),
-                content: uploadedText ?? fields.get("content"),
-                visibility: privateLane ? "private" : "institution",
-                purpose: "knowledge",
-                provenance: "Aksara Library · manual text input",
-              });
-              form.reset();
-              setUploadedText(null);
-              await refresh();
-            });
-          }}
-        >
-          <input
-            name="title"
-            aria-label="Source title"
-            placeholder="Source title"
-            required
-            maxLength={256}
-          />
-          <textarea
-            name="content"
-            aria-label="Source content"
-            onChange={() => setUploadedText(null)}
-            placeholder="Paste the original text…"
-            required
-            maxLength={1000000}
-          />
-          <div className="form-footer">
-            <label className="file-upload">
-              Or choose .txt / .md
+              <Search size={18} />
               <input
-                type="file"
-                accept="text/plain,text/markdown,.txt,.md"
+                aria-label="Search Library"
+                placeholder="Search your Library…"
+                value={query}
                 onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-                  if (file.size > 1048576) {
-                    setError("Maximum source size is 1 MiB");
-                    return;
-                  }
-                  const form = e.currentTarget.form!;
-                  void file
-                    .arrayBuffer()
-                    .then((bytes) =>
-                      new TextDecoder("utf-8", {
-                        fatal: true,
-                        ignoreBOM: true,
-                      }).decode(bytes),
-                    )
-                    .then((text) => {
-                      (
-                        form.elements.namedItem("title") as HTMLInputElement
-                      ).value = file.name;
-                      (
-                        form.elements.namedItem(
-                          "content",
-                        ) as HTMLTextAreaElement
-                      ).value = text;
-                      setUploadedText(text);
-                    })
-                    .catch(() =>
-                      setError("This file is not valid UTF-8 text."),
-                    );
+                  setQuery(e.target.value);
+                  setHits([]);
                 }}
               />
-            </label>
-            <button className="primary" disabled={busy}>
-              Add source
-            </button>
-          </div>
-        </form>
-      </details>
+              {query && (
+                <button
+                  type="button"
+                  className="icon-button"
+                  aria-label="Clear Library search"
+                  onClick={() => {
+                    setQuery("");
+                    setHits([]);
+                  }}
+                >
+                  <X size={16} />
+                </button>
+              )}
+              <button className="text-button" disabled={busy || !query.trim()}>
+                Search content
+              </button>
+            </form>
+            <div className="collection-tabs" aria-label="File collections">
+              {[
+                ["all", "All files"],
+                ["sources", "Sources"],
+                ["documents", "Documents"],
+              ].map(([id, title]) => (
+                <button
+                  key={id}
+                  aria-pressed={collection === id}
+                  onClick={() => setCollection(id)}
+                >
+                  {title}
+                </button>
+              ))}
+            </div>
+            {contentHits.length > 0 && (
+              <div className="search-results">
+                {contentHits.map((h) => (
+                  <button key={h.block_id} onClick={() => open(h.artifact_id)}>
+                    <strong>{h.title}</strong>
+                    <p>{h.text}</p>
+                  </button>
+                ))}
+              </div>
+            )}
+            {files.length ? (
+              <div className="file-rows">
+                {files.map((a) => (
+                  <button
+                    className="library-row"
+                    key={a.id}
+                    onClick={() => open(a.id)}
+                  >
+                    <FileText size={21} />
+                    <span>
+                      <strong>{a.title}</strong>
+                      <small>
+                        {a.visibility === "private" ? "Private" : "Community"} ·{" "}
+                        {isDocument(a) ? "Document" : "Source"}
+                      </small>
+                    </span>
+                    <span className="file-size">
+                      {a.bytes < 1024
+                        ? `${a.bytes} B`
+                        : `${(a.bytes / 1024).toFixed(1)} KB`}
+                    </span>
+                    <ArrowUpRight size={16} />
+                  </button>
+                ))}
+              </div>
+            ) : artifacts.length ? (
+              !contentHits.length && (
+                <p className="panel-empty">No files match this view.</p>
+              )
+            ) : (
+              <Empty
+                icon={<BookOpen size={26} />}
+                title="Make room for what you know."
+              >
+                Add a source or create your first document.
+              </Empty>
+            )}
+          </section>
+          <section className="working-pages" aria-label="Working pages">
+            <div className="section-title">
+              <h2>On the desk</h2>
+              <button className="text-button" onClick={newCanvas}>
+                New shared table <Plus size={14} />
+              </button>
+            </div>
+            {entries.length ? (
+              entries.map((entry) => (
+                <button
+                  className="working-page-row"
+                  key={entry.id}
+                  onClick={() => void openEntry(entry.id)}
+                >
+                  <FileText size={18} />
+                  <strong>{entry.title}</strong>
+                  <small>
+                    {entry.kind === "canvas" ? "Table" : "Working page"} ·
+                    revision {entry.revision}
+                  </small>
+                  <ArrowUpRight size={14} />
+                </button>
+              ))
+            ) : (
+              <p className="panel-empty">
+                Working pages and shared tables stay with this conversation.
+              </p>
+            )}
+          </section>
+          <section
+            className="knowledge-section file-knowledge-summary"
+            aria-label="Reviewed knowledge"
+          >
+            <div className="section-title">
+              <h2>Reviewed knowledge</h2>
+              <span>
+                {knowledge.length
+                  ? `${knowledge.length} ${knowledge.length === 1 ? "excerpt" : "excerpts"}`
+                  : "Build on what you know"}
+              </span>
+            </div>
+            {knowledge.length ? (
+              <div className="knowledge-grid">
+                {knowledge.map((m) => (
+                  <button
+                    key={m.id}
+                    className="knowledge-card"
+                    onClick={() => open(m.source_artifact_id)}
+                  >
+                    <BookOpen size={19} />
+                    <h3>
+                      {artifacts.find((a) => a.id === m.source_artifact_id)
+                        ?.title || "Knowledge excerpt"}
+                    </h3>
+                    <p>{m.text}</p>
+                    <span>
+                      Reviewed excerpt <ArrowUpRight size={14} />
+                    </span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="knowledge-empty">
+                <BookOpen size={21} />
+                <span>Knowledge grows from reviewed sources.</span>
+              </div>
+            )}
+          </section>
+          {artifacts.some(
+            (a) =>
+              a.title.startsWith("Wiki: ") ||
+              a.title.startsWith("People: ") ||
+              a.provenance?.startsWith("agent-procedure:"),
+          ) && (
+            <section
+              className="knowledge-section"
+              aria-label="Working knowledge"
+            >
+              <div className="section-title">
+                <h2>Working knowledge</h2>
+                <span>Source-linked · unreviewed</span>
+              </div>
+              <div className="knowledge-grid">
+                {artifacts
+                  .filter(
+                    (a) =>
+                      a.title.startsWith("Wiki: ") ||
+                      a.title.startsWith("People: ") ||
+                      a.provenance?.startsWith("agent-procedure:"),
+                  )
+                  .map((a) => (
+                    <button
+                      className="knowledge-card"
+                      key={a.id}
+                      onClick={() => open(a.id)}
+                    >
+                      <BookOpen size={19} />
+                      <h3>
+                        {a.title.replace(
+                          /^(Wiki: |People: |Procedure draft: )/,
+                          "",
+                        )}
+                      </h3>
+                      <span>
+                        {a.title.startsWith("Wiki: ")
+                          ? "Wiki page"
+                          : a.title.startsWith("People: ")
+                            ? "People note"
+                            : "Learned procedure"}{" "}
+                        <ArrowUpRight size={14} />
+                      </span>
+                    </button>
+                  ))}
+              </div>
+            </section>
+          )}
+          <details
+            className="source-import"
+            open={importOpen}
+            onToggle={(e) => setImportOpen(e.currentTarget.open)}
+          >
+            <summary>
+              Bring in a source <Plus size={15} />
+            </summary>
+            <p>UTF-8 text or Markdown · original bytes preserved.</p>
+            <form
+              className="source-form"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const form = e.currentTarget;
+                const fields = new FormData(form);
+                void run(async () => {
+                  await api("kernel/ingest", {
+                    title: fields.get("title"),
+                    content: uploadedText ?? fields.get("content"),
+                    visibility: privateLane ? "private" : "institution",
+                    purpose: "knowledge",
+                    provenance: "Aksara Library · manual text input",
+                  });
+                  form.reset();
+                  setUploadedText(null);
+                  await refresh();
+                });
+              }}
+            >
+              <input
+                name="title"
+                aria-label="Source title"
+                placeholder="Source title"
+                required
+                maxLength={256}
+              />
+              <textarea
+                name="content"
+                aria-label="Source content"
+                onChange={() => setUploadedText(null)}
+                placeholder="Paste the original text…"
+                required
+                maxLength={1000000}
+              />
+              <div className="form-footer">
+                <label className="file-upload">
+                  Or choose .txt / .md
+                  <input
+                    type="file"
+                    accept="text/plain,text/markdown,.txt,.md"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      if (file.size > 1048576) {
+                        setError("Maximum source size is 1 MiB");
+                        return;
+                      }
+                      const form = e.currentTarget.form!;
+                      void file
+                        .arrayBuffer()
+                        .then((bytes) =>
+                          new TextDecoder("utf-8", {
+                            fatal: true,
+                            ignoreBOM: true,
+                          }).decode(bytes),
+                        )
+                        .then((text) => {
+                          (
+                            form.elements.namedItem("title") as HTMLInputElement
+                          ).value = file.name;
+                          (
+                            form.elements.namedItem(
+                              "content",
+                            ) as HTMLTextAreaElement
+                          ).value = text;
+                          setUploadedText(text);
+                        })
+                        .catch(() =>
+                          setError("This file is not valid UTF-8 text."),
+                        );
+                    }}
+                  />
+                </label>
+                <button className="primary" disabled={busy}>
+                  Add source
+                </button>
+              </div>
+            </form>
+          </details>
+        </>
+      )}
     </>
   );
 }

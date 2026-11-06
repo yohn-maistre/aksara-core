@@ -8,6 +8,10 @@
     "./surfaces": {
       "types": "./surfaces.d.mts",
       "default": "./surfaces.mjs"
+    },
+    "./visuals": {
+      "types": "./visuals.d.mts",
+      "default": "./visuals.mjs"
     }
   },
   "dependencies": {

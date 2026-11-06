@@ -21,6 +21,7 @@ export function Welcome() {
             .filter((p) => p.mode === "community")
             .map((p) => (
               <button
+                aria-label={`${p.name} Community workspace`}
                 disabled={busy}
                 onClick={() =>
                   run(async () =>

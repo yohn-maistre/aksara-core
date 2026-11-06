@@ -13,7 +13,7 @@ import { useSidebar } from "../components/ui/sidebar";
 import { useWorkspace } from "./state";
 import { AksaraLauncher } from "./AksaraLauncher";
 export function MobileSpaces() {
-  const { page, navigate } = useWorkspace();
+  const { page, navigate,setAssistantPanelOpen } = useWorkspace();
   const { isMobile } = useSidebar();
   const [open, setOpen] = useState(false);
   if (!isMobile) return null;
@@ -64,7 +64,7 @@ export function MobileSpaces() {
                 ))}
               </div>
               <div className="spaces-secondary">
-                <button onClick={() => go("Ask")}>
+                <button onClick={() => {setOpen(false);setAssistantPanelOpen(true);}}>
                   <Sparkles size={16} />
                   Ask Aksara
                 </button>
@@ -80,9 +80,9 @@ export function MobileSpaces() {
   );
 }
 export function MobileDock() {
-  const { page } = useWorkspace();
+  const { page,assistantPanelOpen } = useWorkspace();
   const { isMobile } = useSidebar();
-  if (!isMobile || ["Ask", "Conversation", "Document", "Canvas"].includes(page)) return null;
+  if (!isMobile || assistantPanelOpen || ["Ask", "Conversation", "Document", "Canvas","Drawing"].includes(page)) return null;
   return (
     <div className="mobile-dock mobile-launchers">
       <MobileSpaces />

@@ -54,7 +54,7 @@ test("MCP resource reads recheck source withdrawal, reject URI injection and exp
   };
   const { server, resources } = createResourceGateway(port);
   try {
-    assert.equal((await server.getToolListInfo()).tools.length, 0);
+    assert.deepEqual((await server.getToolListInfo()).tools.map(t=>t.name), ["memory_search"]);
     const listed = await resources.listResources();
     assert.equal(listed[0].uri, "aksara://library/source-1");
     assert.equal(

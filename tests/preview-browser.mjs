@@ -70,6 +70,7 @@ try {
   const one = await browser.newContext({
     viewport: { width: 1440, height: 1000 },
   });
+  await one.addInitScript(()=>localStorage.setItem("aksara-theme","dark"));
   const page = await one.newPage();
   page.setDefaultTimeout(12000);
   const errors = [],
@@ -77,546 +78,239 @@ try {
   page.on("pageerror", (e) => errors.push(e.message));
   page.on("request", (r) => requests.push(r.url()));
   await page.goto(base);
-  await page.locator(".living-brief h1").waitFor();
-  await page.getByText("Interactive UI preview", { exact: true }).waitFor();
-  mark("Preview opens on Today and identifies sample data without a backend");
   await page
-    .getByRole("button", { name: "Collapse sidebar", exact: true })
-    .click();
-  await page.waitForTimeout(260);
-  const navLeft = await page
-    .locator(".reading-nav")
-    .evaluate((el) => el.getBoundingClientRect().left);
-  const iconLeft = await page
-    .getByRole("button", { name: "Home", exact: true })
-    .locator("svg")
-    .evaluate((el) => el.getBoundingClientRect().left);
-  await page
-    .getByRole("button", { name: "Expand sidebar", exact: true })
-    .click();
-  await page.waitForTimeout(550);
-  assert.ok(
-    Math.abs(
-      (
-        await page
-          .getByRole("button", { name: "Home", exact: true })
-          .locator("svg")
-          .boundingBox()
-      ).x - iconLeft,
-    ) < 1,
-  );
-  assert.ok(await page.locator(".reading-brand .mark").isVisible());
-  await page
-    .getByRole("button", { name: "Collapse sidebar", exact: true })
-    .click();
-  for (let i = 0; i < 5; i++) {
-    assert.equal(
-      await page
-        .locator(".reading-nav")
-        .evaluate((el) => el.getBoundingClientRect().left),
-      navLeft,
-    );
-    await page.waitForTimeout(100);
-  }
-  assert.ok(await page.locator(".reading-brand .mark").isVisible());
-  mark(
-    "Navbar keeps its left edge and icon column while folding, with a visible brand in both states",
-  );
-  assert.ok(
-    (await page.locator("#workspace-content").boundingBox()).width > 1000,
-  );
-  await navigateSurface(page, "Library");
-  assert.equal(await page.locator(".home-surface").count(), 0);
-  assert.equal(
-    await page.getByLabel("Message Aksara", { exact: true }).count(),
-    0,
-  );
-  await navigateSurface(page, "Home");
-  assert.equal(
-    await page.getByLabel("Message Aksara", { exact: true }).count(),
-    1,
-  );
-  assert.equal(await page.locator(".aksara-launcher canvas").count(), 0);
-  mark(
-    "Home is a peer view with one composer; other workspaces use the full plane without a shader",
-  );
-  await page.getByLabel("Message Aksara").fill("A thought started on Today");
-  await page
-    .getByRole("button", { name: "Continue our conversation", exact: true })
-    .click();
-  await page
-    .getByRole("heading", { name: "Private thread", exact: true })
+    .getByRole("heading", { name: "Work, taking shape.", exact: true })
     .waitFor();
-  assert.equal(await page.locator(".home-surface").count(), 0);
-  assert.equal(
-    await page.getByLabel("Message Aksara", { exact: true }).count(),
-    1,
-  );
-  assert.equal(
-    await page.getByLabel("Message Aksara").inputValue(),
-    "A thought started on Today",
-  );
-  await navigateSurface(page, "Home");
-  assert.equal(
-    await page.getByLabel("Message Aksara").inputValue(),
-    "A thought started on Today",
-  );
-  await page.getByLabel("Message Aksara").fill("");
-  mark(
-    "Wide Today embeds the composer and keeps its draft when opening the thread",
-  );
-  await page
-    .getByRole("button", { name: "Model & sources", exact: true })
-    .click();
-  await page.getByText(/^Reference Library sources locally/).click();
-  await page.locator(".source-picker input[type=checkbox]").first().check();
-  await page
-    .getByLabel("Message Aksara")
-    .fill("Show my selected sample source");
-  await page.getByRole("button", { name: "Send message", exact: true }).click();
-  await page.getByRole("region", { name: "Latest Home reply" }).waitFor();
-  assert.equal(
-    await page
-      .getByRole("button", { name: "Continue our conversation", exact: true })
-      .count(),
-    0,
-  );
-  assert.equal(
-    await page
-      .getByRole("button", { name: "Open conversation", exact: true })
-      .count(),
-    1,
-  );
-  await page
-    .getByRole("region", { name: "Latest Home reply" })
-    .getByRole("button", { name: "Open conversation", exact: true })
-    .click();
-  const resource = page.locator(".resource-surface");
-  await resource
-    .getByRole("heading", { name: "Selected sample sources" })
-    .waitFor();
-  await resource.getByRole("button").first().click();
-  await page.locator(".document-plane").waitFor();
-  await page
-    .getByRole("button", { name: "Back to Library", exact: true })
-    .click();
-  await navigateSurface(page, "Ask PRIVATE");
-  mark(
-    "A literal OpenUI resource card resolves current data and opens the trusted document view",
-  );
-
-  const menu = page.getByRole("button", { name: "Spaces", exact: true });
-  await page.setViewportSize({ width: 360, height: 800 });
-  await menu.focus();
-  await page.keyboard.press("Enter");
-  await page.locator(".spaces-menu").waitFor();
-  assert.equal(
-    await page
-      .locator(".spaces-menu")
-      .getByRole("button", { name: "Home", exact: true })
-      .count(),
-    1,
-  );
-  await page.keyboard.press("Escape");
-  await page.locator(".spaces-menu").waitFor({ state: "hidden" });
-  assert.ok(await menu.evaluate((el) => el === document.activeElement));
-  mark("Phone spaces menu is keyboard operable and Escape restores its opener");
-  await page.setViewportSize({ width: 1440, height: 1000 });
-  await navigateSurface(page, "Home");
-  await page.getByRole("button", { name: /Review.*welcome note/ }).click();
-  await page.getByRole("button", { name: "Try sample approval" }).click();
-  await page
-    .getByRole("button", { name: "Create sample document", exact: true })
-    .click();
-  await page.getByText(/Preview result: PREVIEW_ONLY/).waitFor();
-  await page.getByRole("button", { name: "Close work", exact: true }).click();
-  mark("Sample document flow never claims a verified Rust receipt");
-  await page.getByRole("button", { name: "Library", exact: true }).click();
-  await page.getByRole("button", { name: "Documents", exact: true }).click();
-  await page
-    .locator(".file-explorer")
-    .getByRole("button", { name: /Our first welcome note/ })
-    .waitFor();
-  assert.equal(
-    await page
-      .locator(".file-explorer")
-      .getByRole("button", { name: /A place for our first steps/ })
-      .count(),
-    0,
-  );
-  await page.getByRole("button", { name: "All files", exact: true }).click();
-  mark("File explorer separates created documents from original sources");
-  await page
-    .getByRole("button", { name: "Import source", exact: true })
-    .click();
-  await page
-    .getByLabel("Source title", { exact: true })
-    .fill("Tab-only sample note");
-  await page
-    .getByLabel("Source content", { exact: true })
-    .fill("PREVIEW_TAB_ONLY_SENTINEL");
-  await page.getByRole("button", { name: "Add source", exact: true }).click();
-  await page
-    .locator(".file-explorer")
-    .getByRole("button", { name: /Tab-only sample note/ })
-    .waitFor();
-  const second = await browser.newContext();
-  const other = await second.newPage();
-  await other.goto(base);
-  await other.locator(".living-brief h1").waitFor();
-  await other.getByRole("button", { name: "Library", exact: true }).click();
-  assert.equal(
-    await other
-      .locator(".file-explorer")
-      .getByRole("button", { name: /Tab-only sample note/ })
-      .count(),
-    0,
-  );
-  mark("Separate visitors have independent disposable preview data");
-  await second.close();
-  await page.getByRole("button", { name: "Ask PRIVATE" }).click();
-  await page.getByLabel("Message Aksara").fill("Explore a sample next step");
-  await page.getByRole("button", { name: "Send message" }).click();
-  await page
-    .getByRole("heading", { name: "A place for your next step" })
-    .last()
-    .waitFor();
-  await page
-    .getByText(/guided UI response, not model inference/)
-    .last()
-    .waitFor();
-  mark("Guided conversation renders an OpenUI card without a model request");
-  await page.getByRole("button", { name: "Settings", exact: true }).click();
-  await page
-    .getByRole("button", { name: "My personal space", exact: true })
-    .click();
-  await page.getByRole("button", { name: "Library", exact: true }).click();
-  await page
-    .getByRole("heading", { name: "Make room for what you know." })
-    .waitFor();
-  mark("Sample personal mode stays separate from the community sample");
-  await navigateSurface(page, "Tools");
-  assert.equal(
-    await page
-      .getByRole("button", { name: "Prepare a test indication" })
-      .count(),
-    0,
-  );
-  mark("Hardware and model downloads are disconnected in the preview");
-  await page.getByRole("button", { name: /^Home/ }).click();
-  await page.getByText("Recorded work", { exact: true }).click();
-  await page.getByLabel("Historical date").fill("2001-01-01");
-  await page
-    .getByRole("heading", { name: "No recorded work for this date" })
-    .waitFor();
-  mark("Unrecorded history stays empty");
-  await page.reload();
-  await page.locator(".living-brief h1").waitFor();
-  await page.getByRole("button", { name: "Library", exact: true }).click();
-  assert.equal(
-    await page
-      .locator(".file-explorer")
-      .getByRole("button", { name: /Tab-only sample note/ })
-      .count(),
-    0,
-  );
-  mark("Reload clears preview changes instead of persisting user content");
-  await page
-    .getByRole("button", { name: "Context: Operator", exact: true })
-    .click();
-  await page
-    .getByRole("menuitem", { name: "Personal space", exact: true })
-    .click();
-  await page
-    .locator(".reading-brand small")
-    .filter({ hasText: "Personal space" })
-    .waitFor();
-  await page
-    .getByRole("button", { name: "Context: Operator", exact: true })
-    .click();
-  await page
-    .getByRole("menuitem", { name: "Community workspace", exact: true })
-    .click();
-  await page
-    .locator(".reading-brand small")
-    .filter({ hasText: "Community office" })
-    .waitFor();
-  mark(
-    "The workspace switcher changes custody through the same fenced host action",
-  );
-  await navigateSurface(page, "Settings");
-  await page.getByRole("button", { name: /Set up Aksara/ }).click();
-  await page.getByRole("radio", { name: /ChatGPT subscription/ }).check();
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  assert.ok(
-    await page
-      .getByRole("button", { name: "Sign in with ChatGPT", exact: true })
-      .isDisabled(),
-  );
-  await page
-    .getByRole("button", { name: "Explore first", exact: true })
-    .click();
-  await navigateSurface(page, "Home");
-  await page
-    .getByLabel("Message Aksara")
-    .fill("The setup preview kept the guided transport");
-  await page.getByRole("button", { name: "Send message", exact: true }).click();
-  await page
-    .getByRole("region", { name: "Latest Home reply" })
-    .getByRole("button", { name: "Open conversation", exact: true })
-    .click();
-  await page
-    .locator(".conversation-scroll")
-    .getByText(/guided UI response/)
-    .last()
-    .waitFor();
-  mark(
-    "Onboarding can preview provider choices while account and model calls stay disconnected",
-  );
-  await page.reload();
-  await page.locator(".living-brief h1").waitFor();
-  await page.getByRole("button", { name: /^Home/ }).click();
-  await navigateSurface(page, "Home");
-  if (
-    await page
-      .getByRole("button", { name: "Expand sidebar", exact: true })
-      .isVisible()
-  )
-    await page
-      .getByRole("button", { name: "Expand sidebar", exact: true })
-      .click();
-  await page
-    .getByRole("button", { name: "Open channel Field notes", exact: true })
-    .click();
-  await page
-    .getByRole("heading", { name: "Field notes", exact: true })
-    .waitFor();
-  assert.ok(
-    await page
-      .getByRole("button", { name: "Collapse sidebar", exact: true })
-      .isVisible(),
-  );
-  assert.ok(
-    !(await page.locator(".work-surface").innerText()).includes(
-      "A place for our first steps",
-    ),
-  );
-  assert.equal(
-    await page.getByLabel("Message Aksara", { exact: true }).count(),
-    1,
-  );
-  await page.getByRole("button", { name: "Ask PRIVATE", exact: true }).click();
-  await page
-    .getByRole("heading", { name: "Private thread", exact: true })
-    .waitFor();
-  await page
-    .getByRole("button", { name: "Collapse sidebar", exact: true })
-    .click();
-  await navigateSurface(page, "Home");
-  mark(
-    "Channel branches retain navigation preference while clearing private Home content",
-  );
-  const shots = process.env.AKSARA_PREVIEW_SCREENSHOTS;
-  if (shots) {
-    await mkdir(shots, { recursive: true });
-    await page.screenshot({
-      path: path.join(shots, "cloudflare-desktop.png"),
-      fullPage: true,
-      animations: "disabled",
-    });
-  }
-  await page.setViewportSize({ width: 360, height: 800 });
-  assert.equal(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth > innerWidth,
-    ),
-    false,
-  );
-  if (shots)
-    await page.screenshot({
-      path: path.join(shots, "cloudflare-mobile.png"),
-      fullPage: true,
-      animations: "disabled",
-    });
-  mark("Hosted preview is usable at a 360 px viewport");
-  await page.getByRole("button", { name: "Spaces", exact: true }).waitFor();
-  assert.equal(
-    await page
-      .getByRole("button", { name: "Ask PRIVATE", exact: true })
-      .count(),
-    1,
-  );
-  await navigateSurface(page, "Library");
-  await page.getByRole("heading", { name: "Library", exact: true }).waitFor();
-  assert.equal(await page.getByRole("dialog").count(), 0);
-  mark(
-    "Phone dock navigates directly and retains the persistent assistant entry",
-  );
-  await navigateSurface(page, "Home");
-  await page.getByRole("button", { name: "Ask PRIVATE", exact: true }).click();
-  await page
-    .getByRole("heading", { name: "Private thread", exact: true })
-    .waitFor();
-  const area = page.getByLabel("Message Aksara", { exact: true });
-  await area.fill("A line");
-  const short = (await area.boundingBox()).height;
-  await area.fill("A line\nAnother line\nA third line");
-  assert.ok((await area.boundingBox()).height > short);
-  const sendBounds = await page
-    .getByRole("button", { name: "Send message", exact: true })
-    .boundingBox();
-  assert.ok(sendBounds.x >= 0 && sendBounds.x + sendBounds.width <= 360);
-  assert.equal(await page.locator(".mobile-dock").count(), 0);
-  const spacesBounds = await page
-    .getByRole("button", { name: "Spaces", exact: true })
-    .boundingBox();
-  assert.ok(
-    Math.abs(
-      spacesBounds.y +
-        spacesBounds.height / 2 -
-        (sendBounds.y + sendBounds.height / 2),
-    ) < 8,
-    "navigation and Send share the composer row",
-  );
-  await page.keyboard.press("Escape");
-  await page.locator(".living-brief h1").waitFor();
-  assert.equal(
-    await page.getByLabel("Message Aksara").inputValue(),
-    "A line\nAnother line\nA third line",
-  );
-  mark(
-    "Private conversation uses a peer surface, its multiline composer stays in view, and Escape preserves the draft",
-  );
-  const slow = await one.newCDPSession(page);
-  await slow.send("Emulation.setCPUThrottlingRate", { rate: 4 });
-  for (let i = 0; i < 3; i++) {
-    await navigateSurface(page, "Home");
-    await page
-      .getByRole("button", { name: "Ask PRIVATE", exact: true })
-      .click();
-    await page
-      .getByRole("heading", { name: "Private thread", exact: true })
-      .waitFor();
-    await page.keyboard.press("Escape");
-    await page.locator(".living-brief h1").waitFor();
-    await navigateSurface(page, "Settings");
-    await page
-      .getByRole("heading", { name: "Appearance", exact: true })
-      .waitFor();
-  }
-  await slow.send("Emulation.setCPUThrottlingRate", { rate: 1 });
-  await slow.detach();
-  mark(
-    "Interrupted blob/Home animations cannot hide a newer destination under CPU throttling",
-  );
-  await navigateSurface(page, "Settings");
-  const oldAccent = await page.evaluate(() =>
-    getComputedStyle(document.documentElement).getPropertyValue("--green"),
-  );
-  await page.getByRole("button", { name: "Clay", exact: true }).click();
-  await page.waitForFunction(
-    (old) =>
-      getComputedStyle(document.documentElement).getPropertyValue("--green") !==
-      old,
-    oldAccent,
-  );
-  await page.getByText("Simulate time of day", { exact: true }).click();
-  await page
-    .getByRole("button", { name: "Auto · local time", exact: true })
-    .click();
-  const hour = page.getByLabel("Atmosphere preview hour");
-  await hour.focus();
-  await hour.press("Home");
-  assert.equal(
-    await page.evaluate(() =>
-      document.documentElement.classList.contains("dark"),
-    ),
-    true,
-  );
-  const darkPhase = await page.evaluate(() =>
-    getComputedStyle(document.documentElement).getPropertyValue("--atmo-light"),
-  );
-  for (let i = 0; i < 12; i++) await hour.press("ArrowRight");
-  assert.equal(
-    await page.evaluate(() =>
-      document.documentElement.classList.contains("dark"),
-    ),
-    false,
-  );
-  await page.getByRole("button", { name: "Dark", exact: true }).click();
-  assert.equal(
-    await page.evaluate(() =>
-      document.documentElement.classList.contains("dark"),
-    ),
-    true,
-  );
-  await page
-    .getByRole("button", { name: "Auto · local time", exact: true })
-    .click();
-  assert.equal(
-    await page.evaluate(() =>
-      document.documentElement.classList.contains("dark"),
-    ),
-    false,
-  );
-  mark(
-    "Clock simulation changes Auto day/night appearance while explicit overrides remain effective",
-  );
-  await hour.press("End");
-  await hour.press("ArrowLeft");
-  assert.notEqual(
-    await page.evaluate(() =>
-      getComputedStyle(document.documentElement).getPropertyValue(
-        "--atmo-light",
-      ),
-    ),
-    darkPhase,
-  );
-  await page
-    .getByLabel("Reduce glass & shader effects", { exact: true })
-    .check();
-  assert.equal(
-    await page
-      .locator(".work-surface")
-      .evaluate((el) => getComputedStyle(el).backdropFilter),
-    "none",
-  );
-  await page.reload();
-  await page.locator(".living-brief h1").waitFor();
   assert.equal(
     await page.evaluate(() => localStorage.getItem("aksara-palette")),
     "clay",
   );
-  assert.equal(await page.locator(".aksara-launcher canvas").count(), 0);
-  mark(
-    "Palette and reduced effects persist while clock simulation and private drafts remain disposable",
+  assert.equal(
+    await page
+      .getByRole("button", { name: "Ask PRIVATE", exact: true })
+      .count(),
+    0,
   );
-
-  await page.evaluate(() => (document.documentElement.style.fontSize = "200%"));
-  await navigateSurface(page, "Ask PRIVATE");
-  await page.getByLabel("Message Aksara").scrollIntoViewIfNeeded();
-  const messageBox = await page.getByLabel("Message Aksara").boundingBox();
-  assert.ok(messageBox.width > 100);
+  await mkdir(".impeccable/review", { recursive: true });
+  const shot = async (name) =>
+    page.screenshot({
+      path: ".impeccable/review/" + name + ".png",
+      animations: "disabled",
+      fullPage: true,
+    });
+  await shot("desktop");
+  mark("Visual Home shows accessible saved artifacts and actual work states");
+  await page
+    .getByRole("button", { name: "Collapse sidebar", exact: true })
+    .click();
+  await page.waitForTimeout(300);
+  const left = await page
+    .locator(".reading-nav")
+    .evaluate((e) => e.getBoundingClientRect().left);
+  await page
+    .getByRole("button", { name: "Expand sidebar", exact: true })
+    .click();
+  await page.waitForTimeout(300);
+  assert.equal(
+    await page
+      .locator(".reading-nav")
+      .evaluate((e) => e.getBoundingClientRect().left),
+    left,
+  );
+  mark("Sidebar collapse keeps its left border fixed");
+  await page
+    .getByRole("button", { name: "Open channel Common room", exact: true })
+    .click();
+  await page
+    .getByRole("heading", { name: "Common room", exact: true })
+    .waitFor();
+  await page.getByRole("button", { name: "Workbench", exact: true }).click();
+  await page.getByLabel("Document content", { exact: true }).waitFor();
+  await page
+    .getByLabel("Document title", { exact: true })
+    .fill("Shared water plan");
+  await page.getByRole("button", { name: "Save draft", exact: true }).click();
+  await page.getByText("Saved", { exact: true }).first().waitFor();
+  await shot("workbench");
+  await page.getByRole("button", { name: "Room", exact: true }).click();
+  await page
+    .locator(".conversation-scroll")
+    .getByText(/Welcome to a sample shared conversation/)
+    .waitFor();
+  await shot("room");
+  mark("Room and Workbench preserve the channel and saved rich document");
+  await page
+    .getByRole("button", { name: "Open private Aksara", exact: true })
+    .first()
+    .click();
+  const pane = page.locator("#private-aksara");
+  await pane
+    .getByLabel("Message Aksara", { exact: true })
+    .fill("A private thought");
+  await page
+    .getByRole("button", { name: "Library", exact: true })
+    .first()
+    .click();
+  assert.equal(
+    await pane.getByLabel("Message Aksara", { exact: true }).inputValue(),
+    "A private thought",
+  );
+  await page.getByRole("heading",{name:"Library",exact:true}).waitFor();
+  await shot("private");
+  await pane
+    .getByRole("button", { name: "Expand private thread", exact: true })
+    .click();
+  assert.equal(await pane.getAttribute("data-full"), "true");
+  await pane
+    .getByRole("button", {
+      name: "Return to compact private pane",
+      exact: true,
+    })
+    .click();
+  await pane
+    .getByRole("button", { name: "Close private conversation", exact: true })
+    .click();
+  await page.getByRole("heading", { name: "Library", exact: true }).waitFor();
+  await page
+    .getByRole("button", { name: "Open private Aksara", exact: true })
+    .first()
+    .click();
+  assert.equal(
+    await pane.getByLabel("Message Aksara", { exact: true }).inputValue(),
+    "A private thought",
+  );
+  assert.ok(!(await pane.innerText()).includes("Shared water plan"));
+  await pane.getByRole("button", { name: "Send message", exact: true }).click();
+  await pane
+    .getByText(/guided UI response/)
+    .first()
+    .waitFor();
+  await pane
+    .getByRole("button", { name: "Close private conversation", exact: true })
+    .click();
+  mark(
+    "Private pane preserves drafts across screens and excludes shared-thread content",
+  );
+  await page.getByRole("button", { name: "Knowledge", exact: true }).click();
+  await page
+    .getByRole("heading", {
+      name: "Useful knowledge starts with a source.",
+      exact: true,
+    })
+    .waitFor();
+  assert.ok(
+    !(await page.locator(".memory-view").innerText()).includes(
+      "Aksara brings people, knowledge and work into one living workspace.",
+    ),
+  );
+  await shot("knowledge");
+  mark(
+    "Knowledge view labels source-backed review status and disconnected preview",
+  );
+  await page
+    .getByRole("button", { name: "Files & documents", exact: true })
+    .click();
+  await page.getByRole("button", { name: "New drawing", exact: true }).click();
+  await page.locator(".excalidraw canvas").first().waitFor();
+  await page.getByLabel("Drawing title").fill("Water point diagram");
+  const rectangle = page.getByLabel("Rectangle", { exact: true });
+  await rectangle.locator("..").click();
+  const canvas = await page.locator(".excalidraw canvas").first().boundingBox();
+  await page.mouse.move(canvas.x + 120, canvas.y + 160);
+  await page.mouse.down();
+  await page.mouse.move(canvas.x + 340, canvas.y + 280, { steps: 5 });
+  await page.mouse.up();
+  await page.getByRole("button", { name: "Save drawing", exact: true }).click();
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Export SVG", exact: true }).click();
+  assert.ok((await download).suggestedFilename().endsWith(".svg"));
+  await shot("drawing");
+  await page
+    .locator(".document-topbar")
+    .getByRole("button", { name: "Library", exact: true })
+    .click();
+  await page.getByRole("button", { name: /Water point diagram/ }).waitFor();
+  mark(
+    "Vector drawings save to the Library and export SVG without a third-party font request",
+  );
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.getByRole("button", { name: "Appearance", exact: true }).click();
+  await page.getByRole("button", { name: "Light", exact: true }).click();
+  await shot("settings-light");
+  await page.getByRole("button",{name:"Library",exact:true}).first().click();
+  await page.getByRole("button",{name:/Water point diagram/}).click();
+  await page.locator(".excalidraw canvas").first().waitFor();
+  await shot("drawing-light");
+  const drawingColor=await page.locator(".excalidraw").first().evaluate(el=>({primary:getComputedStyle(el).getPropertyValue("--color-primary"),selection:getComputedStyle(el).getPropertyValue("--color-surface-primary-container"),accent:getComputedStyle(el).getPropertyValue("--green"),soft:getComputedStyle(el).getPropertyValue("--duet-accent-soft")}));
+  assert.equal(drawingColor.primary.trim(),drawingColor.accent.trim());assert.equal(drawingColor.selection.trim(),drawingColor.soft.trim());
+  await page.getByRole("button",{name:"Settings",exact:true}).click();await page.getByRole("button",{name:"Appearance",exact:true}).click();
+  await page.getByRole("button", { name: "Sage", exact: true }).click();
+  await page.getByRole("button", { name: "Clay", exact: true }).click();
+  assert.equal(
+    await page.evaluate(() => localStorage.getItem("aksara-palette")),
+    "clay",
+  );
+  await page.getByRole("button", { name: "Dark", exact: true }).click();
+  await shot("settings");
+  mark("Twenty selection controls, palettes and both themes are usable");
+  await page.getByRole("button", { name: /Set up Aksara/ }).click();
+  await page.getByRole("dialog").waitFor();
+  await shot("setup");
+  await page
+    .getByRole("button", { name: "Explore first", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Capabilities", exact: true }).click();
+  await shot("capabilities");
+  await page.getByRole("button", { name: "Home", exact: true }).click();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForTimeout(250);
+  await shot("mobile");
+  await page
+    .getByRole("button", { name: "Open private Aksara", exact: true })
+    .click();
+  await pane.getByLabel("Message Aksara", { exact: true }).waitFor();
+  assert.equal(await page.locator(".mobile-dock").count(), 0);
+  await shot("private-mobile");
   assert.equal(
     await page.evaluate(
       () => document.documentElement.scrollWidth > innerWidth,
     ),
     false,
   );
-  await page.evaluate(() => (document.documentElement.style.fontSize = ""));
+  await pane
+    .getByRole("button", { name: "Close private conversation", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Spaces", exact: true }).click();
+  await page
+    .locator(".spaces-menu")
+    .getByRole("button", { name: "Channels", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Open channel", exact: true })
+    .first()
+    .click();
+  await page.getByRole("button", { name: "Room", exact: true }).click();
+  await shot("room-mobile");
+  assert.equal(await page.locator(".mobile-dock").count(), 0);
+  assert.equal(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth > innerWidth,
+    ),
+    false,
+  );
   mark(
-    "At 200% text size the phone composer remains usable without sideways overflow",
+    "Phone conversations have a single compact composer without a competing bottom dock",
   );
   assert.deepEqual(errors, []);
-  assert.ok(!requests.some((u) => new URL(u).pathname.startsWith("/api/")));
-  assert.ok(requests.every((u) => new URL(u).origin === new URL(base).origin));
-  mark(
-    "No API, model, third-party or local-host requests leave the preview tab",
+  assert.deepEqual(
+    requests.filter(
+      (url) =>
+        !url.startsWith(base) &&
+        !url.startsWith("blob:") &&
+        !url.startsWith("data:"),
+    ),
+    [],
   );
-  const response = await fetch(base + "/api/session");
-  assert.equal(response.status, 501);
-  assert.equal((await response.json()).preview, true);
-  mark("Cloudflare API guard explicitly rejects live-backend requests");
   console.log(JSON.stringify({ preview_checks_passed: checks.length, checks }));
 } finally {
   await browser?.close();

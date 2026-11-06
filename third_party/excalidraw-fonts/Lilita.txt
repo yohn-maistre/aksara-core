@@ -1,0 +1,5 @@
+Original font name-table notices from @excalidraw/excalidraw 0.18.1.
+
+Copyright: Copyright (c) 2011 Juan Montoreano (juan@remolacha.biz), with Reserved Font Names "Lilita One"
+Family: Lilita One
+License URL: http://scripts.sil.org/OFL

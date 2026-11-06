@@ -113,6 +113,26 @@ async function fixture(generate) {
     },
   };
 }
+test("private pane has an independent actor-bound context without switching the shared workspace",async()=>{
+ const f=await fixture();
+ try{
+  const parent=(await f.request("session")).value;
+  const opening=await f.request("contexts/private",{});assert.equal(opening.status,200);
+  const child=opening.value;assert.equal(child.profile.mode,"personal");assert.notEqual(child.scope,parent.scope);
+  const headers={"x-aksara-context":child.context,"x-aksara-scope":child.scope};
+  assert.equal((await f.request("session")).value.scope,parent.scope);
+  const note=await f.request("kernel/ingest",{title:"Private pane note",content:"PRIVATE_PANE_SENTINEL",visibility:"private",purpose:"knowledge",provenance:"synthetic private pane"},headers);
+  assert.equal(note.status,200);
+  const own=await f.request("kernel/library",undefined,headers);assert.ok(JSON.stringify(own.value).includes("Private pane note"));
+  const shared=await f.request("kernel/library");assert.ok(!JSON.stringify(shared.value).includes("Private pane note"));
+  assert.equal((await f.request("kernel/library",undefined,{...headers,"x-aksara-scope":parent.scope})).status,409);
+  assert.equal((await f.request("kernel/library",undefined,{...headers,"x-aksara-context":"invented"})).status,403);
+  assert.equal((await f.request("scope",{profile:"community"},headers)).status,403);
+  const memory=await f.request("memory/recall",{query:"note"},headers);assert.equal(memory.status,200);assert.equal(memory.value.engine.id,"longmemory");
+  assert.equal((await f.request("logout",{})).status,200);
+  assert.equal((await f.request("kernel/library",undefined,headers)).status,403);
+ }finally{await f.close();}
+});
 test("real hosts: session boundary, CSRF, separate personal custody, and stale-context rejection", async () => {
   const f = await fixture();
   try {

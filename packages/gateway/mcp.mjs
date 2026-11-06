@@ -1,5 +1,7 @@
 import { readFile } from "node:fs/promises";
-import { validatePack } from "@aksara/contracts";
+import { validatePack, MemoryRecallQuery } from "@aksara/contracts";
+import {createMemoryService} from "@aksara/memory";
+import {createTool} from "@mastra/core/tools";
 import { MCPServer } from "@mastra/mcp";
 import { noopLogger } from "@mastra/core/logger";
 import { fileURLToPath } from "node:url";
@@ -10,6 +12,7 @@ const unavailable = () => new Error("Resource unavailable in this context");
  * subscription, prior list response or consumer model is never an access grant. */
 export function createResourceGateway(port, { packs = [] } = {}) {
   const manifests = packs.map(validatePack);
+  const memory=createMemoryService({load:()=>port.read("knowledge")});
   const uri = (kind, id) => `aksara://${kind}/${encodeURIComponent(id)}`;
   const resources = {
     async listResources() {
@@ -117,11 +120,20 @@ export function createResourceGateway(port, { packs = [] } = {}) {
     id: "aksara-resources",
     name: "Aksara governed resources",
     version: "0.1.0",
-    tools: {},
+    tools: {
+      memory_search:createTool({
+        id:"memory_search",
+        description:"Read-only search of currently authorized communal memory using embedded LongMemory. Returns cited originals and reviewed/provisional status. Rechecks scope and withdrawal before returning. No write, approval, publication or tool execution.",
+        inputSchema:MemoryRecallQuery,
+        execute:input=>memory.recall(input),
+      }),
+    },
     resources,
   });
   server.__setLogger(noopLogger);
-  return { server, resources };
+  const close=server.close.bind(server);
+  server.close=async()=>{await memory.close();await close();};
+  return { server, resources, memory };
 }
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   try {

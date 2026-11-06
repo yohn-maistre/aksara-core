@@ -5,15 +5,16 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc --noEmit && node --max-old-space-size=6144 ../../node_modules/vite/bin/vite.js build",
     "typecheck": "tsc --noEmit",
-    "build:preview": "tsc --noEmit && vite build --mode preview"
+    "build:preview": "tsc --noEmit && node --max-old-space-size=6144 ../../node_modules/vite/bin/vite.js build --mode preview"
   },
   "dependencies": {
-    "@base-ui/react": "1.6.0",
+    "@base-ui/react": "^1.9.0",
     "@blocknote/core": "0.57.0",
     "@blocknote/react": "0.57.0",
     "@blocknote/shadcn": "0.57.0",
+    "@excalidraw/excalidraw": "^0.18.1",
     "@fontsource-variable/inter": "5.3.0",
     "@material/material-color-utilities": "0.4.0",
     "@openuidev/react-lang": "1.0.2",
@@ -32,6 +33,7 @@
     "react-use-measure": "2.1.7",
     "suncalc": "2.1.1",
     "tailwind-merge": "3.6.0",
+    "twenty-ui": "^2.56.0",
     "zod": "4.3.6"
   },
   "devDependencies": {

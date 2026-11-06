@@ -11,6 +11,7 @@ export type Profile = {
 export type Session = {
   profile: Profile;
   scope: string;
+  context?: string;
   lane: string;
   lanes: { name: string; lane: { id: string; audience: string[] } }[];
   development: boolean;

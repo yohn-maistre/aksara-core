@@ -29,7 +29,7 @@ import {
 import { Empty, Mark } from "./shared";
 import { useWorkspace } from "./state";
 
-export function ConversationView() {
+export function ConversationView({embedded=false}:{embedded?:boolean}) {
   const {
     session,
     page,
@@ -65,7 +65,7 @@ export function ConversationView() {
   return (
     <>
       <>
-        <div className="page-heading chat-heading">
+        <div className="page-heading chat-heading" hidden={embedded}>
           {privateLane && (
             <button
               className="icon-button"
@@ -151,17 +151,13 @@ export function ConversationView() {
                             : "hosted"}
                       </small>
                     </span>
-                    <SpeechBubbleRoot className="chat-bubble">
-                      <SpeechBubbleBody>
-                        <SpeechBubbleText>
+                    <div className="message-content">
                           <Suspense
                             fallback={<p className="message-text">{m.text}</p>}
                           >
                             <MessageBody text={m.text} />
                           </Suspense>
-                        </SpeechBubbleText>
-                      </SpeechBubbleBody>
-                    </SpeechBubbleRoot>
+                        </div>
                     {m.role === "assistant" && (
                       <DropdownMenu>
                         <DropdownMenuTrigger

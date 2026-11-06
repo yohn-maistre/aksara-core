@@ -14,6 +14,7 @@ import { useState } from "react";
 import { useWorkspace } from "../workspace/state";
 import { ContextMenu } from "../workspace/ContextMenu";
 import { Mark } from "../workspace/shared";
+import {AksaraLauncher} from "../workspace/AksaraLauncher";
 export function AppSidebar() {
   const w = useWorkspace();
   const [channelsOpen, setChannelsOpen] = useState(true);
@@ -21,10 +22,8 @@ export function AppSidebar() {
   const { session, page, navExpanded, navigate, setNavExpanded } = w;
   const links = [
     ["Today", "Home", House],
-    ["Ask", "Aksara", MessageCircle],
     ["Library", "Library", BookOpen],
     ["Channels", "Channels", Hash],
-    ["Canvas", "Shared table", LayoutDashboard],
     ["Tools", "Capabilities", Layers],
   ] as const;
   return (
@@ -54,15 +53,13 @@ export function AppSidebar() {
             <button
               className="reading-nav-link"
               title={label}
-              aria-label={
-                id === "Tools" ? "Tools" : id === "Ask" ? "Ask PRIVATE" : label
-              }
+              aria-label={label}
               aria-current={
                 page === id || (id === "Channels" && page === "Conversation")
                   ? "page"
                   : undefined
               }
-              onClick={() => (id === "Canvas" ? w.newCanvas() : navigate(id))}
+              onClick={() => navigate(id)}
             >
               <Icon size={19} />
               <span>{label}</span>
@@ -105,6 +102,7 @@ export function AppSidebar() {
         ))}
       </nav>
       <div className="reading-nav-footer">
+        <AksaraLauncher/>
         <button
           className="reading-nav-link"
           aria-label="Settings"

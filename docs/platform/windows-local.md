@@ -7,8 +7,8 @@ remain available.
 31 October 2026, Asia/Bangkok. This increment keeps Rust authority, the PWA and
 Mastra together. It adds a native-process launcher, provider alternatives and a
 real first file/editor workflow. Current durable execution and UI updates are in the
-[3 November checkpoint](resident-harness-implementation-2026-11-02.md). This is a **development distribution**, not
-production enrollment. The [resident checkpoint](resident-agent-implementation.md)
+[3 November checkpoint](architecture.md). This is a **development distribution**, not
+production enrollment. The [resident checkpoint](architecture.md)
 adds background tools, working knowledge and bounded private native computer use.
 
 ## Windows portable bundle

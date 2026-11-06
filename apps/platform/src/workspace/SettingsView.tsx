@@ -1,3 +1,5 @@
+import {useState} from "react";
+import {ActionButton} from "./controls";
 import { AppearanceControls } from "./AppearanceControls";
 import {
   ArrowUpRight,
@@ -16,6 +18,7 @@ import { type Data } from "./shared";
 import { useWorkspace } from "./state";
 
 export function SettingsView() {
+  const [section,setSection]=useState("connections");
   const {
     profiles,
     session,
@@ -62,8 +65,8 @@ export function SettingsView() {
         >
           Set up Aksara · models & connections <ArrowUpRight size={15} />
         </button>
-        <div className="settings-grid">
-          <DuetCard className="settings-card">
+        <div className="settings-layout"><nav className="settings-navigation" aria-label="Settings sections">{[["connections","Models & connections"],["workspace","Workspace"],["appearance","Appearance"],["memory","Memory"],["voice","Voice"],["about","About"]].map(([id,label])=><ActionButton variant={section===id?"soft":"ghost"} aria-current={section===id?"page":undefined} key={id} onClick={()=>setSection(id)}>{label}</ActionButton>)}</nav><div className="settings-grid" data-section={section}>
+          <DuetCard className="settings-card" data-settings-section="workspace">
             <h2>Personal & community</h2>
             <p>
               {PREVIEW
@@ -115,7 +118,7 @@ export function SettingsView() {
               </select>
             </label>
           </DuetCard>
-          <DuetCard className="settings-card">
+          <DuetCard className="settings-card" data-settings-section="connections">
             <h2>Local models & offline use</h2>
             <p>
               Start Ollama or a llama.cpp OpenAI-compatible server on this host
@@ -168,7 +171,7 @@ export function SettingsView() {
               <p className="muted">No local model server detected.</p>
             )}
           </DuetCard>
-          <DuetCard className="settings-card">
+          <DuetCard className="settings-card" data-settings-section="appearance">
             <h2>Appearance</h2>
             <p>A quieter workspace, in the light that suits you.</p>
             <AppearanceControls />
@@ -195,7 +198,7 @@ export function SettingsView() {
               </button>
             </div>
           </DuetCard>
-          <DuetCard className="settings-card">
+          <DuetCard className="settings-card" data-settings-section="connections">
             <h2>Model connections</h2>
             <p>
               Connect your ChatGPT subscription, Google AI Studio, Groq or
@@ -215,7 +218,7 @@ export function SettingsView() {
               Read provider documentation <ArrowUpRight size={13} />
             </a>
           </DuetCard>
-          <DuetCard className="settings-card">
+          <DuetCard className="settings-card" data-settings-section="voice">
             <h2>Voice & native surfaces</h2>
             <AudioLines size={23} />
             <p>
@@ -229,7 +232,7 @@ export function SettingsView() {
               measured native needs.
             </p>
           </DuetCard>
-          <DuetCard className="settings-card">
+          <DuetCard className="settings-card" data-settings-section="about">
             <h2>{PREVIEW ? "About this preview" : "Development setup"}</h2>
             <p>
               {PREVIEW
@@ -257,7 +260,8 @@ export function SettingsView() {
                 : "Choose a development identity"}
             </button>
           </DuetCard>
-        </div>
+          <DuetCard className="settings-card" data-settings-section="memory"><h2>Memory</h2><p>Sources, working knowledge and useful procedures stay with this workspace. Recall checks current access and withdrawn sources before returning an answer.</p><div className="settings-memory-status"><Check size={16}/>{PREVIEW?"Disconnected sample":"LongMemory · local recall"}</div><p>Reviewed excerpts stay distinct from working notes. A correction can be saved without silently becoming institutional policy.</p><button className="secondary" onClick={()=>navigate("Library")}>Open workspace knowledge <ArrowUpRight size={14}/></button><details><summary>Storage and portability</summary><p>Originals and provenance persist in the local authority store. The recall graph is rebuildable and makes no external inference calls. Public release and remote agent enrollment are not enabled by this setting.</p></details></DuetCard>
+        </div></div>
       </>
     </>
   );

@@ -45,7 +45,7 @@ export function atmosphereForHour(hour: number) {
     lightness: a[2] + (b[2] - a[2]) * t,
   };
 }
-export function useAppearance(theme: string, scope = "") {
+export function useAppearance(theme: string, scope = "", enabled = true) {
   const [skyLocation, setSkyLocation] = useState<SkyLocation | null>(() => {
     try {
       const value = JSON.parse(read("aksara-sky-location", "null"));
@@ -69,7 +69,7 @@ export function useAppearance(theme: string, scope = "") {
   useEffect(() => {
     let live = true;
     setWeather(null);
-    if (!skyLocation || !weatherEnabled || !scope || PREVIEW) return;
+    if (!enabled || !skyLocation || !weatherEnabled || !scope || PREVIEW) return;
     const update = async () => {
       if (document.hidden) return;
       try {
@@ -101,10 +101,10 @@ export function useAppearance(theme: string, scope = "") {
       clearInterval(timer);
       document.removeEventListener("visibilitychange", update);
     };
-  }, [skyLocation, weatherEnabled, scope]);
+  }, [skyLocation, weatherEnabled, scope, enabled]);
   const [palette, setPalette] = useState<Palette>(() => {
-    const p = read("aksara-palette", "lilac");
-    return Object.hasOwn(PALETTES, p) ? (p as Palette) : "lilac";
+    const p = read("aksara-palette", "clay");
+    return Object.hasOwn(PALETTES, p) ? (p as Palette) : "clay";
   });
   const [atmosphere, setAtmosphere] = useState(() =>
     read("aksara-atmosphere", "time") === "off" ? "off" : "time",
@@ -142,6 +142,7 @@ export function useAppearance(theme: string, scope = "") {
   );
   const phase = atmosphereForHour(hour);
   useLayoutEffect(() => {
+    if (!enabled) return;
     const root = document.documentElement;
     root.classList.toggle("dark", resolvedTheme === "dark");
     root.style.colorScheme = resolvedTheme;
@@ -164,6 +165,7 @@ export function useAppearance(theme: string, scope = "") {
       "--primary": "primary",
       "--primary-foreground": "onPrimary",
       "--duet-user": "primaryContainer",
+      "--duet-accent-soft": "primaryContainer",
       "--user-ink": "onPrimaryContainer",
     } as const;
     for (const [token, role] of Object.entries(roles))
@@ -184,16 +186,48 @@ export function useAppearance(theme: string, scope = "") {
     };
     for (const [token, value] of Object.entries(reading))
       root.style.setProperty(token, value);
-    if (palette === "lilac") {
-      root.style.setProperty("--green", dark ? "#d9a47e" : "#75529a");
-      root.style.setProperty("--primary", dark ? "#d9a47e" : "#75529a");
+    if (palette === "lilac" || palette === "clay") {
+      const accent = dark
+        ? "#d9a47e"
+        : palette === "clay"
+          ? "#8a5638"
+          : "#75529a";
+      const soft = dark
+        ? "#3b2e26"
+        : palette === "clay"
+          ? "#f0e4d9"
+          : "#ede5f5";
+      root.style.setProperty("--green", accent);
+      root.style.setProperty("--primary", accent);
+      root.style.setProperty("--duet-accent-soft", soft);
       root.style.setProperty(
         "--primary-foreground",
         dark ? "#241a12" : "#ffffff",
       );
-      root.style.setProperty("--duet-user", dark ? "#382c24" : "#f0e9f5");
+      root.style.setProperty(
+        "--duet-user",
+        dark ? "#382c24" : palette === "clay" ? "#f4e9df" : "#f0e9f5",
+      );
       root.style.setProperty("--user-ink", dark ? "#ece8e1" : "#242329");
     }
+    // These semantic partners must follow the selected palette too. Retired
+    // Duet defaults otherwise leave blue working/selection states behind.
+    root.style.setProperty(
+      "--duet-status-working",
+      root.style.getPropertyValue("--green"),
+    );
+    root.style.setProperty(
+      "--duet-status-working-soft",
+      root.style.getPropertyValue("--duet-accent-soft"),
+    );
+    root.style.setProperty(
+      "--sidebar-primary",
+      root.style.getPropertyValue("--primary"),
+    );
+    root.style.setProperty(
+      "--sidebar-primary-foreground",
+      root.style.getPropertyValue("--primary-foreground"),
+    );
     root.style.setProperty("--sky-ground", solar.ground);
     root.style.setProperty("--sky-upper", solar.upper);
     root.style.setProperty("--sky-lower", solar.lower);
@@ -219,6 +253,7 @@ export function useAppearance(theme: string, scope = "") {
     root.dataset.effects = reducedEffects ? "reduced" : "full";
   }, [
     colors,
+    enabled,
     phase.hue,
     phase.lightness,
     atmosphere,
@@ -236,6 +271,7 @@ export function useAppearance(theme: string, scope = "") {
     weather,
   ]);
   useEffect(() => {
+    if (!enabled) return;
     try {
       localStorage.setItem("aksara-palette", palette);
       localStorage.setItem("aksara-atmosphere", atmosphere);

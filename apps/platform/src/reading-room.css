@@ -45,6 +45,52 @@ input,
 textarea {
   caret-color: var(--green);
 }
+input[type="checkbox"],
+input[type="radio"],
+input[type="range"] {
+  accent-color: var(--green);
+}
+/* Structural rules belong to the active surface stylesheet. Their previous
+   definitions lived in retired atmospheric styles that are no longer loaded. */
+.library-actions,
+.collection-tabs,
+.palette-choices {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.collection-tabs {
+  margin: 20px 0 12px;
+}
+.collection-tabs button,
+.palette-choices button {
+  min-height: 38px;
+  padding: 7px 12px;
+  border-radius: 6px;
+  color: var(--ink-muted);
+}
+.collection-tabs button[aria-pressed="true"],
+.palette-choices button[aria-pressed="true"] {
+  background: var(--duet-accent-soft);
+  color: var(--green);
+}
+.appearance-controls {
+  display: grid;
+  gap: 16px;
+}
+.appearance-controls fieldset {
+  min-width: 0;
+}
+.appearance-controls legend {
+  margin-bottom: 8px;
+}
+@media (pointer: coarse) {
+  .collection-tabs button,
+  .palette-choices button {
+    min-height: 44px;
+  }
+}
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,

@@ -34,6 +34,46 @@ pub struct WorkspaceEntry {
 }
 
 impl Kernel {
+    /// One authority-locked projection across the person's currently eligible
+    /// lanes. The client never downloads other people's private work to hide it.
+    pub fn home_overview(&self, ctx: &AccessContext) -> Result<Value> {
+        self.check_context(ctx)?;
+        let labels = self.lane_names(&ctx.actor)?;
+        let mut work = Vec::new();
+        let mut artifacts = Vec::new();
+        for row in labels.as_array().ok_or(Error::Denied)?.iter().take(100) {
+            let lane: ConversationLane = serde_json::from_value(row["lane"].clone())?;
+            let scoped = AccessContext {
+                lane,
+                ..ctx.clone()
+            };
+            self.check_context(&scoped)?;
+            for item in self.works(&scoped)?.into_iter().take(30) {
+                let recorded: i64 = self.db.query_row(
+                    "SELECT coalesce(max(recorded_ms),0) FROM work_history WHERE work_id=?1",
+                    [&item.id],
+                    |r| r.get(0),
+                )?;
+                let results = self.work_artifacts(&scoped, &item.id)?;
+                work.push(value!({"work":item,"lane":scoped.lane.id,"channel":row["name"],"private":scoped.lane.audience.len()==1,"recorded_ms":recorded,"artifacts":results}));
+            }
+            for item in self.workspace_entries(&scoped)?.into_iter().take(20) {
+                let entry =
+                    self.workspace_entry(&scoped, item["id"].as_str().ok_or(Error::Denied)?)?;
+                let preview: String = entry.content.chars().take(240).collect();
+                artifacts.push(value!({"entry":item,"preview":preview,"lane":scoped.lane.id,"channel":row["name"],"private":scoped.lane.audience.len()==1}));
+            }
+        }
+        work.sort_by_key(|r| std::cmp::Reverse(r["recorded_ms"].as_i64().unwrap_or(0)));
+        artifacts
+            .sort_by_key(|r| std::cmp::Reverse(r["entry"]["updated_at"].as_i64().unwrap_or(0)));
+        let truncated = work.len() > 100 || artifacts.len() > 100;
+        work.truncate(100);
+        artifacts.truncate(100);
+        Ok(
+            value!({"protocol":"aksara.home/1","work":work,"artifacts":artifacts,"truncated":truncated,"current_authorization":true}),
+        )
+    }
     pub fn work_artifacts(&self, ctx: &AccessContext, id: &str) -> Result<Vec<Artifact>> {
         self.work(ctx, id)?;
         let mut ids = Vec::<String>::new();
@@ -78,9 +118,14 @@ impl Kernel {
         if let Some(id) = existing {
             return self.artifact(ctx, &id);
         }
+        let snapshot_content = if entry.kind == "drawing" {
+            serde_json::to_string_pretty(&entry.body)?
+        } else {
+            entry.content.clone()
+        };
         let input = IngestRequest {
             title: entry.title.clone(),
-            content: entry.content.clone(),
+            content: snapshot_content,
             visibility: if ctx.lane.audience.len() == 1 {
                 Visibility::Private
             } else {
@@ -172,7 +217,7 @@ impl Kernel {
             return Err(Error::Invalid("invalid working document id".into()));
         }
         bounded(&input.title, 256)?;
-        if !matches!(input.kind.as_str(), "document" | "canvas")
+        if !matches!(input.kind.as_str(), "document" | "canvas" | "drawing")
             || input.content.len() > 500_000
             || json(&input.body)?.len() > 500_000
             || input.source_ids.len() > 50
@@ -181,6 +226,54 @@ impl Kernel {
         }
         if input.kind == "document" && !input.body.is_array() {
             return Err(Error::Invalid("document blocks must be an array".into()));
+        }
+        if input.kind == "drawing" {
+            let elements = input
+                .body
+                .get("elements")
+                .and_then(Value::as_array)
+                .ok_or_else(|| Error::Invalid("drawing elements must be an array".into()))?;
+            if elements.len() > 300
+                || input
+                    .body
+                    .get("files")
+                    .is_some_and(|v| v.as_object().is_none_or(|m| !m.is_empty()))
+            {
+                return Err(Error::Limit(
+                    "drawing exceeds the vector-only profile".into(),
+                ));
+            }
+            for element in elements {
+                if !matches!(
+                    element["type"].as_str(),
+                    Some(
+                        "rectangle"
+                            | "ellipse"
+                            | "diamond"
+                            | "line"
+                            | "arrow"
+                            | "text"
+                            | "freedraw"
+                            | "frame"
+                    )
+                ) || !element["link"].is_null()
+                {
+                    return Err(Error::Invalid(
+                        "unsupported drawing element or external link".into(),
+                    ));
+                }
+                for axis in ["x", "y", "width", "height"] {
+                    if !element[axis]
+                        .as_f64()
+                        .is_some_and(|v| v.is_finite() && v.abs() <= 100_000.0)
+                    {
+                        return Err(Error::Invalid("invalid drawing geometry".into()));
+                    }
+                }
+                if element["text"].as_str().is_some_and(|t| t.len() > 12000) {
+                    return Err(Error::Limit("drawing text too long".into()));
+                }
+            }
         }
         if input.kind == "canvas" {
             let nodes = input

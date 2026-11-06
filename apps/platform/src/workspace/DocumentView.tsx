@@ -15,6 +15,8 @@ import { useWorkspace } from "./state";
 import { useWorkingSurface } from "./useWorkingSurface";
 import { FilePreview } from "./FilePreview";
 import type { Data } from "./shared";
+import {parseVisual} from "@aksara/contracts/visuals";
+import {VisualArtifact} from "./VisualArtifact";
 import { PREVIEW } from "../transport";
 const BlockEditor = lazy(() =>
   import("./BlockEditor").then((m) => ({ default: m.BlockEditor })),
@@ -115,7 +117,7 @@ export function DocumentView() {
           <p className="document-byline">
             Preserved source · {detail.artifact.owner}
           </p>
-          {isText ? (
+          {parseVisual(detail.content||"") ? <VisualArtifact content={detail.content} artifact={detail.artifact}/> : isText ? (
             <Suspense fallback={<p>Opening document…</p>}>
               <BlockEditor
                 key={detail.artifact.id}

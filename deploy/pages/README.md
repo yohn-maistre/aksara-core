@@ -24,5 +24,5 @@ For a live backend operational test, see `../test-host/README.md`. The current a
 The OpenDuet shell update is deployed at the same public URL. Its deployment
 metadata records the source revision. All thirteen preview checks passed against
 the public alias after deployment. See the
-[UI audit and screenshots](../../docs/platform/ui-audit.md) for source reuse,
+[UI audit and screenshots](../../docs/platform/architecture.md) for source reuse,
 Taste v2 installation and documented visual exceptions.

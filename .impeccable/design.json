@@ -1,21 +1,63 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-05T18:03:04.691768+00:00",
-  "title": "Design System: Aksara Reading Room",
+  "generatedAt": "2026-11-06T08:11:05.530759+00:00",
+  "title": "Design System: Aksara Workbench",
   "extensions": {
     "colorMeta": {
+      "clay": {
+        "role": "primary",
+        "displayName": "Clay",
+        "tonalRamp": [
+          "oklch(0.150 0.0286 50.06)",
+          "oklch(0.260 0.0532 50.06)",
+          "oklch(0.380 0.0737 50.06)",
+          "oklch(0.500 0.0818 50.06)",
+          "oklch(0.620 0.0818 50.06)",
+          "oklch(0.740 0.0655 50.06)",
+          "oklch(0.860 0.0409 50.06)",
+          "oklch(0.950 0.0164 50.06)"
+        ]
+      },
+      "clay-soft": {
+        "role": "primary",
+        "displayName": "Clay Soft",
+        "tonalRamp": [
+          "oklch(0.150 0.0069 65.13)",
+          "oklch(0.260 0.0128 65.13)",
+          "oklch(0.380 0.0178 65.13)",
+          "oklch(0.500 0.0198 65.13)",
+          "oklch(0.620 0.0198 65.13)",
+          "oklch(0.740 0.0158 65.13)",
+          "oklch(0.860 0.0099 65.13)",
+          "oklch(0.950 0.0040 65.13)"
+        ]
+      },
+      "clay-user": {
+        "role": "primary",
+        "displayName": "Clay User",
+        "tonalRamp": [
+          "oklch(0.150 0.0063 64.93)",
+          "oklch(0.260 0.0117 64.93)",
+          "oklch(0.380 0.0162 64.93)",
+          "oklch(0.500 0.0180 64.93)",
+          "oklch(0.620 0.0180 64.93)",
+          "oklch(0.740 0.0144 64.93)",
+          "oklch(0.860 0.0090 64.93)",
+          "oklch(0.950 0.0036 64.93)"
+        ]
+      },
       "lilac": {
         "role": "primary",
         "displayName": "Lilac",
         "tonalRamp": [
-          "oklch(0.150 0.0350 305.06)",
-          "oklch(0.260 0.0650 305.06)",
-          "oklch(0.380 0.0900 305.06)",
-          "oklch(0.500 0.1000 305.06)",
-          "oklch(0.620 0.1000 305.06)",
-          "oklch(0.740 0.0800 305.06)",
-          "oklch(0.860 0.0500 305.06)",
-          "oklch(0.950 0.0200 305.06)"
+          "oklch(0.150 0.0406 305.06)",
+          "oklch(0.260 0.0754 305.06)",
+          "oklch(0.380 0.1045 305.06)",
+          "oklch(0.500 0.1161 305.06)",
+          "oklch(0.620 0.1161 305.06)",
+          "oklch(0.740 0.0929 305.06)",
+          "oklch(0.860 0.0580 305.06)",
+          "oklch(0.950 0.0232 305.06)"
         ]
       },
       "lilac-soft": {
@@ -257,7 +299,7 @@
         ]
       },
       "copper-on-primary": {
-        "role": "neutral",
+        "role": "primary",
         "displayName": "Copper On Primary",
         "tonalRamp": [
           "oklch(0.150 0.0076 60.06)",
@@ -302,14 +344,14 @@
         "role": "neutral",
         "displayName": "Problem Light",
         "tonalRamp": [
-          "oklch(0.150 0.0350 23.01)",
-          "oklch(0.260 0.0650 23.01)",
-          "oklch(0.380 0.0900 23.01)",
-          "oklch(0.500 0.1000 23.01)",
-          "oklch(0.620 0.1000 23.01)",
-          "oklch(0.740 0.0800 23.01)",
-          "oklch(0.860 0.0500 23.01)",
-          "oklch(0.950 0.0200 23.01)"
+          "oklch(0.150 0.0461 23.01)",
+          "oklch(0.260 0.0856 23.01)",
+          "oklch(0.380 0.1186 23.01)",
+          "oklch(0.500 0.1318 23.01)",
+          "oklch(0.620 0.1318 23.01)",
+          "oklch(0.740 0.1054 23.01)",
+          "oklch(0.860 0.0659 23.01)",
+          "oklch(0.950 0.0264 23.01)"
         ]
       },
       "needs-dark": {
@@ -358,190 +400,212 @@
     "typographyMeta": {
       "display": {
         "displayName": "Display",
-        "purpose": "Home living-brief greeting."
+        "purpose": "Home living brief."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Page headings."
       },
       "document-title": {
         "displayName": "Document Title",
-        "purpose": "Editable working-document title."
+        "purpose": "Unboxed editable document title."
       },
-      "heading": {
-        "displayName": "Heading",
-        "purpose": "Reading Room heading."
+      "title": {
+        "displayName": "Title",
+        "purpose": "Section and artifact titles."
       },
       "body": {
         "displayName": "Body",
-        "purpose": "Reading Room body."
+        "purpose": "Interface text."
       },
       "conversation": {
         "displayName": "Conversation",
-        "purpose": "Reading Room conversation."
+        "purpose": "Message paragraphs."
       },
       "document-body": {
         "displayName": "Document Body",
-        "purpose": "Georgia paragraphs inside working documents."
+        "purpose": "Rich-document paragraphs."
       },
       "control": {
         "displayName": "Control",
-        "purpose": "Reading Room control."
+        "purpose": "Custom actions."
       },
       "metadata": {
         "displayName": "Metadata",
-        "purpose": "Reading Room metadata."
+        "purpose": "Secondary context."
       }
     },
     "shadows": [
       {
         "name": "menu",
-        "value": "0 10px 35px #0002",
-        "purpose": "Composer options and context menus."
+        "value": "0 6px 24px #0002",
+        "purpose": "Spaces menu and phone dock."
       },
       {
-        "name": "dialog",
-        "value": "0 20px 65px #0003",
-        "purpose": "Centered review and setup overlays."
+        "name": "composer-options",
+        "value": "0 8px 28px #0002",
+        "purpose": "Composer options popup."
       },
       {
-        "name": "toast",
-        "value": "0 8px 35px #0002",
-        "purpose": "Transient feedback."
+        "name": "review-sheet",
+        "value": "-8px 0 36px #0001",
+        "purpose": "Right-side review."
       },
       {
-        "name": "phone-dock",
-        "value": "0 5px 22px #0002",
-        "purpose": "Compact phone launcher."
+        "name": "private-overlay",
+        "value": "-8px 0 40px #0002",
+        "purpose": "Private pane overlay below desktop width."
+      },
+      {
+        "name": "setup",
+        "value": "0 20px 80px #0002",
+        "purpose": "Centered setup dialog."
       }
     ],
     "motion": [
       {
-        "name": "page-enter",
-        "value": "200ms cubic-bezier(0.16, 1, 0.3, 1); opacity 0.65 \u2192 1; translateY 5px \u2192 0",
-        "purpose": "Short page settling; disabled for reduced motion."
+        "name": "navigation",
+        "value": "240ms cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Shell column reflow."
       },
       {
-        "name": "rail-width",
-        "value": "240ms cubic-bezier(0.2, 0.8, 0.2, 1)",
-        "purpose": "Interruptible navigation expansion."
+        "name": "preview",
+        "value": "150ms",
+        "purpose": "Artifact border/background changes."
       },
       {
-        "name": "button-state",
-        "value": "background 150ms, color 150ms; active scale 0.985",
-        "purpose": "Small control feedback; transitions removed for reduced motion."
+        "name": "control",
+        "value": "100ms",
+        "purpose": "Twenty button background transition."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "0.01ms",
+        "purpose": "Transition and animation duration when reduced motion is requested."
       }
     ],
     "breakpoints": [
       {
-        "name": "document-thread-hidden",
-        "value": "1100px"
+        "name": "phone",
+        "value": "760px"
       },
       {
-        "name": "phone",
-        "value": "767px"
+        "name": "compact",
+        "value": "1000px"
+      },
+      {
+        "name": "overlay",
+        "value": "1200px"
+      },
+      {
+        "name": "wide",
+        "value": "1700px"
       }
     ]
   },
   "components": [
     {
-      "name": "Primary Button",
+      "name": "Primary action",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "Compact action using the active appearance roles.",
-      "html": "<button class=\"ds-primary\">Save draft</button>",
-      "css": ".ds-primary{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:38px;padding:0 16px;border-radius:8px;font-size:.8125rem;font-weight:550;cursor:pointer;transition:background 150ms,color 150ms;font-family:\"Inter Variable\",Inter,ui-sans-serif,system-ui,sans-serif;background:var(--green,#75529a);color:var(--primary-foreground,#fff);border:0;}.ds-primary:hover{filter:brightness(.97);}.ds-primary:focus-visible{outline:2px solid var(--green,#75529a);outline-offset:3px;}.ds-primary:active:not(:disabled){scale:.985;}.ds-primary:disabled{opacity:.45;cursor:not-allowed;}"
+      "description": "Existing custom action treatment alongside the Twenty control family.",
+      "html": "<button class=\"ds-button-primary\">Prepare for review</button>",
+      "css": ".ds-button-primary{font-family:\"Inter Variable\",Inter,sans-serif;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:38px;padding:8px 14px;border:1px solid transparent;border-radius:6px;font-size:.8125rem;font-weight:550;background:var(--green, #8a5638);color:var(--primary-foreground, #ffffff);cursor:pointer}.ds-button-primary:hover:not(:disabled){filter:brightness(.95);}.ds-button-primary:focus-visible{outline:2px solid var(--green, #8a5638);outline-offset:3px;}.ds-button-primary:disabled{opacity:.48;cursor:default}"
     },
     {
-      "name": "Secondary Button",
+      "name": "Secondary action",
       "kind": "button",
       "refersTo": "button-secondary",
-      "description": "Compact action using the active appearance roles.",
-      "html": "<button class=\"ds-secondary\">Save draft</button>",
-      "css": ".ds-secondary{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:38px;padding:0 16px;border-radius:8px;font-size:.8125rem;font-weight:550;cursor:pointer;transition:background 150ms,color 150ms;font-family:\"Inter Variable\",Inter,ui-sans-serif,system-ui,sans-serif;background:var(--panel,#fff);color:var(--ink,#242329);border:1px solid var(--line,#e1ddd7);}.ds-secondary:hover{filter:brightness(.97);}.ds-secondary:focus-visible{outline:2px solid var(--green,#75529a);outline-offset:3px;}.ds-secondary:active:not(:disabled){scale:.985;}.ds-secondary:disabled{opacity:.45;cursor:not-allowed;}"
+      "description": "Existing custom action treatment alongside the Twenty control family.",
+      "html": "<button class=\"ds-button-secondary\">Save draft</button>",
+      "css": ".ds-button-secondary{font-family:\"Inter Variable\",Inter,sans-serif;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:38px;padding:8px 14px;border:1px solid var(--line, #e1ddd7);border-radius:6px;font-size:.8125rem;font-weight:550;background:var(--panel, #ffffff);color:var(--ink, #242329);cursor:pointer}.ds-button-secondary:hover:not(:disabled){background:var(--soft, #efede9);}.ds-button-secondary:focus-visible{outline:2px solid var(--green, #8a5638);outline-offset:3px;}.ds-button-secondary:disabled{opacity:.48;cursor:default}"
     },
     {
-      "name": "Text Button",
+      "name": "Text action",
       "kind": "button",
       "refersTo": "button-text",
-      "description": "Low-emphasis contextual action.",
-      "html": "<button class=\"ds-text\">Open conversation <svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M7 17 17 7M7 7h10v10\"/></svg></button>",
-      "css": ".ds-text{display:inline-flex;align-items:center;gap:6px;background:none;border:0;padding:9px 0;color:var(--green,#75529a);font-size:.8125rem;cursor:pointer;font-family:\"Inter Variable\",Inter,ui-sans-serif,system-ui,sans-serif;}.ds-text:hover{filter:brightness(.97);}.ds-text:focus-visible{outline:2px solid var(--green,#75529a);outline-offset:3px;}.ds-text:active{scale:.985;}"
+      "description": "Compact accent action with an underlined hover.",
+      "html": "<button class=\"ds-text\">Current conversation ↗</button>",
+      "css": ".ds-text{font-family:\"Inter Variable\",Inter,sans-serif;display:inline-flex;gap:6px;align-items:center;min-height:34px;padding:4px 0;border:0;background:transparent;color:var(--green, #8a5638);font-size:.8125rem;line-height:1.4;cursor:pointer}.ds-text:hover{text-decoration:underline;text-underline-offset:3px}.ds-text:focus-visible{outline:2px solid var(--green, #8a5638);outline-offset:3px;}.ds-text:disabled{opacity:.48;cursor:default}"
     },
     {
-      "name": "Text Field",
+      "name": "Text field",
       "kind": "input",
       "refersTo": "input",
-      "description": "Standard field with a visible accent focus.",
-      "html": "<input class=\"ds-field\" aria-label=\"Document name\" placeholder=\"Document name\">",
-      "css": ".ds-field{color:var(--ink,#242329);font-family:\"Inter Variable\",Inter,ui-sans-serif,system-ui,sans-serif;min-height:44px;max-width:100%;padding:11px 12px;border:1px solid var(--line,#e1ddd7);border-radius:10px;background:var(--panel,#fff);font-size:.875rem;caret-color:var(--green,#75529a);}.ds-field:focus{outline:2px solid var(--green,#75529a);outline-offset:3px;}"
+      "description": "Standard workspace field with semantic focus.",
+      "html": "<input class=\"ds-input\" aria-label=\"Document name\" placeholder=\"Document name\" />",
+      "css": ".ds-input{font-family:\"Inter Variable\",Inter,sans-serif;color:var(--ink, #242329);background:var(--panel, #ffffff);border:1px solid var(--line, #e1ddd7);border-radius:6px;min-height:38px;padding:9px 12px;max-width:100%;font-size:.875rem}.ds-input::placeholder{color:var(--ink-muted, #69636d);opacity:1}.ds-input:focus-visible{outline:2px solid var(--green, #8a5638);outline-offset:3px;}.ds-input:disabled{opacity:.48}"
     },
     {
-      "name": "Active Navigation",
+      "name": "Current destination",
       "kind": "nav",
       "refersTo": "nav-active",
-      "description": "Selected destination in the compact reading rail.",
-      "html": "<button class=\"ds-nav\" aria-current=\"page\"><svg width=\"19\" height=\"19\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z\"/></svg><span>Home</span></button>",
-      "css": ".ds-nav{display:flex;align-items:center;gap:12px;min-height:42px;width:200px;padding:9px 12px;border:0;border-radius:8px;background:var(--duet-accent-soft,#ede5f5);color:var(--green,#75529a);font-size:.875rem;font-weight:500;text-align:left;cursor:pointer;font-family:\"Inter Variable\",Inter,ui-sans-serif,system-ui,sans-serif;}.ds-nav:hover{background:var(--soft,#efede9);}.ds-nav:focus-visible{outline:2px solid var(--green,#75529a);outline-offset:3px;}.ds-nav:active{scale:.985;}"
+      "description": "Labeled destination using the soft accent active state.",
+      "html": "<nav aria-label=\"Workspace\"><button class=\"ds-nav\" aria-current=\"page\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" aria-hidden=\"true\"><path d=\"m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z\"/></svg>Home</button></nav>",
+      "css": ".ds-nav{font-family:\"Inter Variable\",Inter,sans-serif;display:flex;align-items:center;gap:12px;min-height:38px;width:100%;padding:8px 12px;border:0;border-radius:6px;text-align:left;font-size:.8125rem;font-weight:500;background:var(--duet-accent-soft, #f0e4d9);color:var(--green, #8a5638);cursor:pointer}.ds-nav:hover{background:var(--soft, #efede9)}.ds-nav:focus-visible{outline:2px solid var(--green, #8a5638);outline-offset:3px;}"
     },
     {
-      "name": "Audience Indicator",
+      "name": "Privacy chip",
       "kind": "chip",
       "refersTo": "privacy-chip",
-      "description": "Muted scope beside the conversation heading.",
-      "html": "<span class=\"ds-scope\"><svg width=\"13\" height=\"13\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"4\" y=\"10\" width=\"16\" height=\"11\" rx=\"2\"/><path d=\"M8 10V7a4 4 0 0 1 8 0v3\"/></svg>Only you</span>",
-      "css": ".ds-scope{display:inline-flex;align-items:center;gap:6px;color:var(--ink-muted,#69636d);font-size:.75rem;font-family:\"Inter Variable\",Inter,ui-sans-serif,system-ui,sans-serif;}"
+      "description": "Subordinate audience context.",
+      "html": "<span class=\"ds-chip\"><svg width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" aria-hidden=\"true\"><rect x=\"5\" y=\"10\" width=\"14\" height=\"11\" rx=\"2\"/><path d=\"M8 10V7a4 4 0 0 1 8 0v3\"/></svg>Only you</span>",
+      "css": ".ds-chip{font-family:\"Inter Variable\",Inter,sans-serif;display:inline-flex;align-items:center;gap:6px;border-radius:4px;background:var(--soft, #efede9);padding:4px 8px;font-size:.6875rem;color:var(--ink-muted, #69636d);white-space:nowrap}"
     },
     {
-      "name": "Attention Document",
+      "name": "Artifact preview",
       "kind": "card",
-      "refersTo": "attention-document",
-      "description": "Home preview that opens the work needing attention.",
-      "html": "<button class=\"ds-document\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 13h8M8 17h6\"/></svg><h3>Community meeting brief</h3><p>Ready for your review</p><span>Review the work <svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M7 17 17 7M7 7h10v10\"/></svg></span></button>",
-      "css": ".ds-document{display:block;width:100%;text-align:left;min-height:190px;padding:23px 25px 18px;border:1px solid var(--line,#e1ddd7);border-radius:4px 13px 13px 13px;background:var(--panel,#fff);cursor:pointer;color:var(--ink,#242329);font-family:\"Inter Variable\",Inter,ui-sans-serif,system-ui,sans-serif;}.ds-document>svg{color:var(--green,#75529a);margin-bottom:15px;}.ds-document h3{font-size:1.125rem;font-weight:550;line-height:1.4;margin:0 0 8px;}.ds-document p{font-size:.8125rem;margin:0 0 10px;color:var(--ink-muted,#69636d);}.ds-document span{font-size:.8125rem;color:var(--green,#75529a);}.ds-document:hover{border-color:var(--green,#75529a);}.ds-document:focus-visible{outline:2px solid var(--green,#75529a);outline-offset:3px;}.ds-document:active{scale:.985;}"
+      "refersTo": "artifact-preview",
+      "description": "A working artifact with type, excerpt, audience and revision.",
+      "html": "<button class=\"ds-artifact\"><span>Working document ↗</span><strong>Community meeting brief</strong><p>Agree on the next community activity and the resources we can share.</p><small>Common room · Revision 1</small></button>",
+      "css": ".ds-artifact{font-family:\"Inter Variable\",Inter,sans-serif;display:flex;flex-direction:column;align-items:flex-start;min-height:190px;padding:20px;border:1px solid var(--line, #e1ddd7);border-radius:8px;background:var(--panel, #ffffff);color:var(--ink, #242329);text-align:left;overflow:hidden;transition:border-color .15s,background .15s;cursor:pointer}.ds-artifact>span{font-size:.6875rem;color:var(--ink-muted, #69636d);margin-bottom:16px}.ds-artifact>strong{font-size:1rem;font-weight:600;line-height:1.4}.ds-artifact>p{color:var(--ink-muted, #69636d);font-size:.8125rem;line-height:1.65;margin:10px 0 0}.ds-artifact>small{color:var(--ink-muted, #69636d);font-size:.6875rem;margin-top:auto;padding-top:18px}.ds-artifact:hover{border-color:var(--green, #8a5638)}.ds-artifact:focus-visible{outline:2px solid var(--green, #8a5638);outline-offset:3px;}@media(prefers-reduced-motion:reduce){.ds-artifact{transition-duration:.01ms}}"
     },
     {
-      "name": "Conversation Composer",
+      "name": "Conversation composer",
       "kind": "custom",
       "refersTo": "composer",
-      "description": "One compact writing field and send action.",
-      "html": "<form class=\"ds-composer\"><textarea aria-label=\"Message Aksara\" placeholder=\"Message Aksara\u2026\" rows=\"1\"></textarea><button aria-label=\"Send message\" type=\"submit\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M12 19V5m-7 7 7-7 7 7\"/></svg></button></form>",
-      "css": ".ds-composer{display:flex;align-items:center;gap:8px;min-height:48px;padding:6px 9px;border:1px solid var(--line,#e1ddd7);border-radius:11px;background:var(--panel,#fff);color:var(--ink,#242329);font-family:\"Inter Variable\",Inter,ui-sans-serif,system-ui,sans-serif;}.ds-composer textarea{flex:1;min-width:0;min-height:26px;resize:none;padding:4px 5px;border:0;background:transparent;color:var(--ink,#242329);font-size:.875rem;line-height:1.5;font-family:\"Inter Variable\",Inter,ui-sans-serif,system-ui,sans-serif;}.ds-composer textarea:focus-visible{outline:2px solid var(--green,#75529a);outline-offset:3px;}.ds-composer button{display:grid;place-items:center;width:34px;height:34px;border:0;border-radius:8px;background:var(--green,#75529a);color:var(--primary-foreground,#fff);cursor:pointer;}.ds-composer button:hover{filter:brightness(.97);}.ds-composer button:focus-visible{outline:2px solid var(--green,#75529a);outline-offset:3px;}.ds-composer button:active{scale:.985;}"
+      "description": "One bordered writing plane with the accent send action.",
+      "html": "<div class=\"ds-composer\"><textarea aria-label=\"Message Aksara\" placeholder=\"Message Aksara…\"></textarea><button aria-label=\"Send message\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" aria-hidden=\"true\"><path d=\"M12 19V5m-6 6 6-6 6 6\"/></svg></button></div>",
+      "css": ".ds-composer{display:flex;align-items:flex-end;gap:8px;border:1px solid var(--line, #e1ddd7);border-radius:9px;padding:9px;background:var(--panel, #ffffff)}.ds-composer textarea{font-family:\"Inter Variable\",Inter,sans-serif;flex:1;min-width:0;min-height:30px;max-height:160px;resize:none;border:0;background:transparent;padding:5px 4px;font-size:.875rem;line-height:1.5;color:var(--ink, #242329);outline:none;caret-color:var(--green, #8a5638)}.ds-composer textarea::placeholder{color:var(--ink-muted, #69636d);opacity:1}.ds-composer button{display:grid;place-items:center;width:34px;height:34px;border:0;border-radius:6px;background:var(--green, #8a5638);color:var(--primary-foreground, #ffffff);cursor:pointer}.ds-composer button:focus-visible{outline:2px solid var(--green, #8a5638);outline-offset:3px;}.ds-composer button:disabled{opacity:.48;cursor:default}@media(max-width:760px){.ds-composer textarea{font-size:1rem}.ds-composer button{width:38px;height:38px}}"
     }
   ],
   "narrative": {
-    "northStar": "The Working Reading Room",
-    "overview": "Aksara is a working reading room: warm paper, quiet ink, a clear conversation and a document that carries the emphasis. The retained open-triangle mark anchors a compact, labeled interface. The tone is concise and welcoming, with space given to reading and writing rather than atmospheric decoration.\n\nFlat planes and hairline boundaries organize the work. Light mode pairs warm paper with lilac; dark mode changes character to graphite and muted copper. Inter keeps navigation and controls clear, while Georgia gives document paragraphs an editorial reading texture.",
+    "northStar": "The Shared Workbench",
+    "overview": "Aksara is an industrial editorial workbench: warm neutral planes, exact alignment, readable semibold titles and restrained copper emphasis. The retained open-triangle mark and Inter interface give conversation, documents and tools one recognizable family. Density supports real work while leaving the active artifact room to read and edit.\n\nFlat surfaces and hairline boundaries provide structure. Light appearance uses warm paper and a deep copper accent; dark appearance uses graphite and muted copper. Twenty UI supplies shared control behavior; the workspace supplies its semantic colors and spatial grammar. Georgia remains a reading voice for rich-document paragraphs.",
     "keyCharacteristics": [
-      "Paper and ink planes with restrained tonal separation.",
-      "Compact Inter controls and Georgia document paragraphs.",
-      "A conversation and its document share one room.",
-      "Responsive writing space with explicit context and save state."
+      "Broad working planes with compact supporting context.",
+      "Inter interface, semibold titles and serif rich-document paragraphs.",
+      "Copper selection and actions on paper or graphite.",
+      "Quiet borders, modest corners and explicit audience and save state."
     ],
     "rules": [
       {
-        "name": "The Reading Accent Rule",
-        "body": "Use lilac on warm paper and copper on graphite for primary actions, selected navigation and interaction emphasis. The legacy CSS name \u201cgreen\u201d denotes this accent role, not a green hue.",
+        "name": "The Shared Accent Rule",
+        "body": "Use the active semantic accent for actions, focus, selection and working state. Honor saved palette choices; do not hardcode copper into a reusable control.",
         "section": "colors"
       },
       {
         "name": "The Two Voices Rule",
-        "body": "Keep interface text, document titles and headings in Inter. Use Georgia for document paragraphs; do not apply the serif indiscriminately to controls, lists or the whole editor.",
+        "body": "Keep interface text and document titles in Inter. Reserve Georgia for rich-document paragraph reading.",
         "section": "typography"
       },
       {
-        "name": "The Flat Room Rule",
-        "body": "Keep working planes flat at rest. Reserve soft shadows for temporary overlays and the phone launcher dock.",
+        "name": "The Flat Workbench Rule",
+        "body": "Keep working planes flat. Use shadows to distinguish temporary overlays from the workspace.",
         "section": "elevation"
       }
     ],
     "dos": [
-      "Do keep audience, save state and source context readable beside the actual work.",
-      "Do preserve a direct named conversation return when the adjacent thread is hidden.",
-      "Do use the implemented accent outline for keyboard focus and respect reduced motion.",
-      "Do give phone inputs a readable 1rem size and account for the bottom safe area."
+      "Do keep audience, revision, source context and save state readable beside the work.",
+      "Do use semantic colors across controls, editors and portaled menus.",
+      "Do preserve visible keyboard focus, reduced motion and mobile safe-area spacing.",
+      "Do use artifact previews for work and compact rows for settings, capabilities and activity."
     ],
     "donts": [
-      "Don't introduce atmospheric wallpaper or decorative blobs into the Reading Room.",
-      "Don't turn every work item into a floating dashboard card; use hairline-separated rows where the implementation does.",
-      "Don't substitute blue-slate dark surfaces for the graphite and copper palette.",
-      "Don't imply live collaboration, real contributors or real model activity through decorative presence or fabricated content."
+      "Don't reintroduce atmospheric wallpaper or decorative blobs into the workspace.",
+      "Don't turn every row into a floating card or spread settings across a wall of columns.",
+      "Don't substitute blue-slate surfaces for the graphite palette.",
+      "Don't imply live collaboration, real contributors or model activity through fabricated presence or content."
     ]
   }
 }

@@ -1,17 +1,9 @@
 import { PALETTES, type Palette } from "./appearance";
 import { useWorkspace } from "./state";
 import { SkyControls } from "./SkyControls";
+
 export function AppearanceControls() {
-  const {
-    palette,
-    setPalette,
-    atmosphere,
-    setAtmosphere,
-    reducedEffects,
-    setReducedEffects,
-    previewHour,
-    setPreviewHour,
-  } = useWorkspace();
+  const { palette, setPalette, previewHour, setPreviewHour } = useWorkspace();
   return (
     <div className="appearance-controls">
       <fieldset>
@@ -28,25 +20,6 @@ export function AppearanceControls() {
           ))}
         </div>
       </fieldset>
-      <label className="field-label">
-        Atmosphere
-        <select
-          aria-label="Atmosphere"
-          value={atmosphere}
-          onChange={(e) => setAtmosphere(e.target.value)}
-        >
-          <option value="time">Follow local time</option>
-          <option value="off">Plain background</option>
-        </select>
-      </label>
-      <label className="check-label">
-        <input
-          type="checkbox"
-          checked={reducedEffects}
-          onChange={(e) => setReducedEffects(e.target.checked)}
-        />
-        Reduce glass & shader effects
-      </label>
       <SkyControls />
       <details>
         <summary>Simulate time of day</summary>

@@ -336,6 +336,7 @@ async fn api(
         let count=|key:&str,default:usize|query.get(key).map(|v|v.parse::<usize>().map_err(|_|Error::Invalid("invalid page size".into()))).unwrap_or(Ok(default));
         match (method.as_str(),operation.as_str()) {
             ("GET","library")=>Ok(json!(k.library_items(&ctx)?)),
+            ("GET","home-overview")=>k.home_overview(&ctx),
             ("GET","workspace-entries")=>Ok(json!(k.workspace_entries(&ctx)?)),
             ("POST","workspace-snapshot")=>Ok(json!(k.snapshot_workspace(&ctx,field(&input,"id")?,input["revision"].as_i64().ok_or_else(||Error::Invalid("missing revision".into()))?)?)),
             ("GET","workspace-entry")=>Ok(json!(k.workspace_entry(&ctx,get("id")?)?)),

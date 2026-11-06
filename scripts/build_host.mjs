@@ -190,6 +190,7 @@ await writeFile(
   path.join(output, "third_party/npm/inventory.json"),
   JSON.stringify(inventory, null, 2) + "\n",
 );
+await cp("packages/memory/vendor", path.join(output, "third_party/longmemory"), {recursive:true,filter:source=>!source.endsWith(".mjs")});
 async function sizes(folder) {
   let files = 0,
     bytes = 0;

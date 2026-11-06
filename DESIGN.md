@@ -1,250 +1,277 @@
 ---
-name: "Aksara Reading Room"
-description: "Warm paper and ink planes for conversation, writing and shared work."
+name: Aksara Workbench
+description: An industrial editorial workspace for conversation and shared artifacts.
 colors:
-  lilac: "#75529a"
-  lilac-soft: "#ede5f5"
-  lilac-user: "#f0e9f5"
-  copper: "#d9a47e"
-  copper-soft: "#3b2e26"
-  copper-user: "#382c24"
-  paper: "#faf8f5"
-  white-panel: "#ffffff"
-  paper-soft: "#efede9"
-  paper-ink: "#242329"
-  paper-muted: "#69636d"
-  paper-line: "#e1ddd7"
-  graphite: "#191a1b"
-  graphite-panel: "#222425"
-  graphite-soft: "#2b2d2f"
-  graphite-ink: "#ece8e1"
-  graphite-muted: "#b1aca7"
-  graphite-line: "#3d3e40"
-  copper-on-primary: "#241a12"
-  needs-light: "#98603e"
-  done-light: "#497259"
-  problem-light: "#a34040"
-  needs-dark: "#e9b694"
-  done-dark: "#a3c7ac"
-  problem-dark: "#f0aaaa"
+  clay: '#8a5638'
+  clay-soft: '#f0e4d9'
+  clay-user: '#f4e9df'
+  lilac: '#75529a'
+  lilac-soft: '#ede5f5'
+  lilac-user: '#f0e9f5'
+  copper: '#d9a47e'
+  copper-soft: '#3b2e26'
+  copper-user: '#382c24'
+  paper: '#faf8f5'
+  white-panel: '#ffffff'
+  paper-soft: '#efede9'
+  paper-ink: '#242329'
+  paper-muted: '#69636d'
+  paper-line: '#e1ddd7'
+  graphite: '#191a1b'
+  graphite-panel: '#222425'
+  graphite-soft: '#2b2d2f'
+  graphite-ink: '#ece8e1'
+  graphite-muted: '#b1aca7'
+  graphite-line: '#3d3e40'
+  copper-on-primary: '#241a12'
+  needs-light: '#98603e'
+  done-light: '#497259'
+  problem-light: '#a34040'
+  needs-dark: '#e9b694'
+  done-dark: '#a3c7ac'
+  problem-dark: '#f0aaaa'
 typography:
   display:
-    fontFamily: "\"Inter Variable\", Inter, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "2.625rem"
-    fontWeight: 550
-    lineHeight: 1.12
-    letterSpacing: "-0.045em"
-  document-title:
-    fontFamily: "\"Inter Variable\", Inter, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "2rem"
+    fontFamily: '"Inter Variable", Inter, sans-serif'
+    fontSize: 2.25rem
     fontWeight: 650
-    lineHeight: 1.2
-    letterSpacing: "-0.035em"
-  heading:
-    fontFamily: "\"Inter Variable\", Inter, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "1.375rem"
-    lineHeight: 1.35
-    letterSpacing: "-0.025em"
+    lineHeight: 1.15
+    letterSpacing: -0.035em
+  headline:
+    fontFamily: '"Inter Variable", Inter, sans-serif'
+    fontSize: 1.875rem
+    fontWeight: 650
+    lineHeight: 1.18
+    letterSpacing: -0.035em
+  document-title:
+    fontFamily: '"Inter Variable", Inter, sans-serif'
+    fontSize: 1.875rem
+    fontWeight: 650
+    lineHeight: 1.25
+    letterSpacing: -0.035em
+  title:
+    fontFamily: '"Inter Variable", Inter, sans-serif'
+    fontSize: 1rem
+    fontWeight: 600
+    lineHeight: 1.4
+    letterSpacing: -0.015em
   body:
-    fontFamily: "\"Inter Variable\", Inter, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "0.875rem"
+    fontFamily: '"Inter Variable", Inter, sans-serif'
+    fontSize: 0.875rem
+    fontWeight: 400
+    lineHeight: 1.55
+  conversation:
+    fontFamily: '"Inter Variable", Inter, sans-serif'
+    fontSize: 0.875rem
     fontWeight: 400
     lineHeight: 1.6
-  conversation:
-    fontFamily: "\"Inter Variable\", Inter, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "0.875rem"
-    fontWeight: 400
-    lineHeight: 1.65
-    letterSpacing: "0"
   document-body:
-    fontFamily: "Georgia, \"Times New Roman\", serif"
-    fontSize: "1.0625rem"
+    fontFamily: Georgia, "Times New Roman", serif
+    fontSize: 1.0625rem
     lineHeight: 1.75
   control:
-    fontFamily: "\"Inter Variable\", Inter, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "0.8125rem"
+    fontFamily: '"Inter Variable", Inter, sans-serif'
+    fontSize: 0.8125rem
     fontWeight: 550
   metadata:
-    fontFamily: "\"Inter Variable\", Inter, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "0.6875rem"
+    fontFamily: '"Inter Variable", Inter, sans-serif'
+    fontSize: 0.6875rem
 rounded:
-  channel: "6px"
-  control: "8px"
-  input: "10px"
-  composer: "11px"
-  panel: "12px"
-  dialog: "16px"
+  chip: 4px
+  tab: 5px
+  control: 6px
+  switch: 7px
+  panel: 8px
+  composer: 9px
+  menu: 10px
+  dialog: 12px
 spacing:
-  tight: "8px"
-  control: "12px"
-  section: "24px"
-  reading: "36px"
-  home-gutter: "52px"
+  tight: 8px
+  control: 12px
+  item: 16px
+  panel: 20px
+  section: 24px
+  wide: 28px
+  page: 32px
+  workbench: 36px
 components:
   button-primary:
-    backgroundColor: "{colors.lilac}"
-    textColor: "{colors.white-panel}"
-    typography: "{typography.control}"
-    rounded: "{rounded.control}"
-    padding: "0 16px"
-    height: "38px"
+    backgroundColor: '{colors.clay}'
+    textColor: '{colors.white-panel}'
+    typography: '{typography.control}'
+    rounded: '{rounded.control}'
+    padding: 8px 14px
+    height: 38px
   button-secondary:
-    backgroundColor: "{colors.white-panel}"
-    textColor: "{colors.paper-ink}"
-    typography: "{typography.control}"
-    rounded: "{rounded.control}"
-    padding: "0 16px"
-    height: "38px"
+    backgroundColor: '{colors.white-panel}'
+    textColor: '{colors.paper-ink}'
+    typography: '{typography.control}'
+    rounded: '{rounded.control}'
+    padding: 8px 14px
+    height: 38px
   button-text:
-    textColor: "{colors.lilac}"
-    typography: "{typography.control}"
-    padding: "9px 0"
+    textColor: '{colors.clay}'
+    typography: '{typography.control}'
+    padding: 4px 0
+    height: 34px
   input:
-    backgroundColor: "{colors.white-panel}"
-    textColor: "{colors.paper-ink}"
-    rounded: "{rounded.input}"
-    padding: "11px 12px"
-    height: "44px"
+    backgroundColor: '{colors.white-panel}'
+    textColor: '{colors.paper-ink}'
+    rounded: '{rounded.control}'
+    padding: 9px 12px
+    height: 38px
   nav-active:
-    backgroundColor: "{colors.lilac-soft}"
-    textColor: "{colors.lilac}"
-    rounded: "{rounded.control}"
-    padding: "9px 12px"
-    height: "42px"
+    backgroundColor: '{colors.clay-soft}'
+    textColor: '{colors.clay}'
+    rounded: '{rounded.control}'
+    padding: 8px 12px
+    height: 38px
   privacy-chip:
-    textColor: "{colors.paper-muted}"
-    size: "0.75rem"
-  attention-document:
-    backgroundColor: "{colors.white-panel}"
-    textColor: "{colors.paper-ink}"
-    padding: "23px 25px 18px"
-    rounded: "4px 13px 13px 13px"
+    backgroundColor: '{colors.paper-soft}'
+    textColor: '{colors.paper-muted}'
+    typography: '{typography.metadata}'
+    rounded: '{rounded.chip}'
+    padding: 4px 8px
+  artifact-preview:
+    backgroundColor: '{colors.white-panel}'
+    textColor: '{colors.paper-ink}'
+    rounded: '{rounded.panel}'
+    padding: 20px
   composer:
-    backgroundColor: "{colors.white-panel}"
-    textColor: "{colors.paper-ink}"
-    rounded: "{rounded.composer}"
-    padding: "6px 9px"
-    height: "48px"
+    backgroundColor: '{colors.white-panel}'
+    textColor: '{colors.paper-ink}'
+    rounded: '{rounded.composer}'
+    padding: 9px
+  private-pane:
+    backgroundColor: '{colors.paper}'
+    textColor: '{colors.paper-ink}'
+    width: 390px
+    height: 100dvh
 ---
 
-# Design System: Aksara Reading Room
+# Design System: Aksara Workbench
 
 ## Overview
 
-**Creative North Star: "The Working Reading Room"**
+**Creative North Star: "The Shared Workbench"**
 
-Aksara is a working reading room: warm paper, quiet ink, a clear conversation and a document that carries the emphasis. The retained open-triangle mark anchors a compact, labeled interface. The tone is concise and welcoming, with space given to reading and writing rather than atmospheric decoration.
+Aksara is an industrial editorial workbench: warm neutral planes, exact alignment, readable semibold titles and restrained copper emphasis. The retained open-triangle mark and Inter interface give conversation, documents and tools one recognizable family. Density supports real work while leaving the active artifact room to read and edit.
 
-Flat planes and hairline boundaries organize the work. Light mode pairs warm paper with lilac; dark mode changes character to graphite and muted copper. Inter keeps navigation and controls clear, while Georgia gives document paragraphs an editorial reading texture.
+Flat surfaces and hairline boundaries provide structure. Light appearance uses warm paper and a deep copper accent; dark appearance uses graphite and muted copper. Twenty UI supplies shared control behavior; the workspace supplies its semantic colors and spatial grammar. Georgia remains a reading voice for rich-document paragraphs.
 
 **Key Characteristics:**
-- Paper and ink planes with restrained tonal separation.
-- Compact Inter controls and Georgia document paragraphs.
-- A conversation and its document share one room.
-- Responsive writing space with explicit context and save state.
+- Broad working planes with compact supporting context.
+- Inter interface, semibold titles and serif rich-document paragraphs.
+- Copper selection and actions on paper or graphite.
+- Quiet borders, modest corners and explicit audience and save state.
 
-This system records the implemented Reading Room in `apps/platform/src/reading-room.css`, the resolved default palette in `workspace/appearance.ts`, and its React surfaces. Alternate palette preferences exist; the normative visual family here is the default lilac/light and copper/dark pairing. The direction-seed provenance gap is recorded in `.impeccable/surfaces/reading-room.md`; this document does not establish a strict workflow or reproduction qualification.
+This documents the implemented system in `apps/platform/src/industrial.css`, `workspace/appearance.ts` and the workspace components. Frontmatter describes the default light appearance; dark tokens and semantic CSS roles define its paired appearance. Surface composition decisions live in `.impeccable/surfaces/industrial-redesign.md`.
 
 ## Colors
 
-The palette is warm and quiet, with a single primary accent that changes between light and dark appearance. Frontmatter values are normative; semantic CSS variables resolve the active appearance.
+Copper is the default accent family in both appearances. Frontmatter values are normative; semantic roles resolve the chosen theme and saved palette.
 
 ### Primary
 
-- **Reading Lilac** (`lilac`): light-mode primary actions, selected navigation, links and working-state emphasis. **Lilac Wash** (`lilac-soft`) separates selected items and tints the document's conversation plane. **Lilac Reply** (`lilac-user`) identifies a person's message.
-- **Muted Copper** (`copper`): dark-mode counterpart to Reading Lilac. **Copper Wash** (`copper-soft`) and **Copper Reply** (`copper-user`) carry the corresponding tinted areas. Primary text changes from white to `copper-on-primary` in dark mode.
+- **Deep Copper** (`clay`) is the default light action and selection color. **Copper Wash** (`clay-soft`) and **Copper Reply** (`clay-user`) support selected controls and personal messages. The persisted palette key remains `clay`.
+- **Muted Copper** (`copper`) is the default dark accent, with `copper-soft` and `copper-user` tints and `copper-on-primary` action text.
+- **Lilac** and its soft/reply partners remain an explicit light palette override. Sage and neutral overrides are generated from their existing appearance seeds; keep their dynamic role mapping rather than treating them as new defaults.
 
 ### Neutral
 
-- **Warm Paper** (`paper`), **White Panel** (`white-panel`) and **Paper Soft** (`paper-soft`) define canvas, contained fields and subtle tonal areas. **Paper Ink**, **Paper Muted** and **Paper Line** carry text, metadata and hairlines.
-- **Graphite** (`graphite`), **Graphite Panel** and **Graphite Soft** resolve the same roles in dark mode. **Graphite Ink**, **Graphite Muted** and **Graphite Line** keep their warm character.
-- **Needs**, **Done** and **Problem** tokens carry task state in both appearances. Pair status color with readable text or an icon; working state reuses the primary accent.
+- **Warm Paper**, **White Panel**, **Paper Soft**, **Paper Ink**, **Paper Muted** and **Paper Line** supply light canvas, fields, tonal areas, text and boundaries.
+- **Graphite**, **Graphite Panel**, **Graphite Soft**, **Graphite Ink**, **Graphite Muted** and **Graphite Line** supply the paired dark roles.
+- **Needs**, **Done** and **Problem** colors express task status in each appearance. Pair them with readable state text; working state shares the accent.
 
-**The Reading Accent Rule.** Use lilac on warm paper and copper on graphite for primary actions, selected navigation and interaction emphasis. The legacy CSS name “green” denotes this accent role, not a green hue.
+**The Shared Accent Rule.** Use the active semantic accent for actions, focus, selection and working state. Honor saved palette choices; do not hardcode copper into a reusable control.
+
+The legacy CSS role `--green` now means the active accent. Twenty accent and border roles map to the workspace roles; their historical blue names do not prescribe a blue hue.
 
 ## Typography
 
 **Interface Font:** Inter Variable, with Inter and sans-serif fallbacks.
-**Document Paragraph Font:** Georgia, with Times New Roman and serif fallbacks.
-
-The interface is compact and conversational. The serif is reserved for paragraph reading inside the working document; editable titles, document headings and list content retain the interface voice.
+**Rich-document Paragraph Font:** Georgia, with Times New Roman and serif fallbacks.
 
 ### Hierarchy
 
-- **Display:** the Home living-brief heading uses `display`; it becomes (2rem) on phones. This is a surface-specific greeting, not a requirement for every screen.
-- **Document title:** `document-title`; it becomes (1.625rem) on phones. The editable field remains visibly part of the document.
-- **Headings:** editor headings use Inter with tight tracking. The implemented h1/h2/h3 sizes are (1.75rem), (1.375rem) and (1.125rem), with line heights (1.3), (1.35) and (1.4).
-- **Body / conversation:** `body` governs the interface; `conversation` uses a little more leading for message reading. The narrow adjacent thread uses (0.8125rem) paragraphs.
-- **Document paragraphs:** `document-body`; other editor content starts at (1rem). Do not infer a global character-width limit: the implemented document fills its available plane.
-- **Controls / metadata:** `control` and `metadata`; context labels can reach (0.75rem), while phone save and byline metadata use (0.625rem). Use small type only for secondary context.
+- **Display:** Home's living-brief heading uses `display`; phone size is (1.875rem).
+- **Headline:** page headings use `headline`; phones reduce to (1.625rem). Room titles use (1.5rem), then (1.375rem) on phones.
+- **Document title:** `document-title`, reduced to (1.625rem) on phones; preserve its unboxed editable treatment.
+- **Title:** section headings and artifact preview titles use the compact `title` scale.
+- **Body / conversation:** use `body` and `conversation`. Compact private-thread paragraphs use (0.8125rem); phone conversations use (0.9375rem).
+- **Document paragraphs:** rich-editor paragraphs use `document-body`; source-document content uses interface type at (1rem) with a (72ch) maximum reading width.
+- **Controls / metadata:** use `control` and `metadata`. Small timestamps and mode labels can use (0.625rem); reserve that size for secondary context.
 
-**The Two Voices Rule.** Keep interface text, document titles and headings in Inter. Use Georgia for document paragraphs; do not apply the serif indiscriminately to controls, lists or the whole editor.
+**The Two Voices Rule.** Keep interface text and document titles in Inter. Reserve Georgia for rich-document paragraph reading.
 
 ## Layout
 
-The shell fills the dynamic viewport (100dvh). Its outer frame stays fixed while document, thread and content regions scroll independently. The desktop navigation is a left rail (76px collapsed; 232px expanded). The document view gives its adjacent conversation (310px) and the rest of the width to the document, separated by a hairline. Document padding is (36px 36px 65px); the top and bottom action bars remain outside its scrolling article.
+The shell fills (100dvh). Navigation, content and optional private context occupy bounded planes; the document, discussion and supporting regions scroll independently. Desktop navigation is (232px), collapsing to (72px). Standard page padding is (32px 38px 40px).
 
-At widths up to (1100px), the adjacent document thread is hidden and a named conversation return appears in the document top bar. At widths up to (767px), the rail is hidden, the document takes the full screen, and navigation uses the compact bottom launcher. Phone document padding is (26px 21px 44px). Bottom controls account for `env(safe-area-inset-bottom)`; phone composer text is (1rem).
+Home uses a centered (1480px) maximum canvas. Its broad workbench sits beside a (300px) activity column with a (36px) gap. Artifact previews use two columns, expanding to three at (1700px). At (1200px), page padding becomes (28px) and the activity column becomes (260px); at (1000px), it moves below the workbench. These are Home patterns, not universal page templates.
 
-Home has a centered container with a maximum width of (1040px), desktop side padding (52px), and a living brief above a two-column desk. That desk uses (1.1fr / 1fr) and a (48px) gap, then stacks on phones. Home remains a dedicated view rather than a permanent third column. These are implemented surface patterns, not a template imposed on all future screens.
+A channel offers Room and Workbench views. Workbench pairs a (340px) discussion with the selected artifact and its tabs. That discussion narrows to (300px) at (1200px), then (270px) at (1000px). The compact private thread is a separate (390px) pane; at (1200px) it overlays the right edge. Its expanded state fills the workspace beside navigation.
 
-Use the observed spacing steps for control gaps and section rhythm. Keep primary work broad and secondary context compact. Phone controls and long titles must fit without creating horizontal overflow.
+At (760px) and below, navigation gives way to the bottom launcher. Pages use (24px 18px 110px) padding; artifact previews stack. Workbench shows the artifact, with Room available through the view switch. The private pane fills the viewport and exposes a close control. Keep composer's phone text at (1rem), respect the bottom safe area, and allow long tab rows to scroll without widening the page.
 
 ## Elevation & Depth
 
-Working planes have no shadows. Canvas, soft tints, panel fills and single-pixel boundaries provide structure. Popovers, dialogs, transient errors and the phone launcher dock use soft ambient shadows to show that they sit above the workspace.
+Canvas, panel fill and hairline borders define the working hierarchy without shadows. Menus, the phone dock and temporary side overlays use restrained shadows. Review is a right-side sheet; setup remains a centered dialog.
 
-### Shadow Vocabulary
+- **Menu / phone dock:** `0 6px 24px #0002`.
+- **Composer options:** `0 8px 28px #0002`.
+- **Review sheet:** `-8px 0 36px #0001`.
+- **Compact private overlay:** `-8px 0 40px #0002`.
+- **Setup dialog:** `0 20px 80px #0002`.
 
-- **Menu:** `0 10px 35px #0002` for composer options and context menus.
-- **Dialog:** `0 20px 65px #0003` for centered review and setup dialogs.
-- **Toast:** `0 8px 35px #0002` for transient feedback.
-- **Phone dock:** `0 5px 22px #0002` for the compact launcher.
+**The Flat Workbench Rule.** Keep working planes flat. Use shadows to distinguish temporary overlays from the workspace.
 
-**The Flat Room Rule.** Keep working planes flat at rest. Reserve soft shadows for temporary overlays and the phone launcher dock.
-
-Page changes use a short (200ms) opacity and (5px) vertical settling motion; navigation expansion takes (240ms). Buttons transition background and color over (150ms) and compress slightly on press (0.985 scale). Reduced-motion preferences remove transitions and animation. Do not add mandatory shaders to the reading workspace.
+Navigation reflows over (240ms) with an easing curve of `cubic-bezier(0.16, 1, 0.3, 1)`. Artifact preview borders and backgrounds transition over (150ms); Twenty buttons transition backgrounds over (100ms). Reduced-motion preferences collapse transition and animation durations. Do not introduce compulsory atmospheric effects.
 
 ## Shapes
 
-Controls have gently rounded corners, chiefly (8px). General fields use (10px), the compact composer (11px), contained panels (12px), and dialogs (16px). Hairline borders are the normal boundary. The Home attention document has a slightly square leading corner (4px 13px 13px 13px); user messages use (0 10px 10px 10px). Keep these asymmetric shapes for their existing document and message roles. Identity initials and status dots are circular. The open-triangle mark is a simple vector outline, without a decorative badge or invented glyph.
+The system uses modest corners and exact alignment. Standard fields and custom buttons use control corners (6px); tabs use (5px), segmented switch containers (7px), artifact previews and message fills (8px), composers (9px), menus (10px), and setup dialogs (12px). Chips use compact (4px) corners. Full working planes and review sheets remain square. Use single-pixel borders for containment; retain the minimal open-triangle mark without an ornamental badge.
 
 ## Components
 
 ### Buttons
 
-Quiet, compact controls make the next action clear. Primary buttons use the active accent and contrasting primary foreground; secondary buttons use panel fill, ink and a hairline border. Both have (38px) minimum height, control corners and (0 16px) padding. Text buttons carry the accent without a filled container. Icon buttons provide a minimum (36px) square area. Hover changes are restrained; focus uses a visible (2px) accent outline with offset, and disabled controls reduce opacity to (0.45). Avoid adding raised hover movement.
+Twenty's solid, outline, soft and ghost variants supply the common control family through the workspace adapter. Semantic accent roles govern filled accent actions; neutral variants carry supporting actions. Existing custom filled and secondary actions use control corners, a (38px) minimum height and (8px 14px) padding. Text actions use accent text and underline on hover; custom icon buttons are (34px) square, growing to (38px) on phones. Preserve the donor variants rather than restyling every button identically.
+
+Custom secondary hover uses the soft neutral plane; filled hover slightly lowers brightness. Keyboard focus uses a visible (2px) accent outline with (3px) offset. Custom disabled controls use (0.48) opacity. The unboxed composer textarea suppresses its default outline; preserve clear focus on its available actions.
 
 ### Chips
 
-Audience and privacy indicators combine a small outline icon with muted, sentence-case context. Their purpose is understandable scope. They do not compete with the working title or become a colored taxonomy.
+Privacy and status chips combine concise context with a small icon, soft neutral fill and muted metadata. Keep the indicator subordinate to the title. Task dots are (6px) circles with a textual state nearby.
 
 ### Cards / Containers
 
-Most content is a flat plane or a hairline-separated row. The Home attention document is a panel-backed, bordered interactive document preview with an accent icon and restrained asymmetric corners; its border changes to the accent on hover. Settings containers use a simple rounded panel with (24px) padding. Keep overlay shadows confined to the vocabulary above.
+Artifact previews are bordered panels with panel corners, (20px) padding and a (190px) minimum height. A small type/scope row, semibold title, short excerpt and revision establish their reading order. Hover changes the border to the accent. Settings, capabilities, library and activity favor categorized, hairline-separated rows. They remain flat at rest.
 
 ### Inputs / Fields
 
-Standard fields use panel fill, ink text, a hairline border, input corners and (11px 12px) padding with a (44px) minimum height. The working title is an unboxed, full-width Inter title field. Give it visible accent focus. The compact conversation composer has one bordered container around an unboxed textarea and a square accent send action. Home uses the same composer in a bottom-rule presentation so the invitation reads as part of the brief. On phones, composer text increases to (1rem) for comfortable writing.
+Twenty input and select primitives supply behavior; selectors render in themed portals. Standard fields use panel fill, ink, a hairline border, control corners, (9px 12px) padding and a (38px) minimum height. The document title is full-width and unboxed. The composer groups an unboxed textarea and square accent send action inside one bordered plane. Home uses its bottom-rule presentation. Setup choices use whole labeled rows with a radio indicator and accent selected fill/border.
 
 ### Navigation
 
-The retained triangle and labeled Inter destinations occupy the left edge. Current destinations and channels use the soft accent fill and accent text; hover uses the soft neutral fill. Expanded shared channels are indented behind a vertical hairline, with ellipsis for long names. The collapsed rail retains icons and accessible labels. On phones, a small launcher opens the available spaces; preserve direct access to the originating named conversation when the document thread is hidden.
+Labeled destinations use compact Inter and a soft accent active state. Channels nest behind a vertical hairline; the current channel uses soft neutral fill and ink. The collapsed rail retains icons and accessible names. Phone navigation uses the compact launcher and a spaces menu. Selected settings categories use the accent tint; avoid relying on color alone to communicate selection.
 
-### Conversation and Working Document
+### Room and Private Thread
 
-Assistant replies sit directly on the conversation plane; a person's message receives a soft tinted container. Each message has an explicit author label. The document uses a clear Inter title, scope/byline, serif paragraphs and understated save state. Its anchored bottom action bar keeps contextual help and preparing for review close to the content. Responsive reflow prioritizes the artifact's writing space while preserving context through the return control. A review annotation or live work progression is not a documented visual primitive until its rendered state is verified.
+Room/Workbench is a visible two-action switch with pressed state. The selected artifact has a horizontal tab row; save and review actions stay outside the scrolling document. Assistant messages sit on the conversation plane; personal messages receive a soft tinted fill, with explicit author labels.
+
+The private thread keeps its **Only you** context beside its title and provides expand/compact and close actions. Full and phone states act as modal context with managed focus. Loading and access failures use explicit text and a retry action. These patterns document current interface behavior; they do not establish live collaboration or external messaging support.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** keep audience, save state and source context readable beside the actual work.
-- **Do** preserve a direct named conversation return when the adjacent thread is hidden.
-- **Do** use the implemented accent outline for keyboard focus and respect reduced motion.
-- **Do** give phone inputs a readable 1rem size and account for the bottom safe area.
+- **Do** keep audience, revision, source context and save state readable beside the work.
+- **Do** use semantic colors across controls, editors and portaled menus.
+- **Do** preserve visible keyboard focus, reduced motion and mobile safe-area spacing.
+- **Do** use artifact previews for work and compact rows for settings, capabilities and activity.
 
 ### Don't:
-- **Don't** introduce atmospheric wallpaper or decorative blobs into the Reading Room.
-- **Don't** turn every work item into a floating dashboard card; use hairline-separated rows where the implementation does.
-- **Don't** substitute blue-slate dark surfaces for the graphite and copper palette.
-- **Don't** imply live collaboration, real contributors or real model activity through decorative presence or fabricated content.
+- **Don't** reintroduce atmospheric wallpaper or decorative blobs into the workspace.
+- **Don't** turn every row into a floating card or spread settings across a wall of columns.
+- **Don't** substitute blue-slate surfaces for the graphite palette.
+- **Don't** imply live collaboration, real contributors or model activity through fabricated presence or content.

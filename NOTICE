@@ -77,3 +77,12 @@ credential import, credential pool, session database or Composio service is bund
 SunCalc 2.1.1, BSD-2-Clause, Copyright (c) 2026 Volodymyr Agafonkin.
 Used for local solar calculations. Its original license is distributed in
 apps/platform/public/licenses/suncalc-BSD-2-Clause.txt and release inventories.
+
+Embedded LongMemory core is Apache-2.0, pinned at
+8badf44d48d0d72a07e1ea3daf1ecbd76ae1a357 from CaviraOSS/LongMemory.
+The bundled stemmer is MIT. Original licenses and reproducible source provenance
+are retained in packages/memory/vendor and compact-host third_party/longmemory.
+The adapter uses the in-memory profile; canonical memory remains in Rust SQLite.
+
+Twenty UI 2.56.0 and Excalidraw 0.18.1 are MIT npm dependencies. Their licenses
+and applicable asset/font notices are included in generated frontend notices.

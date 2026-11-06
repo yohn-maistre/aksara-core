@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AppSelect, ActionButton } from "./controls";
 import { Popover } from "@base-ui/react/popover";
 import { useSidebar } from "../components/ui/sidebar";
 import { ArrowUp, Plus } from "lucide-react";
@@ -6,6 +7,7 @@ import { PREVIEW } from "../transport";
 
 import { type Data } from "./shared";
 import { MobileSpaces } from "./NavigationDock";
+import { AksaraLauncher } from "./AksaraLauncher";
 import { useWorkspace } from "./state";
 import { KEY_PROVIDERS, modelsFor, providerName } from "./provider-options";
 
@@ -41,8 +43,28 @@ export function Composer({
     send,
     foregroundWorking,
     navigate,
+    embedded,
+    api,
   } = useWorkspace();
   const [optionsOpen, setOptionsOpen] = useState(false);
+  const [recalled, setRecalled] = useState<Data[]>([]),
+    [recalling, setRecalling] = useState(false),
+    [memoryProblem, setMemoryProblem] = useState("");
+  const findMemory = async () => {
+    setRecalling(true);
+    setMemoryProblem("");
+    try {
+      const view = await api("memory/recall", {
+        query: draft.slice(0, 1000),
+        limit: 8,
+      });
+      setRecalled(view.results);
+    } catch {
+      setMemoryProblem("Memory could not load in this context.");
+    } finally {
+      setRecalling(false);
+    }
+  };
   const { isMobile } = useSidebar();
   if (!session) return null;
   return (
@@ -101,7 +123,12 @@ export function Composer({
           void send(e);
         }}
       >
-        {["Ask", "Conversation"].includes(page) && <MobileSpaces />}
+        {!embedded && ["Ask", "Conversation"].includes(page) && (
+          <MobileSpaces />
+        )}
+        {!embedded && isMobile && ["Ask", "Conversation"].includes(page) && (
+          <AksaraLauncher />
+        )}
         <Popover.Root
           open={optionsOpen}
           onOpenChange={setOptionsOpen}
@@ -165,61 +192,99 @@ export function Composer({
                       ))}
                   </details>
                 )}
+                <details className="composer-memory">
+                  <summary>Remembered context</summary>
+                  <p className="composer-note">
+                    Choose an original source to attach for this turn. Hosted
+                    models receive it only with the send consent below.
+                  </p>
+                  <ActionButton
+                    variant="outline"
+                    disabled={recalling}
+                    onClick={() => void findMemory()}
+                  >
+                    {recalling ? "Finding sources…" : "Find relevant memory"}
+                  </ActionButton>
+                  {memoryProblem && <p role="alert">{memoryProblem}</p>}
+                  {recalled.map((r) => (
+                    <label key={r.id} className="memory-attachment">
+                      <input
+                        type="checkbox"
+                        checked={attached.includes(r.source_id)}
+                        disabled={
+                          !attached.includes(r.source_id) &&
+                          attached.length >= 8
+                        }
+                        onChange={(e) => {
+                          setConsent(false);
+                          setAttached((ids) =>
+                            e.target.checked
+                              ? [...new Set([...ids, r.source_id])]
+                              : ids.filter((id) => id !== r.source_id),
+                          );
+                        }}
+                      />
+                      <span>
+                        {r.title}
+                        <small>{r.review} · Attach original source</small>
+                      </span>
+                    </label>
+                  ))}
+                </details>
                 <div className="model-picker">
-                  <select
-                    aria-label="Model provider"
+                  <AppSelect
+                    label="Model provider"
                     value={provider}
-                    onChange={(e) => {
-                      setProvider(e.target.value);
+                    onChange={(value) => {
+                      setProvider(value);
                       setConsent(false);
                       setAttached([]);
-                      setModel(
-                        modelsFor(providers, e.target.value)[0]?.id || "",
-                      );
+                      setModel(modelsFor(providers, value)[0]?.id || "");
                     }}
-                  >
-                    {PREVIEW && (
-                      <option value="preview">
-                        Guided UI demo · no model calls
-                      </option>
-                    )}
-                    {!PREVIEW && (
-                      <option value="local">Local · stays on this host</option>
-                    )}
-                    {!PREVIEW && (
-                      <option value="opencode-free">
-                        OpenCode · runtime needed
-                      </option>
-                    )}
-                    {!PREVIEW && (
-                      <option value="codex-chatgpt">
-                        Codex · ChatGPT subscription
-                      </option>
-                    )}
-                    {!PREVIEW &&
-                      KEY_PROVIDERS.map((id) => (
-                        <option value={id} key={id}>
-                          {providerName(id)}
-                          {providers.hosted?.[id]?.connected
-                            ? ""
-                            : " · connect in setup"}
-                        </option>
-                      ))}
-                  </select>
-                  <select
-                    aria-label="Model"
+                    options={
+                      PREVIEW
+                        ? [
+                            {
+                              value: "preview",
+                              label: "Guided UI demo · no model calls",
+                            },
+                          ]
+                        : [
+                            {
+                              value: "local",
+                              label: "Local · stays on this host",
+                            },
+                            {
+                              value: "opencode-free",
+                              label: "OpenCode · runtime needed",
+                            },
+                            {
+                              value: "codex-chatgpt",
+                              label: "Codex · ChatGPT subscription",
+                            },
+                            ...KEY_PROVIDERS.map((id) => ({
+                              value: id,
+                              label:
+                                providerName(id) +
+                                (providers.hosted?.[id]?.connected
+                                  ? ""
+                                  : " · connect in setup"),
+                            })),
+                          ]
+                    }
+                  />
+                  <AppSelect
+                    label="Model"
                     value={model}
-                    onChange={(e) => setModel(e.target.value)}
-                  >
-                    <option value="">Choose a model</option>
-                    {modelsFor(providers, PREVIEW ? "preview" : provider)
-                      .map((m: Data) => m.id)
-                      .map((id: string) => (
-                        <option value={id} key={id}>
-                          {id}
-                        </option>
-                      ))}
-                  </select>
+                    onChange={setModel}
+                    options={[
+                      { value: "", label: "Choose a model" },
+                      ...modelsFor(
+                        providers,
+                        PREVIEW ? "preview" : provider,
+                      ).map((m: Data) => ({ value: m.id, label: m.id })),
+                    ]}
+                  />
                 </div>
                 {!PREVIEW &&
                   provider === "codex-chatgpt" &&

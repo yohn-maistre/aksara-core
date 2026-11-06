@@ -129,3 +129,45 @@ fn private_sources_cannot_be_inserted_in_a_shared_working_document() {
     input.source_ids.push(source.id);
     assert!(f.k.save_workspace(&shared, &input).is_err());
 }
+
+#[test]
+fn home_overview_uses_each_current_lane_and_excludes_other_private_drafts() {
+    let mut f = Fixture::new();
+    let shared = f.ctx(0, 0);
+    let personal = f.ctx(0, 1);
+    let mut input = f.input();
+    input.id = "shared_home_page".into();
+    f.k.save_workspace(&shared, &input).unwrap();
+    input.id = "personal_home_page".into();
+    input.title = "PRIVATE_HOME_SENTINEL".into();
+    f.k.save_workspace(&personal, &input).unwrap();
+    let owner = f.k.home_overview(&shared).unwrap();
+    assert!(owner.to_string().contains("PRIVATE_HOME_SENTINEL"));
+    let peer = f.k.home_overview(&f.ctx(1, 0)).unwrap();
+    assert!(!peer.to_string().contains("PRIVATE_HOME_SENTINEL"));
+    assert!(peer.to_string().contains("shared_home_page"));
+}
+
+#[test]
+fn drawing_snapshot_preserves_exact_scene_and_rejects_external_elements() {
+    let mut f = Fixture::new();
+    let ctx = f.ctx(0, 0);
+    let mut input = f.input();
+    input.kind = "drawing".into();
+    input.content = "Readable drawing summary".into();
+    input.body = json!({"elements":[{"id":"r1","type":"rectangle","x":10,"y":20,"width":180,"height":60,"link":null}],"files":{}});
+    f.k.save_workspace(&ctx, &input).unwrap();
+    let snapshot = f.k.snapshot_workspace(&ctx, &input.id, 1).unwrap();
+    let exact: Value =
+        serde_json::from_slice(&f.k.raw_source(&ctx, &snapshot.id).unwrap()).unwrap();
+    assert_eq!(exact, input.body);
+    input.revision = 1;
+    input.body["elements"][0]["link"] = json!("https://example.com");
+    assert!(f.k.save_workspace(&ctx, &input).is_err());
+    input.body["elements"][0]["link"] = Value::Null;
+    input.body["elements"][0]["type"] = json!("iframe");
+    assert!(f.k.save_workspace(&ctx, &input).is_err());
+    input.body["elements"][0]["type"] = json!("rectangle");
+    input.body["files"] = json!({"image":"untrusted"});
+    assert!(f.k.save_workspace(&ctx, &input).is_err());
+}

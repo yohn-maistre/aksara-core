@@ -147,7 +147,8 @@ try {
     purpose: "knowledge",
     provenance: "synthetic browser fixture",
   });
-  await nav(op, "Shared table");
+  await nav(op, "Library");
+  await op.getByRole("button",{name:"New shared table",exact:true}).click();
   await op.getByLabel("Table title").fill("Meeting sources");
   await op.getByLabel("Source to add to table").selectOption(source.id);
   await op.getByRole("button", { name: "Add to table", exact: true }).click();
