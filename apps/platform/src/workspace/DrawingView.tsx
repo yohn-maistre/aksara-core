@@ -8,9 +8,6 @@ import { useWorkingSurface } from "./useWorkingSurface";
 import { ActionButton, AppInput } from "./controls";
 import type { Data } from "./shared";
 
-// Excalidraw must never fetch its font assets from a third-party CDN.
-(window as Window & { EXCALIDRAW_ASSET_PATH?: string }).EXCALIDRAW_ASSET_PATH =
-  "/excalidraw/";
 const allowed = new Set([
   "rectangle",
   "ellipse",
